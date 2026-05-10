@@ -27,4 +27,16 @@
     <string name="refund">Refund</string>
     <string name="rupee_symbol">\u20B9</string>
     <string name="payment_method_upi">UPI</string>
+    <string name="particular">Particular</string>
+    <string name="hint_particular">Type transaction item…</string>
+    <string name="select_category">Select Category</string>
+    <string name="selected_category">Selected Category</string>
+    <string name="none_selected">None Selected</string>
+    <string name="tags">Tags</string>
+    <string name="add_tags">Add Tags</string>
+    <string name="selected_tags">Selected Tags</string>
+    <string name="none">None</string>
+    <string name="search_tags">Search tags…</string>
+    <string name="apply_tags">Apply Tags</string>
+    <string name="select_tags">Select Tags</string>
 </resources>

@@ -24,7 +24,9 @@
 
     <!-- Borders -->
     <color name="border_color">#2B2B3A</color>
+    <color name="stroke_color">#232330</color>
     <color name="glow_border_purple">#C084FC</color>
+    <color name="tag_chip_background">#2A1F3D</color>
 
     <!-- Specific components -->
     <color name="selected_date_bg">#9333EA</color>
