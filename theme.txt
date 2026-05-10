@@ -1,0 +1,921 @@
+# Expense Tracker App — Dark Neon UI Design System
+
+# Overview
+
+This document defines the complete visual design system used for the dark futuristic Expense Tracker mobile application UI.
+
+The goal is to allow another developer, designer, or AI agent to fully recreate the exact same UI style inside Android Studio.
+
+UI Style:
+
+* Dark Theme
+* Futuristic
+* Neon Glow
+* Soft Glassmorphism
+* Minimal but premium
+* Rounded modern cards
+* Gradient-based interactions
+* Vibrant accent colors
+
+Platform:
+
+* Android
+* Java/XML UI
+* Material Design based
+
+---
+
+# Design Philosophy
+
+The UI follows these principles:
+
+1. Deep dark backgrounds
+2. Bright neon accent highlights
+3. Rounded components
+4. Soft glowing buttons
+5. Layered card-based layout
+6. High contrast readability
+7. Minimal clutter
+8. Premium cyberpunk-inspired visuals
+
+---
+
+# Primary Theme Colors
+
+These are the core colors used throughout the application.
+
+---
+
+# 1. Main Background Color
+
+Purpose:
+Primary app background.
+
+Color Name:
+Deep Space Black
+
+Hex:
+
+```text
+#0D0D12
+```
+
+Usage:
+
+* Main screen background
+* Root layouts
+* Splash background
+* Fullscreen containers
+
+---
+
+# 2. Secondary Background
+
+Purpose:
+Card backgrounds and elevated surfaces.
+
+Color Name:
+Midnight Surface
+
+Hex:
+
+```text
+#16161F
+```
+
+Usage:
+
+* Cards
+* Containers
+* Bottom sheets
+* Dialogs
+
+---
+
+# 3. Elevated Card Background
+
+Purpose:
+Highlighted cards.
+
+Color Name:
+Elevated Surface
+
+Hex:
+
+```text
+#1E1E2A
+```
+
+Usage:
+
+* Selected cards
+* Dashboard highlight cards
+* Active sections
+
+---
+
+# Primary Accent Colors
+
+---
+
+# 4. Neon Purple
+
+Purpose:
+Main futuristic accent.
+
+Hex:
+
+```text
+#A855F7
+```
+
+Usage:
+
+* Primary buttons
+* Selected tabs
+* Active category highlights
+* Graph highlights
+
+---
+
+# 5. Neon Pink
+
+Purpose:
+Secondary accent.
+
+Hex:
+
+```text
+#EC4899
+```
+
+Usage:
+
+* Gradient combinations
+* Glow effects
+* Floating action buttons
+
+---
+
+# 6. Electric Blue
+
+Purpose:
+Information highlights.
+
+Hex:
+
+```text
+#38BDF8
+```
+
+Usage:
+
+* Analytics
+* Charts
+* Selected date highlights
+* Graph data points
+
+---
+
+# 7. Neon Cyan
+
+Purpose:
+Interactive highlight.
+
+Hex:
+
+```text
+#22D3EE
+```
+
+Usage:
+
+* Focus states
+* Selected elements
+* Interactive glow
+
+---
+
+# 8. Emerald Green
+
+Purpose:
+Success/completed states.
+
+Hex:
+
+```text
+#22C55E
+```
+
+Usage:
+
+* Completed task indicators
+* Tick marks
+* Positive trends
+* Success states
+
+---
+
+# 9. Warning Orange
+
+Purpose:
+Pending/warning states.
+
+Hex:
+
+```text
+#F97316
+```
+
+Usage:
+
+* Pending indicators
+* Alerts
+* Important actions
+
+---
+
+# 10. Error Red
+
+Purpose:
+Danger/error actions.
+
+Hex:
+
+```text
+#EF4444
+```
+
+Usage:
+
+* Delete buttons
+* Error states
+* Negative spending alerts
+
+---
+
+# Text Colors
+
+---
+
+# 11. Primary Text
+
+Purpose:
+Main readable text.
+
+Hex:
+
+```text
+#FFFFFF
+```
+
+Usage:
+
+* Titles
+* Main labels
+* Amount values
+
+---
+
+# 12. Secondary Text
+
+Purpose:
+Subtitles and descriptions.
+
+Hex:
+
+```text
+#B3B3C3
+```
+
+Usage:
+
+* Notes
+* Metadata
+* Subheadings
+
+---
+
+# 13. Muted Text
+
+Purpose:
+Low emphasis text.
+
+Hex:
+
+```text
+#7B7B8C
+```
+
+Usage:
+
+* Placeholders
+* Disabled text
+* Secondary metadata
+
+---
+
+# 14. Hint Text
+
+Purpose:
+Input placeholders.
+
+Hex:
+
+```text
+#8E8EA0
+```
+
+Usage:
+
+* EditText hints
+* Search placeholders
+
+---
+
+# Border & Divider Colors
+
+---
+
+# 15. Border Color
+
+Purpose:
+Card outlines.
+
+Hex:
+
+```text
+#2B2B3A
+```
+
+Usage:
+
+* Card strokes
+* Input borders
+* Dividers
+
+---
+
+# 16. Glow Border Purple
+
+Purpose:
+Neon glow borders.
+
+Hex:
+
+```text
+#C084FC
+```
+
+Usage:
+
+* Focus glow
+* Active neon border
+
+---
+
+# Calendar Colors
+
+---
+
+# 17. Selected Date Background
+
+Hex:
+
+```text
+#9333EA
+```
+
+Usage:
+
+* Selected calendar date
+
+---
+
+# 18. Completed Date Indicator
+
+Hex:
+
+```text
+#22C55E
+```
+
+Usage:
+
+* Green tick mark
+
+---
+
+# 19. Pending Date Indicator
+
+Hex:
+
+```text
+#F97316
+```
+
+Usage:
+
+* Orange pending dot
+
+---
+
+# 20. No Action Indicator
+
+Hex:
+
+```text
+#6B7280
+```
+
+Usage:
+
+* Gray inactive indicator
+
+---
+
+# Gradient Design System
+
+The UI heavily relies on gradients.
+
+---
+
+# Primary Button Gradient
+
+Purpose:
+Main action buttons.
+
+Example Buttons:
+
+* Save
+* Done For The Day
+* Add Transaction
+
+Gradient Colors:
+
+Start:
+
+```text
+#A855F7
+```
+
+End:
+
+```text
+#EC4899
+```
+
+Direction:
+
+```text
+Left → Right
+```
+
+Visual Style:
+
+* smooth transition
+* neon glow
+* soft saturation
+
+---
+
+# gradient_primary_button.xml
+
+Purpose:
+Primary futuristic action button background.
+
+Visual Style:
+
+* rounded corners
+* purple to pink neon gradient
+* premium futuristic appearance
+
+XML Structure Explanation:
+
+Shape Type:
+
+* rectangle
+
+Corner Radius:
+
+```text
+24dp
+```
+
+Gradient:
+
+Start Color:
+
+```text
+#A855F7
+```
+
+End Color:
+
+```text
+#EC4899
+```
+
+Angle:
+
+```text
+0
+```
+
+Meaning:
+Left to right gradient.
+
+Padding Recommendation:
+
+```text
+Vertical: 14dp
+Horizontal: 24dp
+```
+
+Elevation Recommendation:
+
+```text
+8dp
+```
+
+Optional Glow Layer:
+
+Use shadow/glow with:
+
+```text
+#C084FC
+```
+
+---
+
+# Secondary Card Gradient
+
+Purpose:
+Dashboard summary cards.
+
+Gradient:
+
+Start:
+
+```text
+#1E1E2A
+```
+
+End:
+
+```text
+#2A1F3D
+```
+
+Usage:
+
+* analytics cards
+* overview cards
+* highlights section
+
+---
+
+# Analytics Graph Colors
+
+Pie chart palette:
+
+```text
+#A855F7
+#EC4899
+#38BDF8
+#22C55E
+#F97316
+#FACC15
+```
+
+Line Graph:
+
+Main Line:
+
+```text
+#A855F7
+```
+
+Fill Glow:
+
+```text
+#A855F733
+```
+
+Grid Lines:
+
+```text
+#2B2B3A
+```
+
+---
+
+# Typography System
+
+Recommended Font:
+
+```text
+Poppins
+```
+
+Alternative:
+
+```text
+Inter
+```
+
+---
+
+# Typography Sizes
+
+Screen Title:
+
+```text
+28sp
+```
+
+Section Title:
+
+```text
+20sp
+```
+
+Card Title:
+
+```text
+16sp
+```
+
+Body Text:
+
+```text
+14sp
+```
+
+Small Metadata:
+
+```text
+12sp
+```
+
+---
+
+# Corner Radius System
+
+Buttons:
+
+```text
+24dp
+```
+
+Cards:
+
+```text
+20dp
+```
+
+Inputs:
+
+```text
+18dp
+```
+
+Dialogs:
+
+```text
+28dp
+```
+
+---
+
+# Shadow & Glow System
+
+The UI uses soft glow instead of harsh shadows.
+
+Glow Color:
+
+```text
+#A855F744
+```
+
+Blur Radius:
+
+```text
+16dp
+```
+
+Usage:
+
+* active buttons
+* floating action buttons
+* selected cards
+
+---
+
+# Input Field Design
+
+Input Background:
+
+```text
+#1E1E2A
+```
+
+Border:
+
+```text
+#2B2B3A
+```
+
+Focused Border:
+
+```text
+#A855F7
+```
+
+Hint Text:
+
+```text
+#8E8EA0
+```
+
+Text:
+
+```text
+#FFFFFF
+```
+
+Corner Radius:
+
+```text
+18dp
+```
+
+---
+
+# Category Tree Design
+
+The category system uses a tree hierarchy.
+
+Example:
+
+Food
+└── Lunch
+
+Rules:
+
+* only child category shows plus icon
+* parent category acts as container
+* child category can create new nested item
+
+Tree Connector Color:
+
+```text
+#7B7B8C
+```
+
+Active Category Highlight:
+
+```text
+#A855F7
+```
+
+Selected Category Glow:
+
+```text
+#C084FC
+```
+
+---
+
+# Bottom Navigation Design
+
+Background:
+
+```text
+#16161F
+```
+
+Selected Icon:
+
+```text
+#A855F7
+```
+
+Unselected Icon:
+
+```text
+#7B7B8C
+```
+
+Top Border:
+
+```text
+#2B2B3A
+```
+
+Recommended Height:
+
+```text
+72dp
+```
+
+---
+
+# Splash Screen Design
+
+Background:
+
+```text
+#0D0D12
+```
+
+Center Logo Glow:
+
+```text
+#A855F7
+```
+
+Accent Animation:
+
+```text
+#EC4899
+```
+
+---
+
+# Recommended Android Asset Strategy
+
+Use:
+
+* Vector Drawables
+* XML Shape Drawables
+* WebP only for complex images
+
+Avoid:
+
+* heavy PNG assets
+* bitmap-based UI
+
+Recommended:
+
+```text
+90% vectors
+10% WebP
+```
+
+---
+
+# Recommended UI Components
+
+Use:
+
+* rounded cards
+* floating buttons
+* neon outlines
+* soft glassmorphism
+* subtle gradients
+* minimal borders
+
+Avoid:
+
+* sharp corners
+* flat gray UI
+* excessive shadows
+* overcrowded layouts
+
+---
+
+# Final Visual Identity Summary
+
+The UI should feel:
+
+* futuristic
+* elegant
+* premium
+* cyberpunk-inspired
+* smooth
+* modern
+* visually immersive
+
+The design language combines:
+
+* dark AMOLED backgrounds
+* glowing neon gradients
+* rounded modern cards
+* smooth layered spacing
+* vibrant accents
+
+This design system should be used consistently across:
+
+* splash screen
+* dashboard
+* analytics
+* transaction editor
+* settings
+* category tree
+* dialogs
+* bottom navigation
+* charts
+* widgets
+
+Consistency is extremely important to maintain the premium futuristic appearance.

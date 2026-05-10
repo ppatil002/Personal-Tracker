@@ -1,3 +1,30 @@
 <resources>
     <string name="app_name">PP</string>
+    <string name="new_entry">New Entry</string>
+    <string name="highlights">Highlights</string>
+    <string name="quote">Small steps today, big changes tomorrow.</string>
+    <string name="selected_date">Selected Date</string>
+    <string name="sunday">Sunday</string>
+    <string name="may_2025">May 2025</string>
+    <string name="done_for_day">Done for the day</string>
+    <string name="category">Category</string>
+    <string name="search_category">Type to search category…</string>
+    <string name="amount">Amount</string>
+    <string name="type">Type</string>
+    <string name="expense">Expense</string>
+    <string name="cancel">Cancel</string>
+    <string name="clear">Clear</string>
+    <string name="save_entry">Save Entry</string>
+    <string name="dashboard">Dashboard</string>
+    <string name="analytics">Analytics</string>
+    <string name="history">History</string>
+    <string name="more">More</string>
+    <string name="payment_method">Payment Method</string>
+    <string name="note_optional">Note</string>
+    <string name="add_note">Add a note…</string>
+    <string name="tag_optional">Tag</string>
+    <string name="select_tag">Select tag</string>
+    <string name="refund">Refund</string>
+    <string name="rupee_symbol">\u20B9</string>
+    <string name="payment_method_upi">UPI</string>
 </resources>

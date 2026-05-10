@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="60dp"
+    android:background="@drawable/bg_neon_dropdown"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="16dp"
+    android:paddingEnd="16dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <!-- Left Icon -->
+    <ImageView
+        android:id="@+id/dropdownIcon"
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:src="@drawable/ic_placeholder"
+        app:tint="@color/accent_purple"
+        android:contentDescription="@null" />
+
+    <!-- Spacing -->
+    <Space
+        android:layout_width="12dp"
+        android:layout_height="wrap_content" />
+
+    <!-- Text Area -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Hint / Selected Text -->
+        <TextView
+            android:id="@+id/dropdownText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Select Category"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:fontFamily="sans-serif-medium" />
+
+        <!-- Boolean Indicator -->
+        <TextView
+            android:id="@+id/defaultIndicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Default"
+            android:textColor="@color/emerald_green"
+            android:textSize="11sp"
+            android:visibility="gone" />
+
+    </LinearLayout>
+
+        <!-- Dropdown Arrow -->
+    <ImageView
+        android:id="@+id/dropdownArrow"
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:src="@drawable/ic_arrow_down"
+        app:tint="@color/text_secondary"
+        android:contentDescription="@null" />
+
+</LinearLayout>

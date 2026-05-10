@@ -35,6 +35,11 @@ android {
 dependencies {
     implementation libs.appcompat
     implementation libs.material
+    implementation libs.constraintlayout
+    implementation libs.recyclerview
+    implementation libs.cardview
+    implementation libs.material.calendarview
+    implementation libs.threetenabp
     testImplementation libs.junit
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ext.junit

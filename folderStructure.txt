@@ -1,0 +1,861 @@
+# Android Expense Tracker App — Architecture & Folder Structure Guide
+
+# Overview
+
+This document explains the complete folder structure, architecture, and purpose of every major section inside the Android Expense Tracker application.
+---
+
+# High-Level Architecture
+
+The project is divided into multiple layers.
+
+Each layer has a specific responsibility.
+
+Main layers:
+
+1. core/
+2. data/
+3. domain/
+4. features/
+5. ui/
+6. navigation/
+7. utils/
+
+---
+
+# 1. core/
+
+Purpose:
+The foundation of the app.
+
+Contains app-wide systems and low-level functionality used throughout the application.
+
+---
+
+# core/database/
+
+Purpose:
+Handles all database setup and configuration.
+
+Responsibilities:
+
+* creating database
+* managing database version
+* defining database tables
+* migrations
+* database initialization
+
+Example:
+When app starts, database is initialized here.
+
+---
+
+# core/database/dao/
+
+Purpose:
+Database operation layer.
+
+DAO = Data Access Object.
+
+Responsibilities:
+
+* insert transaction
+* delete transaction
+* update category
+* fetch reports
+* search records
+
+Example:
+Fetching all expenses from the last 30 days.
+
+---
+
+# core/database/entities/
+
+Purpose:
+Defines database table structures.
+
+Responsibilities:
+
+* transaction table structure
+* category table structure
+* tags table structure
+* settings table structure
+
+Example:
+Defines fields like:
+
+* amount
+* category
+* date
+* notes
+
+---
+
+# core/database/converters/
+
+Purpose:
+Converts complex data types into database-friendly formats.
+
+Example:
+Converting:
+
+* Date → timestamp
+* Enum → integer/string
+
+---
+
+# core/database/migrations/
+
+Purpose:
+Handles database upgrades safely.
+
+Example:
+If app version 1 had no tags and version 2 introduces tags, migrations update the database without deleting old data.
+
+---
+
+# core/encryption/
+
+Purpose:
+Handles security and encryption.
+
+Responsibilities:
+
+* encrypting database
+* securing backups
+* password protection
+* secure storage
+
+Example:
+Encrypt exported backup files.
+
+---
+
+# core/preferences/
+
+Purpose:
+Stores lightweight app settings.
+
+Responsibilities:
+
+* dark mode
+* selected currency
+* app preferences
+* user settings
+
+Example:
+Saving the selected app theme.
+
+---
+
+# core/theme/
+
+Purpose:
+Controls app appearance.
+
+Responsibilities:
+
+* colors
+* gradients
+* typography
+* fonts
+* neon styling
+
+Example:
+Managing the dark neon UI theme.
+
+---
+
+# core/security/
+
+Purpose:
+Handles app protection.
+
+Responsibilities:
+
+* fingerprint unlock
+* biometric authentication
+* session management
+* app lock
+
+Example:
+Fingerprint unlock before opening app.
+
+---
+
+# core/backup/
+
+Purpose:
+Backup and restore management.
+
+Responsibilities:
+
+* export database
+* import backup
+* restore old data
+* backup scheduling
+
+Example:
+Creating a backup.db file.
+
+---
+
+# core/analytics/
+
+Purpose:
+Analytics calculation engine.
+
+Responsibilities:
+
+* category totals
+* monthly reports
+* spending trends
+* dashboard calculations
+
+Example:
+Calculating total food expenses for current month.
+
+---
+
+# 2. data/
+
+Purpose:
+Handles data flow between database and business logic.
+
+Acts as a bridge between:
+
+* database
+* repositories
+* business layer
+
+---
+
+# data/model/
+
+Purpose:
+Raw data objects.
+
+Responsibilities:
+Representing data retrieved from storage.
+
+Example:
+TransactionModel contains:
+
+* amount
+* category
+* transaction date
+
+---
+
+# data/mapper/
+
+Purpose:
+Transforms data between layers.
+
+Responsibilities:
+Converting database objects into UI/business-friendly objects.
+
+Example:
+Database transaction → dashboard transaction card model.
+
+---
+
+# data/repository/
+
+Purpose:
+Central data manager.
+
+Responsibilities:
+
+* fetching data
+* updating data
+* caching
+* deciding data source
+
+Example:
+Dashboard requests all expenses.
+Repository fetches them from database.
+
+---
+
+# 3. domain/
+
+Purpose:
+Contains pure business logic.
+
+This layer does not contain Android UI code.
+
+Acts as the brain of the application.
+
+---
+
+# domain/model/
+
+Purpose:
+Business-level models.
+
+Represents clean app objects used across logic.
+
+Example:
+Transaction business object.
+
+---
+
+# domain/repository/
+
+Purpose:
+Defines repository contracts.
+
+Responsibilities:
+Defines what repositories must provide.
+
+Example:
+
+* add transaction
+* delete transaction
+* fetch reports
+
+---
+
+# domain/usecase/
+
+Purpose:
+Handles single app actions.
+
+Each use case performs one business operation.
+
+Examples:
+
+* Add transaction
+* Delete transaction
+* Generate monthly report
+* Calculate category totals
+
+These are essentially app operations.
+
+---
+
+# 4. features/
+
+Purpose:
+Contains actual screens/modules of the app.
+
+This is the most important folder.
+
+Each feature is isolated and self-contained.
+
+---
+
+# features/splash/
+
+Purpose:
+App startup screen.
+
+Responsibilities:
+
+* loading animation
+* initialization
+* authentication checks
+* database preparation
+
+---
+
+# features/onboarding/
+
+Purpose:
+First-time user introduction screens.
+
+Responsibilities:
+
+* welcome screens
+* feature introduction
+* initial setup
+
+---
+
+# features/dashboard/
+
+Purpose:
+Main home screen.
+
+Responsibilities:
+
+* summary cards
+* recent transactions
+* quick analytics
+* overview charts
+
+Example:
+Monthly expense summary shown here.
+
+---
+
+# features/transaction/
+
+Purpose:
+Handles all transaction-related operations.
+
+Subsections:
+
+* add
+* edit
+* history
+* details
+
+---
+
+# features/transaction/add/
+
+Purpose:
+Add new expense/income entry.
+
+Responsibilities:
+
+* amount input
+* category selection
+* notes
+* save transaction
+
+---
+
+# features/transaction/edit/
+
+Purpose:
+Modify existing transactions.
+
+Responsibilities:
+
+* update amount
+* change category
+* edit notes
+
+---
+
+# features/transaction/history/
+
+Purpose:
+Transaction listing and filtering.
+
+Responsibilities:
+
+* search transactions
+* filter by date
+* filter by category
+* grouped views
+
+Example:
+Show all expenses from May.
+
+---
+
+# features/transaction/details/
+
+Purpose:
+Detailed transaction view.
+
+Responsibilities:
+
+* full transaction info
+* edit/delete actions
+* history view
+
+---
+
+# features/categories/
+
+Purpose:
+Category tree management.
+
+Responsibilities:
+
+* nested categories
+* parent-child relationships
+* category creation
+* category editing
+
+Example:
+Food
+└── Lunch
+
+---
+
+# features/analytics/
+
+Purpose:
+Reports and graphs.
+
+Responsibilities:
+
+* pie charts
+* line charts
+* category reports
+* monthly reports
+* yearly analysis
+
+Example:
+Food spending pie chart.
+
+---
+
+# features/settings/
+
+Purpose:
+Application settings.
+
+Responsibilities:
+
+* theme settings
+* database settings
+* backup settings
+* encryption settings
+* export/import settings
+
+---
+
+# features/settings/database/
+
+Purpose:
+Database management screens.
+
+Responsibilities:
+
+* export database
+* restore database
+* clear database
+* manage backups
+
+---
+
+# features/settings/encryption/
+
+Purpose:
+Security settings.
+
+Responsibilities:
+
+* enable app lock
+* biometric unlock
+* encryption settings
+* password management
+
+---
+
+# features/settings/theme/
+
+Purpose:
+Theme customization.
+
+Responsibilities:
+
+* dark mode
+* accent color
+* neon style customization
+
+---
+
+# features/settings/export/
+
+Purpose:
+Data export system.
+
+Responsibilities:
+
+* export CSV
+* export PDF
+* export reports
+
+---
+
+# features/backup/
+
+Purpose:
+Backup workflow management.
+
+Responsibilities:
+
+* cloud backups
+* local backups
+* Google Drive sync
+
+---
+
+# features/notifications/
+
+Purpose:
+Reminder and notification system.
+
+Responsibilities:
+
+* daily reminders
+* expense logging reminders
+* scheduled notifications
+
+Example:
+“Don’t forget to log today’s expenses.”
+
+---
+
+# features/widgets/
+
+Purpose:
+Android home screen widgets.
+
+Responsibilities:
+
+* mini expense summary widgets
+* quick-add widgets
+* dashboard widgets
+
+---
+
+# 5. ui/
+
+Purpose:
+Reusable UI components shared across the app.
+
+These are not feature-specific.
+
+---
+
+# ui/components/
+
+Purpose:
+Reusable custom views/components.
+
+Examples:
+
+* neon button
+* gradient card
+* currency input field
+* search field
+
+---
+
+# ui/dialogs/
+
+Purpose:
+Popup dialogs.
+
+Examples:
+
+* confirmation popup
+* delete warning
+* loading popup
+
+---
+
+# ui/charts/
+
+Purpose:
+Reusable graph/chart components.
+
+Examples:
+
+* pie chart view
+* line graph view
+* bar chart view
+
+---
+
+# ui/adapters/
+
+Purpose:
+Reusable list adapters.
+
+Responsibilities:
+Handling RecyclerView lists used across multiple screens.
+
+---
+
+# ui/animations/
+
+Purpose:
+Animation utilities.
+
+Examples:
+
+* fade animation
+* slide transition
+* popup animation
+
+---
+
+# 6. navigation/
+
+Purpose:
+Controls movement between screens.
+
+Responsibilities:
+
+* bottom navigation
+* screen routing
+* navigation helpers
+
+Example:
+Dashboard → Settings navigation.
+
+---
+
+# 7. utils/
+
+Purpose:
+Reusable helper utilities.
+
+Contains generic helper logic.
+
+---
+
+# utils/DateUtils
+
+Purpose:
+Date formatting and manipulation.
+
+Example:
+Converting:
+18/05/2025
+into:
+May 18, 2025
+
+---
+
+# utils/CurrencyUtils
+
+Purpose:
+Currency formatting.
+
+Example:
+120
+→ ₹120.00
+
+---
+
+# utils/FileUtils
+
+Purpose:
+File operations.
+
+Responsibilities:
+
+* read files
+* export CSV
+* import backups
+
+---
+
+# utils/ValidationUtils
+
+Purpose:
+Input validation.
+
+Example:
+Checking whether amount field is empty.
+
+---
+
+# res/layout/
+
+Purpose:
+Contains all XML screen layouts.
+
+Examples:
+
+* dashboard screen layout
+* transaction item layout
+* dialog layouts
+
+---
+
+# res/drawable/
+
+Purpose:
+Images, icons, gradients, and backgrounds.
+
+Examples:
+
+* neon backgrounds
+* gradient buttons
+* category icons
+
+---
+
+# res/values/
+
+Purpose:
+Global app resources.
+
+Contains:
+
+* colors
+* strings
+* dimensions
+* themes
+
+---
+
+# res/menu/
+
+Purpose:
+Menu XML files.
+
+Examples:
+
+* bottom navigation menu
+* toolbar menus
+
+---
+
+# res/anim/
+
+Purpose:
+Animation XML files.
+
+Examples:
+
+* screen transitions
+* fade animations
+* popup animations
+
+---
+
+# res/xml/
+
+Purpose:
+Configuration XML files.
+
+Examples:
+
+* backup rules
+* security configuration
+* provider paths
+
+---
+
+# Final Architecture Understanding
+
+The app is divided into clear responsibilities:
+
+| Layer      | Responsibility      |
+| ---------- | ------------------- |
+| core       | foundation systems  |
+| data       | data management     |
+| domain     | business logic      |
+| features   | app screens/modules |
+| ui         | reusable visuals    |
+| navigation | screen movement     |
+| utils      | helper utilities    |
+
+---
+
+# Recommended Design Philosophy
+
+The project should remain:
+
+* feature-based
+* modular
+* scalable
+* analytics-focused
+* secure
+* easy to maintain
+
+This structure is ideal for medium-to-large Android applications and will scale very well as the expense tracker grows in complexity.
