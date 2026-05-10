@@ -6,16 +6,23 @@ import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
+import androidx.room.RawQuery;
 import androidx.room.Transaction;
 import androidx.room.Update;
+import androidx.sqlite.db.SupportSQLiteQuery;
 
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.local.entity.TransactionTagCrossRef;
 
 import java.util.List;
 
+import androidx.sqlite.db.SupportSQLiteQuery;
+
 @Dao
 public interface TransactionDao {
+
+    @RawQuery
+    List<TransactionEntity> getTableData(SupportSQLiteQuery query);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insert(TransactionEntity transaction);

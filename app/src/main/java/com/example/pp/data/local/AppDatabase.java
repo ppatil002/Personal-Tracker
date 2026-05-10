@@ -7,6 +7,7 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 
 import com.example.pp.data.local.dao.CategoryDao;
+import com.example.pp.data.local.dao.CommonDao;
 import com.example.pp.data.local.dao.TagDao;
 import com.example.pp.data.local.dao.TransactionDao;
 import com.example.pp.data.local.entity.CategoryEntity;
@@ -22,6 +23,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract CategoryDao categoryDao();
     public abstract TagDao tagDao();
     public abstract TransactionDao transactionDao();
+    public abstract CommonDao commonDao();
 
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {

@@ -1,5 +1,6 @@
 package com.example.pp.features.tracker.edit;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.view.View;
@@ -18,6 +19,7 @@ import com.example.pp.domain.model.CategoryTreeNode;
 import com.example.pp.features.category.CategoryBottomSheetFragment;
 import com.example.pp.features.category.TagBottomSheetFragment;
 import com.example.pp.features.category.model.Tag;
+import com.example.pp.features.settings.MoreActivity;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -253,6 +255,13 @@ public class EditTrackerActivity extends AppCompatActivity {
         if (back != null) back.setOnClickListener(v -> finish());
         if (refresh != null) refresh.setOnClickListener(v -> Toast.makeText(this, "Refreshing...", Toast.LENGTH_SHORT).show());
         if (fab != null) fab.setOnClickListener(v -> clearUI());
+
+        View navMore = findViewById(R.id.navMore);
+        if (navMore != null) {
+            navMore.setOnClickListener(v -> {
+                startActivity(new Intent(this, MoreActivity.class));
+            });
+        }
     }
 
     private void setupActions() {

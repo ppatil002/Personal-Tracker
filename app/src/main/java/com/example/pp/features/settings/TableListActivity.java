@@ -1,0 +1,94 @@
+package com.example.pp.features.settings;
+
+import android.content.Intent;
+import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.ImageView;
+import android.widget.TextView;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import com.example.pp.R;
+import java.util.ArrayList;
+import java.util.List;
+
+public class TableListActivity extends AppCompatActivity {
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_table_list);
+
+        ImageView btnBack = findViewById(R.id.btnBack);
+        btnBack.setOnClickListener(v -> finish());
+
+        RecyclerView rvTables = findViewById(R.id.rvTables);
+        rvTables.setLayoutManager(new LinearLayoutManager(this));
+
+        List<TableInfo> tables = new ArrayList<>();
+        tables.add(new TableInfo("categories", "Categories Table", "Hierarchy and icons"));
+        tables.add(new TableInfo("tags", "Tags Table", "Labels and identifiers"));
+        tables.add(new TableInfo("transactions", "Transactions Table", "Core transaction data"));
+        tables.add(new TableInfo("transaction_tag_cross_ref", "Transaction Tags Table", "Many-to-many relationship"));
+
+        rvTables.setAdapter(new TableAdapter(tables));
+    }
+
+    private static class TableInfo {
+        String dbName;
+        String displayName;
+        String subtitle;
+
+        TableInfo(String dbName, String displayName, String subtitle) {
+            this.dbName = dbName;
+            this.displayName = displayName;
+            this.subtitle = subtitle;
+        }
+    }
+
+    private class TableAdapter extends RecyclerView.Adapter<TableAdapter.ViewHolder> {
+        private final List<TableInfo> tables;
+
+        TableAdapter(List<TableInfo> tables) {
+            this.tables = tables;
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_view_table, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            TableInfo table = tables.get(position);
+            holder.tvName.setText(table.displayName);
+            holder.tvSubtitle.setText(table.subtitle);
+            holder.itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(TableListActivity.this, TableViewActivity.class);
+                intent.putExtra("table_name", table.dbName);
+                startActivity(intent);
+            });
+        }
+
+        @Override
+        public int getItemCount() {
+            return tables.size();
+        }
+
+        class ViewHolder extends RecyclerView.ViewHolder {
+            TextView tvName;
+            TextView tvSubtitle;
+
+            ViewHolder(View itemView) {
+                super(itemView);
+                tvName = itemView.findViewById(R.id.tvTableName);
+                tvSubtitle = itemView.findViewById(R.id.tvTableSubtitle);
+            }
+        }
+    }
+}
