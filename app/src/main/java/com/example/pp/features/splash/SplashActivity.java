@@ -18,6 +18,7 @@ public class SplashActivity extends AppCompatActivity {
 
         ((PPApplication) getApplication()).getCategoryRepository().seedDatabaseIfEmpty();
         ((PPApplication) getApplication()).getTagRepository().seedTagsIfEmpty();
+        ((PPApplication) getApplication()).getTransactionRepository().seedTransactionsIfEmpty();
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             startActivity(new Intent(SplashActivity.this, EditTrackerActivity.class));

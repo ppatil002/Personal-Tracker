@@ -32,6 +32,11 @@
             android:exported="false" />
 
         <activity
+            android:name=".features.analytics.AnalyticsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".features.settings.MoreActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize"/>
@@ -43,11 +48,6 @@
 
         <activity
             android:name=".features.settings.TableViewActivity"
-            android:exported="false"
-            android:windowSoftInputMode="adjustResize"/>
-
-        <activity
-            android:name=".features.settings.DynamicTableActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize"/>
 

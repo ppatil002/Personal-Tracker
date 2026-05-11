@@ -598,7 +598,7 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_today"
+                android:src="@drawable/ic_dashboard"
                 app:tint="@color/text_muted"
                 android:contentDescription="@string/dashboard" />
             <TextView
@@ -620,7 +620,7 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_compass"
+                android:src="@drawable/ic_analytics"
                 app:tint="@color/text_muted"
                 android:contentDescription="@string/analytics" />
             <TextView
@@ -648,7 +648,7 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_recent_history"
+                android:src="@drawable/ic_history"
                 app:tint="@color/text_muted"
                 android:contentDescription="@string/history" />
             <TextView
@@ -670,7 +670,7 @@
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
-                android:src="@android:drawable/ic_menu_more"
+                android:src="@drawable/ic_more"
                 app:tint="@color/text_muted"
                 android:contentDescription="@string/more" />
             <TextView

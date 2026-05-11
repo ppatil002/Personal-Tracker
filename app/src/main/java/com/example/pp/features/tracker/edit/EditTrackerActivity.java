@@ -256,6 +256,13 @@ public class EditTrackerActivity extends AppCompatActivity {
         if (refresh != null) refresh.setOnClickListener(v -> Toast.makeText(this, "Refreshing...", Toast.LENGTH_SHORT).show());
         if (fab != null) fab.setOnClickListener(v -> clearUI());
 
+        View navAnalytics = findViewById(R.id.navAnalytics);
+        if (navAnalytics != null) {
+            navAnalytics.setOnClickListener(v -> {
+                startActivity(new Intent(this, com.example.pp.features.analytics.AnalyticsActivity.class));
+            });
+        }
+
         View navMore = findViewById(R.id.navMore);
         if (navMore != null) {
             navMore.setOnClickListener(v -> {

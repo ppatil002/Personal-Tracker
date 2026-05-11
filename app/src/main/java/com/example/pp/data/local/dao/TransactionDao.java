@@ -14,6 +14,8 @@ import androidx.sqlite.db.SupportSQLiteQuery;
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.local.entity.TransactionTagCrossRef;
 
+import com.example.pp.features.analytics.model.DailyExpense;
+import com.example.pp.features.analytics.model.MonthlyExpense;
 import java.util.List;
 
 import androidx.sqlite.db.SupportSQLiteQuery;
@@ -50,6 +52,26 @@ public interface TransactionDao {
 
     @Query("SELECT * FROM transactions WHERE transaction_date = :date")
     List<TransactionEntity> getTransactionsByDate(String date);
+
+    @Query("SELECT * FROM transactions")
+    List<TransactionEntity> getAllTransactionsList();
+
+    @Query("SELECT * FROM transactions WHERE transaction_date >= :start AND transaction_date < :end ORDER BY transaction_date ASC")
+    List<TransactionEntity> getTransactionsBetween(long start, long end);
+
+    @Query("SELECT CAST(strftime('%m', transaction_date / 1000, 'unixepoch', 'localtime') AS INTEGER) as month, " +
+           "SUM(amount) as totalAmount " +
+           "FROM transactions " +
+           "WHERE transaction_date >= :start AND transaction_date < :end " +
+           "GROUP BY month " +
+           "ORDER BY month ASC")
+    List<MonthlyExpense> getMonthlyExpensesBetween(long start, long end);
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE transaction_date >= :start AND transaction_date < :end")
+    int getTransactionCountBetween(long start, long end);
+
+    @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE transaction_date >= :start AND transaction_date < :end")
+    double getTotalAmountBetween(long start, long end);
 
     @Transaction
     default void insertTransactionWithTags(TransactionEntity transaction, List<String> tagIds) {
