@@ -22,11 +22,17 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.R;
 import com.example.pp.features.analytics.adapter.CategoryExpenseAdapter;
+import com.example.pp.features.analytics.adapter.TransactionAdapter;
 import com.example.pp.features.analytics.chart.TrendMarkerView;
 import com.example.pp.features.analytics.model.AnalyticsSummary;
 import com.example.pp.features.analytics.model.CategoryExpense;
 import com.example.pp.features.analytics.model.DailyExpense;
 import com.example.pp.features.analytics.model.PeriodType;
+import com.example.pp.ui.components.table.adapter.GenericTableAdapter;
+import com.example.pp.ui.components.table.model.TableColumn;
+import com.example.pp.ui.components.table.model.TableConfig;
+import com.example.pp.ui.components.table.model.TableRow;
+import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.features.settings.MoreActivity;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
@@ -52,11 +58,16 @@ public class AnalyticsActivity extends AppCompatActivity {
 
     private AnalyticsViewModel viewModel;
     private CategoryExpenseAdapter categoryAdapter;
+    private GenericTableAdapter tableAdapter;
+    private String currentRootCategoryId;
 
     private TextView tvPeriodType, tvPeriodLabel, tvTotalExpenses, tvTransactionCount, tvAvgPerDay, tvHighestAmount, tvHighestCategoryName;
+    private TextView tvSelectedTableCategory, tvExpandTable;
+    private View tableExpandableContainer, tableCategorySelector;
+    private LinearLayout tableHeaderContainer;
     private PieChart donutChart;
     private LineChart sparklineChart, trendChart;
-    private RecyclerView rvCategories;
+    private RecyclerView rvCategories, rvDrillDownTable;
     private View periodDropdown, btnCalendar;
 
     @Override
@@ -88,6 +99,14 @@ public class AnalyticsActivity extends AppCompatActivity {
         sparklineChart = findViewById(R.id.sparklineChart);
         trendChart = findViewById(R.id.trendChart);
         rvCategories = findViewById(R.id.rvCategories);
+        rvDrillDownTable = findViewById(R.id.rvDrillDownTable);
+        
+        tvSelectedTableCategory = findViewById(R.id.tvSelectedTableCategory);
+        tvExpandTable = findViewById(R.id.tvExpandTable);
+        tableExpandableContainer = findViewById(R.id.tableExpandableContainer);
+        tableCategorySelector = findViewById(R.id.tableCategorySelector);
+        tableHeaderContainer = findViewById(R.id.tableHeaderContainer);
+        
         periodDropdown = findViewById(R.id.periodDropdown);
         btnCalendar = findViewById(R.id.btnCalendar);
 
@@ -155,11 +174,49 @@ public class AnalyticsActivity extends AppCompatActivity {
             viewModel.loadDrillDown(item.getCategoryId());
             showDrillDownBottomSheet();
         });
+
+        tableAdapter = new GenericTableAdapter(new TableConfig());
+        tableAdapter.setFixedCellWidth((int) (80 * getResources().getDisplayMetrics().density));
+        tableAdapter.setOnRowClickListener(row -> {
+            if ("footer".equals(row.getRowId())) return;
+            Long timestamp = (Long) row.getOriginalEntity();
+            if (timestamp != null && currentRootCategoryId != null) {
+                viewModel.loadTransactionsForPeriod(timestamp, currentRootCategoryId);
+                showTransactionListBottomSheet(timestamp);
+            }
+        });
+        rvDrillDownTable.setLayoutManager(new LinearLayoutManager(this));
+        rvDrillDownTable.setAdapter(tableAdapter);
     }
 
     private void setupControls() {
         periodDropdown.setOnClickListener(v -> showPeriodTypePopup());
         btnCalendar.setOnClickListener(v -> showCalendarPicker());
+        
+        findViewById(R.id.cardDrillDown).setOnClickListener(v -> {
+            boolean isExpanded = tableExpandableContainer.getVisibility() == View.VISIBLE;
+            viewModel.setTableExpanded(!isExpanded);
+        });
+
+        tableCategorySelector.setOnClickListener(v -> showTableCategoryPopup());
+    }
+
+    private void showTableCategoryPopup() {
+        List<CategoryEntity> categories = viewModel.getRootCategories().getValue();
+        if (categories == null || categories.isEmpty()) return;
+
+        String[] names = new String[categories.size()];
+        for (int i = 0; i < categories.size(); i++) names[i] = categories.get(i).getName();
+
+        new AlertDialog.Builder(this)
+                .setTitle("Select Category")
+                .setItems(names, (dialog, which) -> {
+                    CategoryEntity selected = categories.get(which);
+                    currentRootCategoryId = selected.getCategoryId();
+                    tvSelectedTableCategory.setText(selected.getName());
+                    viewModel.loadTableData(selected.getCategoryId());
+                })
+                .show();
     }
 
     private PopupWindow periodPopup;
@@ -285,6 +342,51 @@ public class AnalyticsActivity extends AppCompatActivity {
         viewModel.getCategoryExpenses().observe(this, this::bindCategoryExpenses);
         viewModel.getDailyTrend().observe(this, this::bindTrend);
         viewModel.getDrillDownExpenses().observe(this, this::bindDrillDown);
+        
+        viewModel.getTableColumns().observe(this, this::renderTableHeader);
+        viewModel.getTableRows().observe(this, rows -> tableAdapter.setRows(rows));
+        viewModel.getTableExpandable().observe(this, expanded -> {
+            tableExpandableContainer.setVisibility(expanded ? View.VISIBLE : View.GONE);
+            tvExpandTable.setText(expanded ? "Tap to collapse" : "Tap to expand table");
+        });
+        
+        viewModel.getRootCategories().observe(this, roots -> {
+            if (roots != null && !roots.isEmpty()) {
+                if (currentRootCategoryId == null) {
+                    currentRootCategoryId = roots.get(0).getCategoryId();
+                }
+                
+                // Update dropdown text based on current root category
+                for (CategoryEntity root : roots) {
+                    if (root.getCategoryId().equals(currentRootCategoryId)) {
+                        tvSelectedTableCategory.setText(root.getName());
+                        break;
+                    }
+                }
+
+                if (tvSelectedTableCategory.getText().equals("Category")) {
+                    tvSelectedTableCategory.setText(roots.get(0).getName());
+                }
+            }
+        });
+    }
+
+    private void renderTableHeader(List<TableColumn> columns) {
+        tableAdapter.setColumns(columns);
+        tableHeaderContainer.removeAllViews();
+        int cellWidth = (int) (80 * getResources().getDisplayMetrics().density);
+
+        for (TableColumn col : columns) {
+            TextView tv = new TextView(this);
+            tv.setLayoutParams(new LinearLayout.LayoutParams(cellWidth, ViewGroup.LayoutParams.WRAP_CONTENT));
+            tv.setPadding(24, 16, 24, 16);
+            tv.setText(col.getTitle());
+            tv.setTextColor(Color.WHITE);
+            tv.setTextSize(12);
+            tv.setTypeface(null, android.graphics.Typeface.BOLD);
+            tv.setGravity(android.view.Gravity.CENTER);
+            tableHeaderContainer.addView(tv);
+        }
     }
 
     private BottomSheetDialog drillDownDialog;
@@ -317,6 +419,33 @@ public class AnalyticsActivity extends AppCompatActivity {
         }
     }
 
+    private void showTransactionListBottomSheet(long timestamp) {
+        BottomSheetDialog dialog = new BottomSheetDialog(this, R.style.RoundedBottomSheetDialog);
+        View sheet = LayoutInflater.from(this).inflate(R.layout.bottom_sheet_drill_down, null);
+        TextView tvTitle = sheet.findViewById(R.id.tvDrillDownTitle);
+        TextView tvSubtitle = sheet.findViewById(R.id.tvDrillDownSubtitle);
+        RecyclerView rvTransactions = sheet.findViewById(R.id.rvDrillDown);
+
+        PeriodType type = viewModel.getPeriodType().getValue();
+        SimpleDateFormat sdf = (type == PeriodType.YEAR)
+                ? new SimpleDateFormat("MMMM yyyy", Locale.getDefault())
+                : new SimpleDateFormat("dd MMMM, yyyy", Locale.getDefault());
+        
+        tvTitle.setText("Transactions");
+        tvSubtitle.setText("For " + sdf.format(timestamp));
+
+        TransactionAdapter adapter = new TransactionAdapter();
+        rvTransactions.setLayoutManager(new LinearLayoutManager(this));
+        rvTransactions.setAdapter(adapter);
+
+        viewModel.getPeriodTransactions().observe(this, transactions -> {
+            if (transactions != null) adapter.submitList(transactions);
+        });
+
+        dialog.setContentView(sheet);
+        dialog.show();
+    }
+
     private void bindSummary(AnalyticsSummary summary) {
         if (summary == null) return;
         tvTotalExpenses.setText(String.format(Locale.getDefault(), "\u20B9 %,.0f", summary.getTotalExpenses()));
@@ -341,9 +470,25 @@ public class AnalyticsActivity extends AppCompatActivity {
         double total = 0;
         for (CategoryExpense ce : expenses) total += ce.getAmount();
 
-        for (CategoryExpense ce : expenses) {
+        // Group top 5 and 'Others'
+        List<CategoryExpense> topExpenses = new ArrayList<>(expenses);
+        topExpenses.sort((a, b) -> Double.compare(b.getAmount(), a.getAmount()));
+
+        List<CategoryExpense> chartExpenses = new ArrayList<>();
+        double othersSum = 0;
+        for (int i = 0; i < topExpenses.size(); i++) {
+            if (i < 5) {
+                chartExpenses.add(topExpenses.get(i));
+            } else {
+                othersSum += topExpenses.get(i).getAmount();
+            }
+        }
+        if (othersSum > 0) {
+            chartExpenses.add(new CategoryExpense("others", null, "Others", "📁", "#7B7B8C", othersSum, (othersSum/total)*100));
+        }
+
+        for (CategoryExpense ce : chartExpenses) {
             float val = (float) ce.getAmount();
-            // Category name is passed as the label
             entries.add(new PieEntry(val, ce.getName()));
             try {
                 colors.add(Color.parseColor(ce.getColour()));
@@ -360,14 +505,12 @@ public class AnalyticsActivity extends AppCompatActivity {
         dataSet.setSliceSpace(3f);
         dataSet.setSelectionShift(7f);
         
-        // Data labels outside the slices
         dataSet.setXValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
         dataSet.setYValuePosition(PieDataSet.ValuePosition.OUTSIDE_SLICE);
         
-        // Improve spacing for data labels
         dataSet.setValueLinePart1OffsetPercentage(80f);
-        dataSet.setValueLinePart1Length(0.4f);
-        dataSet.setValueLinePart2Length(0.5f);
+        dataSet.setValueLinePart1Length(0.5f);
+        dataSet.setValueLinePart2Length(0.6f);
         dataSet.setValueLineColor(Color.parseColor("#7B7B8C"));
         dataSet.setValueLineWidth(1f);
         dataSet.setValueLineVariableLength(true);
@@ -376,8 +519,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         data.setValueFormatter(new com.github.mikephil.charting.formatter.ValueFormatter() {
             @Override
             public String getFormattedValue(float value) {
-                // Return empty to only show the Category Name (Entry Label)
-                return "";
+                return ""; // Only show category names
             }
         });
         
@@ -386,8 +528,8 @@ public class AnalyticsActivity extends AppCompatActivity {
         donutChart.setDrawEntryLabels(true);
         donutChart.setEntryLabelColor(Color.WHITE);
         donutChart.setEntryLabelTextSize(11f);
+        donutChart.setExtraOffsets(30f, 10f, 30f, 10f); // More space for labels
         
-        // Center text
         donutChart.setCenterText(String.format(Locale.getDefault(), "\u20B9 %,.0f\nTotal\n%s", total, viewModel.getPeriodLabel().getValue() != null ? viewModel.getPeriodLabel().getValue() : ""));
         donutChart.invalidate();
 

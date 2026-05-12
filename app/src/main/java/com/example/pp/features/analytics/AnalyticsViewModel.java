@@ -19,12 +19,19 @@ import com.example.pp.features.analytics.model.CategoryExpense;
 import com.example.pp.features.analytics.model.DailyExpense;
 import com.example.pp.features.analytics.model.MonthlyExpense;
 import com.example.pp.features.analytics.model.PeriodType;
+import com.example.pp.ui.components.table.model.TableCell;
+import com.example.pp.ui.components.table.model.TableColumn;
+import com.example.pp.ui.components.table.model.TableRow;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 public class AnalyticsViewModel extends AndroidViewModel {
 
@@ -41,6 +48,13 @@ public class AnalyticsViewModel extends AndroidViewModel {
     private final MutableLiveData<String> periodLabel = new MutableLiveData<>();
     private final MutableLiveData<List<CategoryExpense>> drillDownExpenses = new MutableLiveData<>();
     private final MutableLiveData<String> drillDownTitle = new MutableLiveData<>();
+    
+    private final MutableLiveData<String> selectedTableCategoryId = new MutableLiveData<>();
+    private final MutableLiveData<List<CategoryEntity>> rootCategories = new MutableLiveData<>();
+    private final MutableLiveData<List<TableColumn>> tableColumns = new MutableLiveData<>();
+    private final MutableLiveData<List<TableRow>> tableRows = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> tableExpandable = new MutableLiveData<>(false);
+    private final MutableLiveData<List<TransactionEntity>> periodTransactions = new MutableLiveData<>();
 
     public AnalyticsViewModel(@NonNull Application application) {
         super(application);
@@ -64,6 +78,17 @@ public class AnalyticsViewModel extends AndroidViewModel {
     public LiveData<String> getPeriodLabel() { return periodLabel; }
     public LiveData<List<CategoryExpense>> getDrillDownExpenses() { return drillDownExpenses; }
     public LiveData<String> getDrillDownTitle() { return drillDownTitle; }
+    
+    public LiveData<String> getSelectedTableCategoryId() { return selectedTableCategoryId; }
+    public LiveData<List<CategoryEntity>> getRootCategories() { return rootCategories; }
+    public LiveData<List<TableColumn>> getTableColumns() { return tableColumns; }
+    public LiveData<List<TableRow>> getTableRows() { return tableRows; }
+    public LiveData<Boolean> getTableExpandable() { return tableExpandable; }
+    public LiveData<List<TransactionEntity>> getPeriodTransactions() { return periodTransactions; }
+
+    public void setTableExpanded(boolean expanded) {
+        tableExpandable.setValue(expanded);
+    }
 
     public void setPeriodType(PeriodType type) {
         periodType.setValue(type);
@@ -153,10 +178,131 @@ public class AnalyticsViewModel extends AndroidViewModel {
                 trend = buildDailyTrend(transactions, start, end);
             }
 
+            final List<CategoryTreeNode> finalTree = (categoryTree != null) ? categoryTree : new ArrayList<>();
+
             executors.mainThread().execute(() -> {
                 analyticsSummary.setValue(summary);
                 categoryExpenses.setValue(catExpenses);
                 dailyTrend.setValue(trend);
+                
+                List<CategoryEntity> roots = new ArrayList<>();
+                for (CategoryTreeNode node : finalTree) roots.add(node.getCategory());
+                rootCategories.setValue(roots);
+                
+                // Use currently selected category if available, otherwise default to first
+                String currentId = selectedTableCategoryId.getValue();
+                if (currentId == null && !roots.isEmpty()) {
+                    currentId = roots.get(0).getCategoryId();
+                    selectedTableCategoryId.setValue(currentId);
+                }
+                
+                if (currentId != null) {
+                    loadTableData(currentId);
+                }
+            });
+        });
+    }
+
+    public void loadTableData(String rootCategoryId) {
+        selectedTableCategoryId.postValue(rootCategoryId);
+        PeriodType type = periodType.getValue();
+        Integer year = selectedYear.getValue();
+        Integer month = selectedMonth.getValue();
+        if (type == null || year == null || month == null) return;
+
+        long[] range = calculateDateRange(type, year, month);
+        long start = range[0];
+        long end = range[1];
+
+        executors.diskIO().execute(() -> {
+            List<TransactionEntity> transactions = transactionRepository.getTransactionsBetween(start, end);
+            List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
+            if (categoryTree == null) categoryTree = fetchCategoryTreeSync();
+
+            // Find subcategories of this root
+            List<CategoryEntity> subCats = new ArrayList<>();
+            for (CategoryTreeNode root : categoryTree) {
+                if (root.getCategoryId().equals(rootCategoryId)) {
+                    if (root.getChildren().isEmpty()) {
+                        subCats.add(root.getCategory());
+                    } else {
+                        for (CategoryTreeNode child : root.getChildren()) {
+                            subCats.add(child.getCategory());
+                        }
+                    }
+                    break;
+                }
+            }
+
+            // Map subcategories to column keys
+            List<TableColumn> cols = new ArrayList<>();
+            cols.add(new TableColumn("date", type == PeriodType.YEAR ? "Month" : "Date", TableColumn.ColumnType.TEXT));
+            for (CategoryEntity sc : subCats) {
+                cols.add(new TableColumn(sc.getCategoryId(), sc.getName(), TableColumn.ColumnType.AMOUNT));
+            }
+
+            // Group by date -> subcategory -> total
+            Map<Long, Map<String, Double>> matrix = new TreeMap<>();
+            for (TransactionEntity t : transactions) {
+                // Check if transaction belongs to one of our subcategories
+                boolean relevant = false;
+                for (CategoryEntity sc : subCats) {
+                    if (sc.getCategoryId().equals(t.getCategoryId())) {
+                        relevant = true;
+                        break;
+                    }
+                }
+                if (!relevant) continue;
+
+                long periodKey = type == PeriodType.YEAR ? floorToMonth(t.getTransactionDate()) : floorToDay(t.getTransactionDate());
+                Map<String, Double> dayMap = matrix.get(periodKey);
+                if (dayMap == null) {
+                    dayMap = new HashMap<>();
+                    matrix.put(periodKey, dayMap);
+                }
+                Double current = dayMap.get(t.getCategoryId());
+                dayMap.put(t.getCategoryId(), (current != null ? current : 0.0) + t.getAmount());
+            }
+
+            // Convert matrix to TableRows
+            List<TableRow> rows = new ArrayList<>();
+            SimpleDateFormat sdf = (type == PeriodType.YEAR) 
+                    ? new SimpleDateFormat("MMM", Locale.getDefault())
+                    : new SimpleDateFormat("dd/MM", Locale.getDefault());
+            Map<String, Double> totals = new HashMap<>();
+
+            for (Map.Entry<Long, Map<String, Double>> entry : matrix.entrySet()) {
+                List<TableCell> cells = new ArrayList<>();
+                cells.add(new TableCell("date", sdf.format(entry.getKey()), entry.getKey(), TableColumn.ColumnType.TEXT));
+                
+                boolean hasData = false;
+                for (CategoryEntity sc : subCats) {
+                    Double amt = entry.getValue().get(sc.getCategoryId());
+                    String val = (amt != null && amt != 0) ? String.format(Locale.getDefault(), "%.0f", amt) : "";
+                    cells.add(new TableCell(sc.getCategoryId(), val, amt, TableColumn.ColumnType.AMOUNT));
+                    if (amt != null && amt != 0) {
+                        hasData = true;
+                        totals.put(sc.getCategoryId(), totals.getOrDefault(sc.getCategoryId(), 0.0) + amt);
+                    }
+                }
+                if (hasData) {
+                    rows.add(new TableRow(entry.getKey().toString(), cells, entry.getKey()));
+                }
+            }
+
+            // Add Footer Row
+            List<TableCell> footerCells = new ArrayList<>();
+            footerCells.add(new TableCell("date", "Total", null, TableColumn.ColumnType.TEXT));
+            for (CategoryEntity sc : subCats) {
+                Double total = totals.get(sc.getCategoryId());
+                String val = (total != null && total != 0) ? String.format(Locale.getDefault(), "%.0f", total) : "0";
+                footerCells.add(new TableCell(sc.getCategoryId(), val, total, TableColumn.ColumnType.AMOUNT));
+            }
+            rows.add(new TableRow("footer", footerCells, null));
+
+            executors.mainThread().execute(() -> {
+                tableColumns.setValue(cols);
+                tableRows.setValue(rows);
             });
         });
     }
@@ -269,6 +415,55 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
     private long floorToDay(long timestamp) {
         return timestamp - (timestamp % 86400000L);
+    }
+
+    private long floorToMonth(long timestamp) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(timestamp);
+        cal.set(Calendar.DAY_OF_MONTH, 1);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
+    }
+
+    public void loadTransactionsForPeriod(long timestamp, String rootCategoryId) {
+        PeriodType type = periodType.getValue();
+        if (type == null) return;
+
+        long start, end;
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(timestamp);
+        
+        if (type == PeriodType.YEAR) {
+            cal.set(Calendar.DAY_OF_MONTH, 1);
+            start = cal.getTimeInMillis();
+            cal.add(Calendar.MONTH, 1);
+            end = cal.getTimeInMillis();
+        } else {
+            start = timestamp;
+            cal.add(Calendar.DAY_OF_MONTH, 1);
+            end = cal.getTimeInMillis();
+        }
+
+        executors.diskIO().execute(() -> {
+            List<TransactionEntity> transactions = transactionRepository.getTransactionsBetween(start, end);
+            List<CategoryTreeNode> tree = categoryRepository.getCategoryTree().getValue();
+            if (tree == null) tree = fetchCategoryTreeSync();
+            
+            Map<String, String> catToRoot = buildCategoryToRootMap(tree);
+            List<TransactionEntity> filtered = new ArrayList<>();
+            for (TransactionEntity t : transactions) {
+                String rId = catToRoot.get(t.getCategoryId());
+                if (rId == null) rId = t.getCategoryId();
+                if (rId.equals(rootCategoryId)) {
+                    filtered.add(t);
+                }
+            }
+
+            executors.mainThread().execute(() -> periodTransactions.setValue(filtered));
+        });
     }
 
     public void loadDrillDown(String rootCategoryId) {
