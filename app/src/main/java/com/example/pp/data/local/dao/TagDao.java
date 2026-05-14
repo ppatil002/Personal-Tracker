@@ -29,4 +29,7 @@ public interface TagDao {
 
     @Query("SELECT * FROM tags WHERE tag_id = :id")
     TagEntity getTagById(String id);
+
+    @Query("SELECT MAX(CAST(tag_id AS INTEGER)) FROM tags")
+    Integer getMaxTagId();
 }

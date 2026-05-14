@@ -48,9 +48,30 @@ public class TagRepository {
         });
     }
 
-    public void addTag(TagEntity tag, Runnable onComplete) {
+    public void addTag(String name, Runnable onComplete) {
         executors.diskIO().execute(() -> {
+            Integer maxId = tagDao.getMaxTagId();
+            String tagId = String.valueOf(maxId == null ? 1 : maxId + 1);
+            TagEntity tag = new TagEntity(tagId, name);
             tagDao.insert(tag);
+            cacheManager.setDirty(true);
+            refreshTags();
+            if (onComplete != null) executors.mainThread().execute(onComplete);
+        });
+    }
+
+    public void updateTag(TagEntity tag, Runnable onComplete) {
+        executors.diskIO().execute(() -> {
+            tagDao.update(tag);
+            cacheManager.setDirty(true);
+            refreshTags();
+            if (onComplete != null) executors.mainThread().execute(onComplete);
+        });
+    }
+
+    public void deleteTag(TagEntity tag, Runnable onComplete) {
+        executors.diskIO().execute(() -> {
+            tagDao.delete(tag);
             cacheManager.setDirty(true);
             refreshTags();
             if (onComplete != null) executors.mainThread().execute(onComplete);

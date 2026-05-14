@@ -21,11 +21,11 @@ public class MoreActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnCategoryManager).setOnClickListener(v -> {
-            // Future scope
+            startActivity(new Intent(this, com.example.pp.features.category.CategoryActivity.class));
         });
 
         findViewById(R.id.btnTagManager).setOnClickListener(v -> {
-            // Future scope
+            startActivity(new Intent(this, com.example.pp.features.category.TagActivity.class));
         });
     }
 }
