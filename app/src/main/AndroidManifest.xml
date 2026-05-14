@@ -51,6 +51,16 @@
             android:exported="false"
             android:windowSoftInputMode="adjustResize"/>
 
+        <activity
+            android:name=".features.category.CategoryActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
+
+        <activity
+            android:name=".features.category.TagActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"/>
+
     </application>
 
 </manifest>

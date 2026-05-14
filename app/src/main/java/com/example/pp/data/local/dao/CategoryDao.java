@@ -34,4 +34,10 @@ public interface CategoryDao {
 
     @Query("SELECT * FROM categories WHERE category_id = :id")
     CategoryEntity getCategoryById(String id);
+
+    @Query("SELECT MAX(CAST(category_id AS INTEGER)) FROM categories WHERE parent_category_id IS NULL")
+    Integer getMaxRootId();
+
+    @Query("SELECT MAX(CAST(category_id AS REAL)) FROM categories WHERE parent_category_id = :parentId")
+    Double getMaxChildId(String parentId);
 }

@@ -50,8 +50,21 @@ public class CategoryRepository {
         });
     }
 
-    public void addCategory(CategoryEntity category, Runnable onComplete) {
+    public void addCategory(String parentId, String name, String icon, String colour, Runnable onComplete) {
         executors.diskIO().execute(() -> {
+            String categoryId;
+            if (parentId == null) {
+                Integer maxId = categoryDao.getMaxRootId();
+                categoryId = String.valueOf(maxId == null ? 1 : maxId + 1);
+            } else {
+                Double maxId = categoryDao.getMaxChildId(parentId);
+                if (maxId == null) {
+                    categoryId = parentId + ".1";
+                } else {
+                    categoryId = String.format(java.util.Locale.US, "%.1f", maxId + 0.1);
+                }
+            }
+            CategoryEntity category = new CategoryEntity(categoryId, parentId, name, icon, colour);
             categoryDao.insert(category);
             cacheManager.setDirty(true);
             refreshCategoryTree();
