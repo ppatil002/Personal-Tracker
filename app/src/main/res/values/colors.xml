@@ -16,6 +16,16 @@
     <color name="warning_orange">#F97316</color>
     <color name="error_red">#EF4444</color>
 
+    <color name="highlight_yellow">#FACC15</color>
+
+    <!-- Table Colors -->
+    <color name="table_row_even">#1A1A24</color>
+    <color name="table_footer_bg">#2D2D3A</color>
+    <color name="table_group_stroke">#33A855F7</color>
+
+    <!-- Chart Colors -->
+    <color name="chart_trend_fill">#33A855F7</color>
+
     <!-- Text Colors -->
     <color name="text_primary">#FFFFFF</color>
     <color name="text_secondary">#B3B3C3</color>

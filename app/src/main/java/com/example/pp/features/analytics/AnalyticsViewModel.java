@@ -53,8 +53,15 @@ public class AnalyticsViewModel extends AndroidViewModel {
     private final MutableLiveData<List<CategoryEntity>> rootCategories = new MutableLiveData<>();
     private final MutableLiveData<List<TableColumn>> tableColumns = new MutableLiveData<>();
     private final MutableLiveData<List<TableRow>> tableRows = new MutableLiveData<>();
+    private final MutableLiveData<List<CategoryGroup>> tableColumnGroups = new MutableLiveData<>();
     private final MutableLiveData<Boolean> tableExpandable = new MutableLiveData<>(false);
     private final MutableLiveData<List<TransactionEntity>> periodTransactions = new MutableLiveData<>();
+
+    public static class CategoryGroup {
+        public String name;
+        public int span;
+        public CategoryGroup(String name, int span) { this.name = name; this.span = span; }
+    }
 
     public AnalyticsViewModel(@NonNull Application application) {
         super(application);
@@ -83,6 +90,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
     public LiveData<List<CategoryEntity>> getRootCategories() { return rootCategories; }
     public LiveData<List<TableColumn>> getTableColumns() { return tableColumns; }
     public LiveData<List<TableRow>> getTableRows() { return tableRows; }
+    public LiveData<List<CategoryGroup>> getTableColumnGroups() { return tableColumnGroups; }
     public LiveData<Boolean> getTableExpandable() { return tableExpandable; }
     public LiveData<List<TransactionEntity>> getPeriodTransactions() { return periodTransactions; }
 
@@ -219,10 +227,14 @@ public class AnalyticsViewModel extends AndroidViewModel {
             List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
             if (categoryTree == null) categoryTree = fetchCategoryTreeSync();
 
-            // Find subcategories of this root
+            // Find subcategories
             List<CategoryEntity> subCats = new ArrayList<>();
-            for (CategoryTreeNode root : categoryTree) {
-                if (root.getCategoryId().equals(rootCategoryId)) {
+            List<CategoryGroup> groups = new ArrayList<>();
+            
+            if ("all".equals(rootCategoryId)) {
+                groups.add(new CategoryGroup("", 1)); // For the date column
+                for (CategoryTreeNode root : categoryTree) {
+                    int initialSize = subCats.size();
                     if (root.getChildren().isEmpty()) {
                         subCats.add(root.getCategory());
                     } else {
@@ -230,7 +242,23 @@ public class AnalyticsViewModel extends AndroidViewModel {
                             subCats.add(child.getCategory());
                         }
                     }
-                    break;
+                    int span = subCats.size() - initialSize;
+                    if (span > 0) {
+                        groups.add(new CategoryGroup(root.getName(), span));
+                    }
+                }
+            } else {
+                for (CategoryTreeNode root : categoryTree) {
+                    if (root.getCategoryId().equals(rootCategoryId)) {
+                        if (root.getChildren().isEmpty()) {
+                            subCats.add(root.getCategory());
+                        } else {
+                            for (CategoryTreeNode child : root.getChildren()) {
+                                subCats.add(child.getCategory());
+                            }
+                        }
+                        break;
+                    }
                 }
             }
 
@@ -290,7 +318,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
                 }
             }
 
-            // Add Footer Row
+            // Add Footer Row (Total)
             List<TableCell> footerCells = new ArrayList<>();
             footerCells.add(new TableCell("date", "Total", null, TableColumn.ColumnType.TEXT));
             for (CategoryEntity sc : subCats) {
@@ -300,7 +328,53 @@ public class AnalyticsViewModel extends AndroidViewModel {
             }
             rows.add(new TableRow("footer", footerCells, null));
 
+            // Add Merged Category Total Row
+            List<TableCell> groupFooterCells = new ArrayList<>();
+            groupFooterCells.add(new TableCell("date", "", null, TableColumn.ColumnType.TEXT));
+            
+            if ("all".equals(rootCategoryId)) {
+                // For "All", we have groups
+                int subCatIdx = 0;
+                for (int i = 1; i < groups.size(); i++) { // Skip the date group at index 0
+                    CategoryGroup group = groups.get(i);
+                    double groupTotal = 0;
+                    String firstSubCatId = subCats.get(subCatIdx).getCategoryId();
+                    for (int j = 0; j < group.span; j++) {
+                        CategoryEntity sc = subCats.get(subCatIdx++);
+                        groupTotal += totals.getOrDefault(sc.getCategoryId(), 0.0);
+                    }
+                    String val = groupTotal != 0 ? String.format(Locale.getDefault(), "%.0f", groupTotal) : "0";
+                    TableCell groupCell = new TableCell(firstSubCatId, val, groupTotal, TableColumn.ColumnType.AMOUNT);
+                    groupCell.setColSpan(group.span);
+                    groupFooterCells.add(groupCell);
+                }
+            } else {
+                // For single category, just one merged cell for all subcategories
+                double totalAll = 0;
+                for (Double v : totals.values()) totalAll += v;
+                String val = totalAll != 0 ? String.format(Locale.getDefault(), "%.0f", totalAll) : "0";
+                String firstSubCatId = !subCats.isEmpty() ? subCats.get(0).getCategoryId() : "unknown";
+                TableCell groupCell = new TableCell(firstSubCatId, val, totalAll, TableColumn.ColumnType.AMOUNT);
+                groupCell.setColSpan(subCats.size());
+                groupFooterCells.add(groupCell);
+            }
+            rows.add(new TableRow("group_footer", groupFooterCells, null));
+
+            // For Grand Total if All Category
+            if ("all".equals(rootCategoryId)) {
+                double grandTotal = 0;
+                for (Double v : totals.values()) grandTotal += v;
+                List<TableCell> grandFooterCells = new ArrayList<>();
+                grandFooterCells.add(new TableCell("date", "Grand Total", null, TableColumn.ColumnType.TEXT));
+                String firstSubCatId = !subCats.isEmpty() ? subCats.get(0).getCategoryId() : "unknown";
+                TableCell grandCell = new TableCell(firstSubCatId, String.format(Locale.getDefault(), "%.0f", grandTotal), grandTotal, TableColumn.ColumnType.AMOUNT);
+                grandCell.setColSpan(subCats.size());
+                grandFooterCells.add(grandCell);
+                rows.add(new TableRow("grand_footer", grandFooterCells, null));
+            }
+
             executors.mainThread().execute(() -> {
+                tableColumnGroups.setValue(groups);
                 tableColumns.setValue(cols);
                 tableRows.setValue(rows);
             });
@@ -457,7 +531,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
             for (TransactionEntity t : transactions) {
                 String rId = catToRoot.get(t.getCategoryId());
                 if (rId == null) rId = t.getCategoryId();
-                if (rId.equals(rootCategoryId)) {
+                if ("all".equals(rootCategoryId) || rId.equals(rootCategoryId)) {
                     filtered.add(t);
                 }
             }

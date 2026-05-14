@@ -81,24 +81,43 @@ public class GenericTableAdapter extends RecyclerView.Adapter<GenericTableAdapte
         void bind(TableRow row, List<TableColumn> columns, TableConfig config, OnRowClickListener listener, int fixedWidth, int position) {
             rowContainer.removeAllViews();
             
-            for (TableColumn column : columns) {
+            boolean isFooter = row.getRowId().contains("footer");
+            int skipColumns = 0;
+            for (int i = 0; i < columns.size(); i++) {
+                TableColumn column = columns.get(i);
                 if (!column.isVisible()) continue;
+
+                if (skipColumns > 0) {
+                    skipColumns--;
+                    continue;
+                }
 
                 TableCell cell = findCell(row, column.getKey());
                 View cellView = renderCell(rowContainer, cell, column, config);
                 
+                if (isFooter && cellView instanceof TextView) {
+                    ((TextView) cellView).setTypeface(null, android.graphics.Typeface.BOLD);
+                }
+
+                int span = (cell != null) ? cell.getColSpan() : 1;
+                if (span > 1) {
+                    skipColumns = span - 1;
+                }
+
                 LinearLayout.LayoutParams params;
                 if (fixedWidth > 0) {
-                    params = new LinearLayout.LayoutParams(fixedWidth, ViewGroup.LayoutParams.WRAP_CONTENT);
+                    params = new LinearLayout.LayoutParams(fixedWidth * span, ViewGroup.LayoutParams.WRAP_CONTENT);
                 } else {
-                    params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, column.getWidthWeight());
+                    params = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, column.getWidthWeight() * span);
                 }
                 cellView.setLayoutParams(params);
                 rowContainer.addView(cellView);
             }
 
-            if (position % 2 == 0) {
-                rowContainer.setBackgroundColor(Color.parseColor("#1A1A24"));
+            if (isFooter) {
+                rowContainer.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), R.color.table_footer_bg));
+            } else if (position % 2 == 0) {
+                rowContainer.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), R.color.table_row_even));
             } else {
                 rowContainer.setBackgroundColor(Color.TRANSPARENT);
             }
@@ -131,14 +150,20 @@ public class GenericTableAdapter extends RecyclerView.Adapter<GenericTableAdapte
                 if (cell.getColor() != null) {
                     textView.setTextColor(cell.getColor());
                 }
+                
+                if (cell.getColSpan() > 1) {
+                    textView.setGravity(android.view.Gravity.CENTER);
+                }
             } else {
                 textView.setText("-");
             }
 
-            switch (column.getAlignment()) {
-                case CENTER: textView.setGravity(android.view.Gravity.CENTER); break;
-                case RIGHT: textView.setGravity(android.view.Gravity.END); break;
-                default: textView.setGravity(android.view.Gravity.START); break;
+            if (cell == null || cell.getColSpan() <= 1) {
+                switch (column.getAlignment()) {
+                    case CENTER: textView.setGravity(android.view.Gravity.CENTER); break;
+                    case RIGHT: textView.setGravity(android.view.Gravity.END); break;
+                    default: textView.setGravity(android.view.Gravity.START); break;
+                }
             }
 
             return textView;

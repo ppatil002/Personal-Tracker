@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -64,7 +65,7 @@ public class AnalyticsActivity extends AppCompatActivity {
     private TextView tvPeriodType, tvPeriodLabel, tvTotalExpenses, tvTransactionCount, tvAvgPerDay, tvHighestAmount, tvHighestCategoryName;
     private TextView tvSelectedTableCategory, tvExpandTable;
     private View tableExpandableContainer, tableCategorySelector;
-    private LinearLayout tableHeaderContainer;
+    private LinearLayout tableHeaderContainer, tableGroupHeaderContainer;
     private PieChart donutChart;
     private LineChart sparklineChart, trendChart;
     private RecyclerView rvCategories, rvDrillDownTable;
@@ -106,6 +107,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         tableExpandableContainer = findViewById(R.id.tableExpandableContainer);
         tableCategorySelector = findViewById(R.id.tableCategorySelector);
         tableHeaderContainer = findViewById(R.id.tableHeaderContainer);
+        tableGroupHeaderContainer = findViewById(R.id.tableGroupHeaderContainer);
         
         periodDropdown = findViewById(R.id.periodDropdown);
         btnCalendar = findViewById(R.id.btnCalendar);
@@ -148,12 +150,12 @@ public class AnalyticsActivity extends AppCompatActivity {
         trendChart.getAxisRight().setEnabled(false);
         XAxis xAxis = trendChart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setTextColor(Color.parseColor("#7B7B8C"));
+        xAxis.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
         xAxis.setDrawGridLines(false);
         xAxis.setLabelCount(6, true);
         YAxis yAxis = trendChart.getAxisLeft();
-        yAxis.setTextColor(Color.parseColor("#7B7B8C"));
-        yAxis.setGridColor(Color.parseColor("#2B2B3A"));
+        yAxis.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
+        yAxis.setGridColor(ContextCompat.getColor(this, R.color.border_color));
         yAxis.setDrawGridLines(true);
         yAxis.setAxisMinimum(0f);
 
@@ -178,7 +180,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         tableAdapter = new GenericTableAdapter(new TableConfig());
         tableAdapter.setFixedCellWidth((int) (80 * getResources().getDisplayMetrics().density));
         tableAdapter.setOnRowClickListener(row -> {
-            if ("footer".equals(row.getRowId())) return;
+            if (row.getRowId().contains("footer")) return;
             Long timestamp = (Long) row.getOriginalEntity();
             if (timestamp != null && currentRootCategoryId != null) {
                 viewModel.loadTransactionsForPeriod(timestamp, currentRootCategoryId);
@@ -205,16 +207,23 @@ public class AnalyticsActivity extends AppCompatActivity {
         List<CategoryEntity> categories = viewModel.getRootCategories().getValue();
         if (categories == null || categories.isEmpty()) return;
 
-        String[] names = new String[categories.size()];
-        for (int i = 0; i < categories.size(); i++) names[i] = categories.get(i).getName();
+        String[] names = new String[categories.size() + 1];
+        names[0] = "All Category";
+        for (int i = 0; i < categories.size(); i++) names[i + 1] = categories.get(i).getName();
 
         new AlertDialog.Builder(this)
                 .setTitle("Select Category")
                 .setItems(names, (dialog, which) -> {
-                    CategoryEntity selected = categories.get(which);
-                    currentRootCategoryId = selected.getCategoryId();
-                    tvSelectedTableCategory.setText(selected.getName());
-                    viewModel.loadTableData(selected.getCategoryId());
+                    if (which == 0) {
+                        currentRootCategoryId = "all";
+                        tvSelectedTableCategory.setText("All Category");
+                        viewModel.loadTableData("all");
+                    } else {
+                        CategoryEntity selected = categories.get(which - 1);
+                        currentRootCategoryId = selected.getCategoryId();
+                        tvSelectedTableCategory.setText(selected.getName());
+                        viewModel.loadTableData(selected.getCategoryId());
+                    }
                 })
                 .show();
     }
@@ -344,6 +353,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         viewModel.getDrillDownExpenses().observe(this, this::bindDrillDown);
         
         viewModel.getTableColumns().observe(this, this::renderTableHeader);
+        viewModel.getTableColumnGroups().observe(this, this::renderTableGroups);
         viewModel.getTableRows().observe(this, rows -> tableAdapter.setRows(rows));
         viewModel.getTableExpandable().observe(this, expanded -> {
             tableExpandableContainer.setVisibility(expanded ? View.VISIBLE : View.GONE);
@@ -357,10 +367,14 @@ public class AnalyticsActivity extends AppCompatActivity {
                 }
                 
                 // Update dropdown text based on current root category
-                for (CategoryEntity root : roots) {
-                    if (root.getCategoryId().equals(currentRootCategoryId)) {
-                        tvSelectedTableCategory.setText(root.getName());
-                        break;
+                if ("all".equals(currentRootCategoryId)) {
+                    tvSelectedTableCategory.setText("All Category");
+                } else {
+                    for (CategoryEntity root : roots) {
+                        if (root.getCategoryId().equals(currentRootCategoryId)) {
+                            tvSelectedTableCategory.setText(root.getName());
+                            break;
+                        }
                     }
                 }
 
@@ -386,6 +400,34 @@ public class AnalyticsActivity extends AppCompatActivity {
             tv.setTypeface(null, android.graphics.Typeface.BOLD);
             tv.setGravity(android.view.Gravity.CENTER);
             tableHeaderContainer.addView(tv);
+        }
+    }
+
+    private void renderTableGroups(List<AnalyticsViewModel.CategoryGroup> groups) {
+        tableGroupHeaderContainer.removeAllViews();
+        if (groups == null || groups.isEmpty()) {
+            tableGroupHeaderContainer.setVisibility(View.GONE);
+            return;
+        }
+
+        tableGroupHeaderContainer.setVisibility(View.VISIBLE);
+        int cellWidth = (int) (80 * getResources().getDisplayMetrics().density);
+
+        for (AnalyticsViewModel.CategoryGroup group : groups) {
+            TextView tv = new TextView(this);
+            tv.setLayoutParams(new LinearLayout.LayoutParams(cellWidth * group.span, ViewGroup.LayoutParams.WRAP_CONTENT));
+            tv.setPadding(24, 16, 24, 16);
+            tv.setText(group.name);
+            tv.setTextColor(Color.WHITE);
+            tv.setTextSize(12);
+            tv.setTypeface(null, android.graphics.Typeface.BOLD);
+            tv.setGravity(android.view.Gravity.CENTER);
+            
+            if (group.span > 1 && !group.name.isEmpty()) {
+                tv.setBackgroundResource(R.drawable.bg_table_group_header);
+            }
+            
+            tableGroupHeaderContainer.addView(tv);
         }
     }
 
@@ -456,7 +498,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         try {
             tvHighestCategoryName.setTextColor(Color.parseColor(summary.getHighestCategoryColour()));
         } catch (Exception e) {
-            tvHighestCategoryName.setTextColor(Color.parseColor("#38BDF8"));
+            tvHighestCategoryName.setTextColor(ContextCompat.getColor(this, R.color.electric_blue));
         }
     }
 
@@ -484,7 +526,8 @@ public class AnalyticsActivity extends AppCompatActivity {
             }
         }
         if (othersSum > 0) {
-            chartExpenses.add(new CategoryExpense("others", null, "Others", "📁", "#7B7B8C", othersSum, (othersSum/total)*100));
+            String mutedColor = String.format("#%06X", (0xFFFFFF & ContextCompat.getColor(this, R.color.text_muted)));
+            chartExpenses.add(new CategoryExpense("others", null, "Others", "📁", mutedColor, othersSum, (othersSum/total)*100));
         }
 
         for (CategoryExpense ce : chartExpenses) {
@@ -511,7 +554,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         dataSet.setValueLinePart1OffsetPercentage(80f);
         dataSet.setValueLinePart1Length(0.5f);
         dataSet.setValueLinePart2Length(0.6f);
-        dataSet.setValueLineColor(Color.parseColor("#7B7B8C"));
+        dataSet.setValueLineColor(ContextCompat.getColor(this, R.color.text_muted));
         dataSet.setValueLineWidth(1f);
         dataSet.setValueLineVariableLength(true);
 
@@ -543,7 +586,7 @@ public class AnalyticsActivity extends AppCompatActivity {
             entries.add(new Entry(i, (float) expenses.get(i).getAmount()));
         }
         LineDataSet set = new LineDataSet(entries, "");
-        set.setColor(Color.parseColor("#A855F7"));
+        set.setColor(ContextCompat.getColor(this, R.color.accent_purple));
         set.setLineWidth(1.5f);
         set.setDrawCircles(false);
         set.setDrawValues(false);
@@ -592,17 +635,17 @@ public class AnalyticsActivity extends AppCompatActivity {
         }
 
         LineDataSet set = new LineDataSet(entries, "");
-        set.setColor(Color.parseColor("#A855F7"));
+        set.setColor(ContextCompat.getColor(this, R.color.accent_purple));
         set.setLineWidth(2f);
         set.setDrawCircles(true);
-        set.setCircleColor(Color.parseColor("#EC4899"));
+        set.setCircleColor(ContextCompat.getColor(this, R.color.accent_pink));
         set.setCircleRadius(3f);
         set.setDrawValues(false);
         set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        set.setFillColor(Color.parseColor("#A855F733"));
+        set.setFillColor(ContextCompat.getColor(this, R.color.chart_trend_fill));
         set.setDrawFilled(true);
         set.setHighlightLineWidth(1.5f);
-        set.setHighLightColor(Color.parseColor("#FACC15"));
+        set.setHighLightColor(ContextCompat.getColor(this, R.color.highlight_yellow));
 
         trendChart.setData(new LineData(set));
         trendChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(labels));

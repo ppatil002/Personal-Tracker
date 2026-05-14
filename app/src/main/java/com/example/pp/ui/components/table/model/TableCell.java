@@ -10,6 +10,7 @@ public class TableCell {
     private String emoji;
     private boolean editable;
     private ColumnType cellType;
+    private int colSpan = 1;
 
     public TableCell(String columnKey, String value, Object rawValue, ColumnType cellType) {
         this.columnKey = columnKey;
@@ -17,6 +18,12 @@ public class TableCell {
         this.rawValue = rawValue;
         this.cellType = cellType;
         this.editable = false;
+        this.colSpan = 1;
+    }
+
+    public TableCell(String columnKey, String value, Object rawValue, ColumnType cellType, int colSpan) {
+        this(columnKey, value, rawValue, cellType);
+        this.colSpan = colSpan;
     }
 
     // Getters and Setters
@@ -40,4 +47,7 @@ public class TableCell {
 
     public ColumnType getCellType() { return cellType; }
     public void setCellType(ColumnType cellType) { this.cellType = cellType; }
+
+    public int getColSpan() { return colSpan; }
+    public void setColSpan(int colSpan) { this.colSpan = colSpan; }
 }
