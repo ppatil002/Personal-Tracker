@@ -12,6 +12,7 @@ import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.repository.CategoryRepository;
+import com.example.pp.data.repository.TagRepository;
 import com.example.pp.data.repository.TransactionRepository;
 import com.example.pp.domain.model.CategoryTreeNode;
 import com.example.pp.features.analytics.model.AnalyticsSummary;
@@ -37,6 +38,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
     private final TransactionRepository transactionRepository;
     private final CategoryRepository categoryRepository;
+    private final TagRepository tagRepository;
     private final AppExecutors executors;
 
     private final MutableLiveData<PeriodType> periodType = new MutableLiveData<>(PeriodType.MONTH);
@@ -58,6 +60,10 @@ public class AnalyticsViewModel extends AndroidViewModel {
     private final MutableLiveData<List<TableRow>> heatmapRows = new MutableLiveData<>();
     private final MutableLiveData<Boolean> tableExpandable = new MutableLiveData<>(false);
     private final MutableLiveData<List<TransactionEntity>> periodTransactions = new MutableLiveData<>();
+    private final MutableLiveData<List<CategoryTrendData>> categoryTrends = new MutableLiveData<>();
+    
+    private final LiveData<List<com.example.pp.features.category.model.Tag>> availableTags;
+    private final MutableLiveData<List<String>> selectedTagIds = new MutableLiveData<>(new ArrayList<>());
 
     public static class CategoryGroup {
         public String name;
@@ -70,12 +76,15 @@ public class AnalyticsViewModel extends AndroidViewModel {
         PPApplication app = (PPApplication) application;
         this.transactionRepository = app.getTransactionRepository();
         this.categoryRepository = app.getCategoryRepository();
+        this.tagRepository = app.getTagRepository();
         this.executors = AppExecutors.getInstance();
 
         Calendar now = Calendar.getInstance();
         selectedYear.setValue(now.get(Calendar.YEAR));
         selectedMonth.setValue(now.get(Calendar.MONTH));
         updatePeriodLabel();
+        
+        availableTags = tagRepository.getTags();
     }
 
     public LiveData<PeriodType> getPeriodType() { return periodType; }
@@ -97,6 +106,21 @@ public class AnalyticsViewModel extends AndroidViewModel {
     public LiveData<List<TableRow>> getHeatmapRows() { return heatmapRows; }
     public LiveData<Boolean> getTableExpandable() { return tableExpandable; }
     public LiveData<List<TransactionEntity>> getPeriodTransactions() { return periodTransactions; }
+    public LiveData<List<CategoryTrendData>> getCategoryTrends() { return categoryTrends; }
+    
+    public LiveData<List<com.example.pp.features.category.model.Tag>> getAvailableTags() { return availableTags; }
+    public LiveData<List<String>> getSelectedTagIds() { return selectedTagIds; }
+
+    public void toggleTag(String tagId) {
+        List<String> current = new ArrayList<>(selectedTagIds.getValue() != null ? selectedTagIds.getValue() : new ArrayList<>());
+        if (current.contains(tagId)) {
+            current.remove(tagId);
+        } else {
+            current.add(tagId);
+        }
+        selectedTagIds.setValue(current);
+        refreshAnalytics();
+    }
 
     public void setTableExpanded(boolean expanded) {
         tableExpandable.setValue(expanded);
@@ -125,6 +149,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
         PeriodType type = periodType.getValue();
         Integer year = selectedYear.getValue();
         Integer month = selectedMonth.getValue();
+        List<String> tags = selectedTagIds.getValue();
         if (type == null || year == null || month == null) return;
 
         long[] range = calculateDateRange(type, year, month);
@@ -132,9 +157,14 @@ public class AnalyticsViewModel extends AndroidViewModel {
         long end = range[1];
 
         executors.diskIO().execute(() -> {
-            List<TransactionEntity> transactions = transactionRepository.getTransactionsBetween(start, end);
-            int count = transactionRepository.getTransactionCountBetween(start, end);
-            double total = transactionRepository.getTotalAmountBetween(start, end);
+            List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
+            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            
+            List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
+            
+            int count = transactions.size();
+            double total = 0;
+            for (TransactionEntity t : transactions) total += t.getAmount();
 
             List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
             if (categoryTree == null) {
@@ -217,6 +247,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
     }
 
     public void loadHeatmapData(int year) {
+        List<String> tags = selectedTagIds.getValue();
         executors.diskIO().execute(() -> {
             Calendar cal = Calendar.getInstance();
             cal.set(year, Calendar.JANUARY, 1, 0, 0, 0);
@@ -225,7 +256,10 @@ public class AnalyticsViewModel extends AndroidViewModel {
             cal.set(year, Calendar.DECEMBER, 31, 23, 59, 59);
             long end = cal.getTimeInMillis();
 
-            List<TransactionEntity> transactions = transactionRepository.getTransactionsBetween(start, end);
+            List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
+            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
+
             List<CategoryTreeNode> tree = categoryRepository.getCategoryTree().getValue();
             if (tree == null) tree = fetchCategoryTreeSync();
 
@@ -306,6 +340,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
         PeriodType type = periodType.getValue();
         Integer year = selectedYear.getValue();
         Integer month = selectedMonth.getValue();
+        List<String> tags = selectedTagIds.getValue();
         if (type == null || year == null || month == null) return;
 
         long[] range = calculateDateRange(type, year, month);
@@ -313,7 +348,10 @@ public class AnalyticsViewModel extends AndroidViewModel {
         long end = range[1];
 
         executors.diskIO().execute(() -> {
-            List<TransactionEntity> transactions = transactionRepository.getTransactionsBetween(start, end);
+            List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
+            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
+
             List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
             if (categoryTree == null) categoryTree = fetchCategoryTreeSync();
 
@@ -578,7 +616,13 @@ public class AnalyticsViewModel extends AndroidViewModel {
     }
 
     private long floorToDay(long timestamp) {
-        return timestamp - (timestamp % 86400000L);
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(timestamp);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
     }
 
     private long floorToMonth(long timestamp) {
@@ -594,6 +638,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
     public void loadTransactionsForPeriod(long timestamp, String rootCategoryId) {
         PeriodType type = periodType.getValue();
+        List<String> tags = selectedTagIds.getValue();
         if (type == null) return;
 
         long start, end;
@@ -612,7 +657,10 @@ public class AnalyticsViewModel extends AndroidViewModel {
         }
 
         executors.diskIO().execute(() -> {
-            List<TransactionEntity> transactions = transactionRepository.getTransactionsBetween(start, end);
+            List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
+            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
+            
             List<CategoryTreeNode> tree = categoryRepository.getCategoryTree().getValue();
             if (tree == null) tree = fetchCategoryTreeSync();
             
@@ -634,6 +682,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
         PeriodType type = periodType.getValue();
         Integer year = selectedYear.getValue();
         Integer month = selectedMonth.getValue();
+        List<String> tags = selectedTagIds.getValue();
         if (type == null || year == null || month == null) return;
 
         long[] range = calculateDateRange(type, year, month);
@@ -641,7 +690,9 @@ public class AnalyticsViewModel extends AndroidViewModel {
         long end = range[1];
 
         executors.diskIO().execute(() -> {
-            List<TransactionEntity> transactions = transactionRepository.getTransactionsBetween(start, end);
+            List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
+            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
             List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
             if (categoryTree == null) {
@@ -703,5 +754,30 @@ public class AnalyticsViewModel extends AndroidViewModel {
             sdf = new java.text.SimpleDateFormat("yyyy", java.util.Locale.getDefault());
         }
         periodLabel.setValue(sdf.format(cal.getTime()));
+    }
+
+    private List<TransactionEntity> filterByTags(List<TransactionEntity> transactions, List<com.example.pp.data.local.entity.TransactionTagCrossRef> crossRefs, List<String> selectedTagIds) {
+        if (selectedTagIds == null || selectedTagIds.isEmpty()) return transactions;
+        
+        Map<String, List<String>> txTags = new HashMap<>();
+        for (com.example.pp.data.local.entity.TransactionTagCrossRef ref : crossRefs) {
+            txTags.computeIfAbsent(ref.getTransactionId(), k -> new ArrayList<>()).add(ref.getTagId());
+        }
+        
+        List<TransactionEntity> filtered = new ArrayList<>();
+        for (TransactionEntity t : transactions) {
+            List<String> tags = txTags.get(t.getTransactionId());
+            if (tags != null) {
+                boolean match = false;
+                for (String tagId : selectedTagIds) {
+                    if (tags.contains(tagId)) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (match) filtered.add(t);
+            }
+        }
+        return filtered;
     }
 }

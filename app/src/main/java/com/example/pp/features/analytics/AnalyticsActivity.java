@@ -46,6 +46,7 @@ import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
 import com.github.mikephil.charting.data.PieEntry;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
+import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 
@@ -66,6 +67,7 @@ public class AnalyticsActivity extends AppCompatActivity {
     private TextView tvSelectedTableCategory, tvExpandTable;
     private View tableExpandableContainer, tableCategorySelector;
     private LinearLayout tableHeaderContainer, tableGroupHeaderContainer, heatmapHeaderContainer;
+    private com.google.android.material.chip.ChipGroup tagChipGroup;
     private PieChart donutChart;
     private LineChart sparklineChart, trendChart;
     private RecyclerView rvCategories, rvDrillDownTable, rvHeatmap;
@@ -110,6 +112,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         tableHeaderContainer = findViewById(R.id.tableHeaderContainer);
         tableGroupHeaderContainer = findViewById(R.id.tableGroupHeaderContainer);
         heatmapHeaderContainer = findViewById(R.id.heatmapHeaderContainer);
+        tagChipGroup = findViewById(R.id.tagChipGroup);
         
         periodDropdown = findViewById(R.id.periodDropdown);
         btnCalendar = findViewById(R.id.btnCalendar);
@@ -368,6 +371,16 @@ public class AnalyticsActivity extends AppCompatActivity {
             renderHeatmapHeader(cols);
         });
         viewModel.getHeatmapRows().observe(this, rows -> heatmapAdapter.setRows(rows));
+
+        viewModel.getAvailableTags().observe(this, tags -> {
+            updateTagChips(tags, viewModel.getSelectedTagIds().getValue());
+        });
+        viewModel.getSelectedTagIds().observe(this, selectedIds -> {
+            updateTagChips(viewModel.getAvailableTags().getValue(), selectedIds);
+        });
+
+        viewModel.getCategoryTrends().observe(this, this::bindCategoryTrends);
+
         viewModel.getTableExpandable().observe(this, expanded -> {
             tableExpandableContainer.setVisibility(expanded ? View.VISIBLE : View.GONE);
             tvExpandTable.setText(expanded ? "Tap to collapse" : "Tap to expand table");
@@ -458,6 +471,32 @@ public class AnalyticsActivity extends AppCompatActivity {
             tv.setTypeface(null, android.graphics.Typeface.BOLD);
             tv.setGravity(android.view.Gravity.CENTER);
             heatmapHeaderContainer.addView(tv);
+        }
+    }
+
+    private void updateTagChips(List<com.example.pp.features.category.model.Tag> tags, List<String> selectedIds) {
+        if (tagChipGroup == null) return;
+        tagChipGroup.removeAllViews();
+        if (tags == null) return;
+
+        for (com.example.pp.features.category.model.Tag tag : tags) {
+            com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(this);
+            chip.setText(tag.getName());
+            chip.setCheckable(false); // We'll handle selection state via background color
+            boolean isChecked = selectedIds != null && selectedIds.contains(tag.getId());
+            
+            // Custom styling to match theme
+            if (isChecked) {
+                chip.setChipBackgroundColorResource(R.color.accent_purple);
+                chip.setTextColor(Color.WHITE);
+            } else {
+                chip.setChipBackgroundColorResource(R.color.elevated_surface);
+                chip.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+            }
+            chip.setChipStrokeWidth(0);
+            
+            chip.setOnClickListener(v -> viewModel.toggleTag(tag.getId()));
+            tagChipGroup.addView(chip);
         }
     }
 
@@ -604,6 +643,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         donutChart.setExtraOffsets(30f, 10f, 30f, 10f); // More space for labels
         
         donutChart.setCenterText(String.format(Locale.getDefault(), "\u20B9 %,.0f\nTotal\n%s", total, viewModel.getPeriodLabel().getValue() != null ? viewModel.getPeriodLabel().getValue() : ""));
+        donutChart.animateY(1400, com.github.mikephil.charting.animation.Easing.EaseInOutQuad);
         donutChart.invalidate();
 
         // Update sparkline
@@ -622,6 +662,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         set.setDrawValues(false);
         set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
         sparklineChart.setData(new LineData(set));
+        sparklineChart.animateX(500);
         sparklineChart.invalidate();
     }
 
@@ -685,6 +726,7 @@ public class AnalyticsActivity extends AppCompatActivity {
             marker.setDateTimestamps(timestamps);
             marker.setDatePattern(type == PeriodType.YEAR ? "d MMM" : "d MMM");
         }
+        trendChart.animateX(1000, com.github.mikephil.charting.animation.Easing.EaseInOutQuart);
         trendChart.invalidate();
     }
 }

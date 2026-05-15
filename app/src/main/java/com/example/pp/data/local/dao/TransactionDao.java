@@ -73,6 +73,9 @@ public interface TransactionDao {
     @Query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE transaction_date >= :start AND transaction_date < :end")
     double getTotalAmountBetween(long start, long end);
 
+    @Query("SELECT * FROM transaction_tag_cross_ref WHERE transaction_id IN (SELECT transaction_id FROM transactions WHERE transaction_date >= :start AND transaction_date < :end)")
+    List<TransactionTagCrossRef> getTagCrossRefsBetween(long start, long end);
+
     @Transaction
     default void insertTransactionWithTags(TransactionEntity transaction, List<String> tagIds) {
         insert(transaction);

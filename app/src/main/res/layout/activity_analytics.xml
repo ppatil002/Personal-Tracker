@@ -484,6 +484,21 @@
                         </LinearLayout>
                     </RelativeLayout>
 
+                    <HorizontalScrollView
+                        android:id="@+id/tagFilterScroll"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:scrollbars="none">
+
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/tagChipGroup"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:singleLine="true"
+                            android:paddingHorizontal="4dp" />
+                    </HorizontalScrollView>
+
                     <LinearLayout
                         android:id="@+id/tableExpandableContainer"
                         android:layout_width="match_parent"
