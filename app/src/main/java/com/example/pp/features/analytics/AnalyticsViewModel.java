@@ -54,6 +54,8 @@ public class AnalyticsViewModel extends AndroidViewModel {
     private final MutableLiveData<List<TableColumn>> tableColumns = new MutableLiveData<>();
     private final MutableLiveData<List<TableRow>> tableRows = new MutableLiveData<>();
     private final MutableLiveData<List<CategoryGroup>> tableColumnGroups = new MutableLiveData<>();
+    private final MutableLiveData<List<TableColumn>> heatmapColumns = new MutableLiveData<>();
+    private final MutableLiveData<List<TableRow>> heatmapRows = new MutableLiveData<>();
     private final MutableLiveData<Boolean> tableExpandable = new MutableLiveData<>(false);
     private final MutableLiveData<List<TransactionEntity>> periodTransactions = new MutableLiveData<>();
 
@@ -91,6 +93,8 @@ public class AnalyticsViewModel extends AndroidViewModel {
     public LiveData<List<TableColumn>> getTableColumns() { return tableColumns; }
     public LiveData<List<TableRow>> getTableRows() { return tableRows; }
     public LiveData<List<CategoryGroup>> getTableColumnGroups() { return tableColumnGroups; }
+    public LiveData<List<TableColumn>> getHeatmapColumns() { return heatmapColumns; }
+    public LiveData<List<TableRow>> getHeatmapRows() { return heatmapRows; }
     public LiveData<Boolean> getTableExpandable() { return tableExpandable; }
     public LiveData<List<TransactionEntity>> getPeriodTransactions() { return periodTransactions; }
 
@@ -207,6 +211,92 @@ public class AnalyticsViewModel extends AndroidViewModel {
                 if (currentId != null) {
                     loadTableData(currentId);
                 }
+                loadHeatmapData(year);
+            });
+        });
+    }
+
+    public void loadHeatmapData(int year) {
+        executors.diskIO().execute(() -> {
+            Calendar cal = Calendar.getInstance();
+            cal.set(year, Calendar.JANUARY, 1, 0, 0, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            long start = cal.getTimeInMillis();
+            cal.set(year, Calendar.DECEMBER, 31, 23, 59, 59);
+            long end = cal.getTimeInMillis();
+
+            List<TransactionEntity> transactions = transactionRepository.getTransactionsBetween(start, end);
+            List<CategoryTreeNode> tree = categoryRepository.getCategoryTree().getValue();
+            if (tree == null) tree = fetchCategoryTreeSync();
+
+            Map<String, CategoryEntity> rootMap = new HashMap<>();
+            for (CategoryTreeNode node : tree) rootMap.put(node.getCategoryId(), node.getCategory());
+            List<CategoryEntity> roots = new ArrayList<>(rootMap.values());
+            Map<String, String> catToRoot = buildCategoryToRootMap(tree);
+
+            // Columns: Month + Categories
+            List<TableColumn> cols = new ArrayList<>();
+            cols.add(new TableColumn("month", "Month", TableColumn.ColumnType.TEXT));
+            for (CategoryEntity root : roots) {
+                cols.add(new TableColumn(root.getCategoryId(), root.getName(), TableColumn.ColumnType.AMOUNT));
+            }
+
+            // Data: Month Index (0-11) -> Root Category Id -> Amount
+            double[][] matrix = new double[12][roots.size()];
+            double maxVal = 0;
+
+            for (TransactionEntity t : transactions) {
+                Calendar tCal = Calendar.getInstance();
+                tCal.setTimeInMillis(t.getTransactionDate());
+                int monthIdx = tCal.get(Calendar.MONTH);
+                String rootId = catToRoot.get(t.getCategoryId());
+                if (rootId == null) rootId = t.getCategoryId();
+
+                for (int i = 0; i < roots.size(); i++) {
+                    if (roots.get(i).getCategoryId().equals(rootId)) {
+                        matrix[monthIdx][i] += t.getAmount();
+                        if (matrix[monthIdx][i] > maxVal) maxVal = matrix[monthIdx][i];
+                        break;
+                    }
+                }
+            }
+
+            String[] monthNames = new java.text.DateFormatSymbols().getShortMonths();
+            List<TableRow> rows = new ArrayList<>();
+            for (int m = 0; m < 12; m++) {
+                List<TableCell> cells = new ArrayList<>();
+                cells.add(new TableCell("month", monthNames[m], m, TableColumn.ColumnType.TEXT));
+                for (int c = 0; c < roots.size(); c++) {
+                    double val = matrix[m][c];
+                    String displayVal = val > 0 ? String.format(Locale.getDefault(), "%.0f", val) : "";
+                    TableCell cell = new TableCell(roots.get(c).getCategoryId(), displayVal, val, TableColumn.ColumnType.AMOUNT);
+                    
+                    if (val > 0 && maxVal > 0) {
+                        float ratio = (float) (val / maxVal);
+                        
+                        // Extract base purple from resources
+                        int baseColor = androidx.core.content.ContextCompat.getColor(getApplication(), com.example.pp.R.color.accent_purple);
+                        int red = android.graphics.Color.red(baseColor);
+                        int green = android.graphics.Color.green(baseColor);
+                        int blue = android.graphics.Color.blue(baseColor);
+                        
+                        int alpha = (int) (40 + (ratio * 215)); // 40 to 255
+                        cell.setBackgroundColor(android.graphics.Color.argb(alpha, red, green, blue));
+                        
+                        if (ratio > 0.6) {
+                            cell.setColor(android.graphics.Color.WHITE);
+                        } else {
+                            cell.setColor(androidx.core.content.ContextCompat.getColor(getApplication(), com.example.pp.R.color.text_secondary));
+                        }
+                    }
+                    cells.add(cell);
+                }
+                rows.add(new TableRow("month_" + m, cells, m));
+            }
+
+            executors.mainThread().execute(() -> {
+                heatmapColumns.setValue(cols);
+                heatmapRows.setValue(rows);
             });
         });
     }

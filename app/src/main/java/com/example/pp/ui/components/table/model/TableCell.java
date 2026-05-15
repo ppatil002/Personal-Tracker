@@ -11,6 +11,7 @@ public class TableCell {
     private boolean editable;
     private ColumnType cellType;
     private int colSpan = 1;
+    private Integer backgroundColor;
 
     public TableCell(String columnKey, String value, Object rawValue, ColumnType cellType) {
         this.columnKey = columnKey;
@@ -50,4 +51,7 @@ public class TableCell {
 
     public int getColSpan() { return colSpan; }
     public void setColSpan(int colSpan) { this.colSpan = colSpan; }
+
+    public Integer getBackgroundColor() { return backgroundColor; }
+    public void setBackgroundColor(Integer backgroundColor) { this.backgroundColor = backgroundColor; }
 }

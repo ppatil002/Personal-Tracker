@@ -150,6 +150,9 @@ public class GenericTableAdapter extends RecyclerView.Adapter<GenericTableAdapte
                 if (cell.getColor() != null) {
                     textView.setTextColor(cell.getColor());
                 }
+                if (cell.getBackgroundColor() != null) {
+                    textView.setBackgroundColor(cell.getBackgroundColor());
+                }
                 
                 if (cell.getColSpan() > 1) {
                     textView.setGravity(android.view.Gravity.CENTER);

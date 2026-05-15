@@ -59,16 +59,16 @@ public class AnalyticsActivity extends AppCompatActivity {
 
     private AnalyticsViewModel viewModel;
     private CategoryExpenseAdapter categoryAdapter;
-    private GenericTableAdapter tableAdapter;
+    private GenericTableAdapter tableAdapter, heatmapAdapter;
     private String currentRootCategoryId;
 
     private TextView tvPeriodType, tvPeriodLabel, tvTotalExpenses, tvTransactionCount, tvAvgPerDay, tvHighestAmount, tvHighestCategoryName;
     private TextView tvSelectedTableCategory, tvExpandTable;
     private View tableExpandableContainer, tableCategorySelector;
-    private LinearLayout tableHeaderContainer, tableGroupHeaderContainer;
+    private LinearLayout tableHeaderContainer, tableGroupHeaderContainer, heatmapHeaderContainer;
     private PieChart donutChart;
     private LineChart sparklineChart, trendChart;
-    private RecyclerView rvCategories, rvDrillDownTable;
+    private RecyclerView rvCategories, rvDrillDownTable, rvHeatmap;
     private View periodDropdown, btnCalendar;
 
     @Override
@@ -101,6 +101,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         trendChart = findViewById(R.id.trendChart);
         rvCategories = findViewById(R.id.rvCategories);
         rvDrillDownTable = findViewById(R.id.rvDrillDownTable);
+        rvHeatmap = findViewById(R.id.rvHeatmap);
         
         tvSelectedTableCategory = findViewById(R.id.tvSelectedTableCategory);
         tvExpandTable = findViewById(R.id.tvExpandTable);
@@ -108,6 +109,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         tableCategorySelector = findViewById(R.id.tableCategorySelector);
         tableHeaderContainer = findViewById(R.id.tableHeaderContainer);
         tableGroupHeaderContainer = findViewById(R.id.tableGroupHeaderContainer);
+        heatmapHeaderContainer = findViewById(R.id.heatmapHeaderContainer);
         
         periodDropdown = findViewById(R.id.periodDropdown);
         btnCalendar = findViewById(R.id.btnCalendar);
@@ -189,6 +191,11 @@ public class AnalyticsActivity extends AppCompatActivity {
         });
         rvDrillDownTable.setLayoutManager(new LinearLayoutManager(this));
         rvDrillDownTable.setAdapter(tableAdapter);
+
+        heatmapAdapter = new GenericTableAdapter(new TableConfig());
+        heatmapAdapter.setFixedCellWidth((int) (80 * getResources().getDisplayMetrics().density));
+        rvHeatmap.setLayoutManager(new LinearLayoutManager(this));
+        rvHeatmap.setAdapter(heatmapAdapter);
     }
 
     private void setupControls() {
@@ -355,6 +362,12 @@ public class AnalyticsActivity extends AppCompatActivity {
         viewModel.getTableColumns().observe(this, this::renderTableHeader);
         viewModel.getTableColumnGroups().observe(this, this::renderTableGroups);
         viewModel.getTableRows().observe(this, rows -> tableAdapter.setRows(rows));
+
+        viewModel.getHeatmapColumns().observe(this, cols -> {
+            heatmapAdapter.setColumns(cols);
+            renderHeatmapHeader(cols);
+        });
+        viewModel.getHeatmapRows().observe(this, rows -> heatmapAdapter.setRows(rows));
         viewModel.getTableExpandable().observe(this, expanded -> {
             tableExpandableContainer.setVisibility(expanded ? View.VISIBLE : View.GONE);
             tvExpandTable.setText(expanded ? "Tap to collapse" : "Tap to expand table");
@@ -428,6 +441,23 @@ public class AnalyticsActivity extends AppCompatActivity {
             }
             
             tableGroupHeaderContainer.addView(tv);
+        }
+    }
+
+    private void renderHeatmapHeader(List<TableColumn> columns) {
+        heatmapHeaderContainer.removeAllViews();
+        int cellWidth = (int) (80 * getResources().getDisplayMetrics().density);
+
+        for (TableColumn col : columns) {
+            TextView tv = new TextView(this);
+            tv.setLayoutParams(new LinearLayout.LayoutParams(cellWidth, ViewGroup.LayoutParams.WRAP_CONTENT));
+            tv.setPadding(24, 16, 24, 16);
+            tv.setText(col.getTitle());
+            tv.setTextColor(Color.WHITE);
+            tv.setTextSize(11);
+            tv.setTypeface(null, android.graphics.Typeface.BOLD);
+            tv.setGravity(android.view.Gravity.CENTER);
+            heatmapHeaderContainer.addView(tv);
         }
     }
 
