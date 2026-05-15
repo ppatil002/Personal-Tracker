@@ -27,6 +27,7 @@ import com.example.pp.features.analytics.adapter.TransactionAdapter;
 import com.example.pp.features.analytics.chart.TrendMarkerView;
 import com.example.pp.features.analytics.model.AnalyticsSummary;
 import com.example.pp.features.analytics.model.CategoryExpense;
+import com.example.pp.features.analytics.model.CategoryTrendData;
 import com.example.pp.features.analytics.model.DailyExpense;
 import com.example.pp.features.analytics.model.PeriodType;
 import com.example.pp.ui.components.table.adapter.GenericTableAdapter;
@@ -35,10 +36,15 @@ import com.example.pp.ui.components.table.model.TableConfig;
 import com.example.pp.ui.components.table.model.TableRow;
 import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.features.settings.MoreActivity;
+import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
+import com.github.mikephil.charting.data.BarData;
+import com.github.mikephil.charting.data.BarDataSet;
+import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.CombinedData;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
@@ -71,6 +77,7 @@ public class AnalyticsActivity extends AppCompatActivity {
     private PieChart donutChart;
     private LineChart sparklineChart, trendChart;
     private RecyclerView rvCategories, rvDrillDownTable, rvHeatmap;
+    private LinearLayout categoryTrendChartsContainer;
     private View periodDropdown, btnCalendar;
 
     @Override
@@ -113,6 +120,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         tableGroupHeaderContainer = findViewById(R.id.tableGroupHeaderContainer);
         heatmapHeaderContainer = findViewById(R.id.heatmapHeaderContainer);
         tagChipGroup = findViewById(R.id.tagChipGroup);
+        categoryTrendChartsContainer = findViewById(R.id.categoryTrendChartsContainer);
         
         periodDropdown = findViewById(R.id.periodDropdown);
         btnCalendar = findViewById(R.id.btnCalendar);
@@ -455,6 +463,189 @@ public class AnalyticsActivity extends AppCompatActivity {
             
             tableGroupHeaderContainer.addView(tv);
         }
+    }
+
+    private void bindCategoryTrends(List<CategoryTrendData> trends) {
+        if (categoryTrendChartsContainer == null) return;
+        categoryTrendChartsContainer.removeAllViews();
+        if (trends == null || trends.isEmpty()) {
+            return;
+        }
+
+        PeriodType type = viewModel.getPeriodType().getValue();
+
+        for (CategoryTrendData data : trends) {
+            // Title with Icon
+            TextView tv = new TextView(this);
+            LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+            titleParams.setMargins(0, 32, 0, 8);
+            tv.setLayoutParams(titleParams);
+            
+            String icon = data.getCategoryIcon() != null ? data.getCategoryIcon() : "📊";
+            tv.setText(icon + " " + data.getCategoryName() + " Trend");
+            tv.setTextColor(Color.WHITE);
+            tv.setTextSize(14);
+            tv.setTypeface(null, android.graphics.Typeface.BOLD);
+            categoryTrendChartsContainer.addView(tv);
+
+            if (type == PeriodType.MONTH) {
+                CombinedChart chart = new CombinedChart(this);
+                chart.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) (220 * getResources().getDisplayMetrics().density)));
+                setupCombinedChart(chart, data);
+                categoryTrendChartsContainer.addView(chart);
+                chart.animateY(1000, com.github.mikephil.charting.animation.Easing.EaseInOutQuad);
+            } else {
+                LineChart chart = new LineChart(this);
+                chart.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) (200 * getResources().getDisplayMetrics().density)));
+                setupYearlyLineChart(chart, data);
+                categoryTrendChartsContainer.addView(chart);
+                chart.animateX(1000, com.github.mikephil.charting.animation.Easing.EaseInOutQuad);
+            }
+        }
+    }
+
+    private void setupCombinedChart(CombinedChart chart, CategoryTrendData data) {
+        chart.getDescription().setEnabled(false);
+        chart.setDrawGridBackground(false);
+        chart.setDrawBarShadow(false);
+        chart.setHighlightFullBarEnabled(false);
+        chart.getLegend().setEnabled(false);
+        chart.getAxisRight().setEnabled(false);
+
+        YAxis leftAxis = chart.getAxisLeft();
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setGridColor(ContextCompat.getColor(this, R.color.border_color));
+        leftAxis.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
+        leftAxis.setAxisMinimum(0f);
+
+        XAxis xAxis = chart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
+        xAxis.setGranularity(1f);
+
+        CombinedData combinedData = new CombinedData();
+        
+        // Bar Data: Historical totals (3 months)
+        List<BarEntry> barEntries = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        for (int i = 0; i < data.getHistoricalTotals().size(); i++) {
+            CategoryTrendData.MonthlyTotal total = data.getHistoricalTotals().get(i);
+            barEntries.add(new BarEntry(i, (float) total.getAmount()));
+            labels.add(total.getLabel());
+        }
+        BarDataSet barSet = new BarDataSet(barEntries, "Monthly Total");
+        barSet.setColor(ContextCompat.getColor(this, R.color.elevated_surface));
+        barSet.setDrawValues(true);
+        barSet.setValueTextColor(Color.WHITE);
+        barSet.setValueTextSize(10f);
+        barSet.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return value > 0 ? String.format(Locale.getDefault(), "%.0f", value) : "";
+            }
+        });
+        BarData barData = new BarData(barSet);
+        barData.setBarWidth(0.5f);
+        combinedData.setData(barData);
+
+        // Line Data: Daily Trend for the current month (overlaid on the 3rd bar)
+        List<Entry> lineEntries = new ArrayList<>();
+        List<DailyExpense> daily = data.getDailyTrend();
+        
+        if (daily != null && !daily.isEmpty()) {
+            // Map the current month range to X axis range corresponding to the 3rd bar (index 2)
+            // Bar centers are at 0, 1, 2. Bar width is 0.5.
+            // We'll span the line from 1.6 to 2.4 to stay within the bar's area
+            float startX = 1.6f;
+            float endX = 2.4f;
+            for (int i = 0; i < daily.size(); i++) {
+                float progress = (float) i / daily.size();
+                float x = startX + (progress * (endX - startX));
+                lineEntries.add(new Entry(x, (float) daily.get(i).getAmount()));
+            }
+        }
+        
+        LineDataSet lineSet = new LineDataSet(lineEntries, "Daily Trend");
+        try {
+            lineSet.setColor(Color.parseColor(data.getCategoryColor()));
+        } catch (Exception e) {
+            lineSet.setColor(ContextCompat.getColor(this, R.color.accent_purple));
+        }
+        lineSet.setLineWidth(2.5f);
+        lineSet.setDrawCircles(false);
+        lineSet.setMode(LineDataSet.Mode.LINEAR);
+        lineSet.setDrawValues(false);
+        
+        LineData lineData = new LineData(lineSet);
+        combinedData.setData(lineData);
+
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        xAxis.setAxisMinimum(-0.5f);
+        xAxis.setAxisMaximum(2.5f);
+
+        chart.setData(combinedData);
+        chart.setDrawOrder(new CombinedChart.DrawOrder[]{
+                CombinedChart.DrawOrder.BAR, CombinedChart.DrawOrder.LINE
+        });
+        
+        float yMax = Math.max(combinedData.getYMax(), 10f);
+        chart.getAxisLeft().setAxisMaximum(yMax * 1.1f);
+        chart.getAxisLeft().setAxisMinimum(0f);
+
+        chart.notifyDataSetChanged();
+        chart.invalidate();
+    }
+
+    private void setupYearlyLineChart(LineChart chart, CategoryTrendData data) {
+        chart.getDescription().setEnabled(false);
+        chart.getLegend().setEnabled(false);
+        chart.getAxisRight().setEnabled(false);
+        chart.setDrawGridBackground(false);
+
+        XAxis xAxis = chart.getXAxis();
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setDrawGridLines(false);
+        xAxis.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
+        xAxis.setLabelCount(12);
+
+        YAxis leftAxis = chart.getAxisLeft();
+        leftAxis.setDrawGridLines(true);
+        leftAxis.setGridColor(ContextCompat.getColor(this, R.color.border_color));
+        leftAxis.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
+        leftAxis.setAxisMinimum(0f);
+
+        List<Entry> entries = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        for (int i = 0; i < data.getYearlyTrend().size(); i++) {
+            CategoryTrendData.MonthlyTotal total = data.getYearlyTrend().get(i);
+            entries.add(new Entry(i, (float) total.getAmount()));
+            labels.add(total.getLabel());
+        }
+
+        LineDataSet set = new LineDataSet(entries, "");
+        try {
+            set.setColor(Color.parseColor(data.getCategoryColor()));
+        } catch (Exception e) {
+            set.setColor(ContextCompat.getColor(this, R.color.accent_purple));
+        }
+        set.setLineWidth(2.5f);
+        set.setDrawCircles(true);
+        set.setCircleRadius(3f);
+        set.setDrawValues(false);
+        set.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        set.setDrawFilled(true);
+        set.setFillAlpha(40);
+        try {
+            set.setFillColor(Color.parseColor(data.getCategoryColor()));
+        } catch (Exception e) {
+            set.setFillColor(ContextCompat.getColor(this, R.color.accent_purple));
+        }
+
+        chart.setData(new LineData(set));
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        chart.animateX(1000, com.github.mikephil.charting.animation.Easing.EaseInOutQuad);
+        chart.invalidate();
     }
 
     private void renderHeatmapHeader(List<TableColumn> columns) {

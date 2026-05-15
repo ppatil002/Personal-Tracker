@@ -539,6 +539,13 @@
                                     android:nestedScrollingEnabled="false" />
                             </LinearLayout>
                         </HorizontalScrollView>
+
+                        <LinearLayout
+                            android:id="@+id/categoryTrendChartsContainer"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="24dp"
+                            android:orientation="vertical" />
                     </LinearLayout>
 
                     <TextView

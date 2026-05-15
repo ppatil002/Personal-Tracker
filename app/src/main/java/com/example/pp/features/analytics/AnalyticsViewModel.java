@@ -17,6 +17,7 @@ import com.example.pp.data.repository.TransactionRepository;
 import com.example.pp.domain.model.CategoryTreeNode;
 import com.example.pp.features.analytics.model.AnalyticsSummary;
 import com.example.pp.features.analytics.model.CategoryExpense;
+import com.example.pp.features.analytics.model.CategoryTrendData;
 import com.example.pp.features.analytics.model.DailyExpense;
 import com.example.pp.features.analytics.model.MonthlyExpense;
 import com.example.pp.features.analytics.model.PeriodType;
@@ -506,6 +507,129 @@ public class AnalyticsViewModel extends AndroidViewModel {
                 tableColumns.setValue(cols);
                 tableRows.setValue(rows);
             });
+            
+            // Calculate Category Trend Graphs
+            calculateCategoryTrends(rootCategoryId, type, year, month, tags);
+        });
+    }
+
+    private void calculateCategoryTrends(String rootCategoryId, PeriodType type, int year, int month, List<String> tags) {
+        executors.diskIO().execute(() -> {
+            long start, end;
+            if (type == PeriodType.MONTH) {
+                Calendar cal = Calendar.getInstance();
+                cal.set(year, month, 1, 0, 0, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                cal.add(Calendar.MONTH, 1);
+                end = cal.getTimeInMillis();
+                cal.add(Calendar.MONTH, -3);
+                start = cal.getTimeInMillis();
+            } else {
+                Calendar cal = Calendar.getInstance();
+                cal.set(year, Calendar.JANUARY, 1, 0, 0, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                start = cal.getTimeInMillis();
+                cal.set(year + 1, Calendar.JANUARY, 1, 0, 0, 0);
+                end = cal.getTimeInMillis();
+            }
+
+            List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
+            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
+
+            List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
+            if (categoryTree == null) categoryTree = fetchCategoryTreeSync();
+            Map<String, String> catToRoot = buildCategoryToRootMap(categoryTree);
+
+            List<CategoryEntity> relevantRoots = new ArrayList<>();
+            if ("all".equals(rootCategoryId)) {
+                for (CategoryTreeNode node : categoryTree) relevantRoots.add(node.getCategory());
+            } else {
+                for (CategoryTreeNode node : categoryTree) {
+                    if (node.getCategoryId().equals(rootCategoryId)) {
+                        relevantRoots.add(node.getCategory());
+                        break;
+                    }
+                }
+            }
+
+            List<CategoryTrendData> trendList = new ArrayList<>();
+            SimpleDateFormat monthSdf = new SimpleDateFormat("MMM", Locale.getDefault());
+
+            for (CategoryEntity root : relevantRoots) {
+                CategoryTrendData trendData = new CategoryTrendData(root.getCategoryId(), root.getName(), root.getIcon(), root.getColour());
+                
+                List<TransactionEntity> rootTx = new ArrayList<>();
+                for (TransactionEntity t : transactions) {
+                    String rId = catToRoot.get(t.getCategoryId());
+                    if (rId == null) rId = t.getCategoryId();
+                    if (rId.equals(root.getCategoryId())) rootTx.add(t);
+                }
+
+                if (rootTx.isEmpty()) continue;
+
+                if (type == PeriodType.MONTH) {
+                    long currentMonthStart = calculateDateRange(type, year, month)[0];
+                    long currentMonthEnd = calculateDateRange(type, year, month)[1];
+                    
+                    List<DailyExpense> lineTrend = new ArrayList<>();
+                    Map<Long, Double> dailyMap = new HashMap<>();
+                    for (TransactionEntity t : rootTx) {
+                        long day = floorToDay(t.getTransactionDate());
+                        dailyMap.put(day, dailyMap.getOrDefault(day, 0.0) + t.getAmount());
+                    }
+
+                    // Progression line: Actual daily data for current selected month ONLY
+                    long current = currentMonthStart;
+                    boolean hasDataInSelectedMonth = false;
+                    while (current < currentMonthEnd) {
+                        double dayAmt = dailyMap.getOrDefault(current, 0.0);
+                        if (dayAmt > 0) hasDataInSelectedMonth = true;
+                        lineTrend.add(new DailyExpense(current, dayAmt));
+                        current += 86400000L;
+                    }
+                    
+                    if (!hasDataInSelectedMonth) continue;
+
+                    trendData.setDailyTrend(lineTrend);
+
+                    List<CategoryTrendData.MonthlyTotal> historical = new ArrayList<>();
+                    Calendar hCal = Calendar.getInstance();
+                    hCal.setTimeInMillis(start);
+                    for (int i = 0; i < 3; i++) {
+                        long mStart = hCal.getTimeInMillis();
+                        hCal.add(Calendar.MONTH, 1);
+                        long mEnd = hCal.getTimeInMillis();
+                        double mSum = 0;
+                        for (TransactionEntity t : rootTx) {
+                            if (t.getTransactionDate() >= mStart && t.getTransactionDate() < mEnd) mSum += t.getAmount();
+                        }
+                        historical.add(new CategoryTrendData.MonthlyTotal(mStart, monthSdf.format(mStart), mSum));
+                    }
+                    trendData.setHistoricalTotals(historical);
+
+                } else {
+                    List<CategoryTrendData.MonthlyTotal> yearly = new ArrayList<>();
+                    Calendar yCal = Calendar.getInstance();
+                    yCal.setTimeInMillis(start);
+                    boolean anyData = false;
+                    for (int i = 0; i < 12; i++) {
+                        long mStart = yCal.getTimeInMillis();
+                        yCal.add(Calendar.MONTH, 1);
+                        long mEnd = yCal.getTimeInMillis();
+                        double mSum = 0;
+                        for (TransactionEntity t : rootTx) {
+                            if (t.getTransactionDate() >= mStart && t.getTransactionDate() < mEnd) mSum += t.getAmount();
+                        }
+                        if (mSum > 0) anyData = true;
+                        yearly.add(new CategoryTrendData.MonthlyTotal(mStart, monthSdf.format(mStart), mSum));
+                    }
+                    if (!anyData) continue;
+                    trendData.setYearlyTrend(yearly);
+                }
+                trendList.add(trendData);
+            }
+            executors.mainThread().execute(() -> categoryTrends.setValue(trendList));
         });
     }
 
