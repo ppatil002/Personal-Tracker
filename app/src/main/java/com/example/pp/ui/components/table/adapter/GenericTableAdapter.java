@@ -6,14 +6,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import androidx.annotation.NonNull;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.pp.R;
-import com.example.pp.ui.components.table.model.TableColumn;
 import com.example.pp.ui.components.table.model.TableCell;
-import com.example.pp.ui.components.table.model.TableRow;
+import com.example.pp.ui.components.table.model.TableColumn;
 import com.example.pp.ui.components.table.model.TableConfig;
+import com.example.pp.ui.components.table.model.TableRow;
 
 import java.util.ArrayList;
 import java.util.List;

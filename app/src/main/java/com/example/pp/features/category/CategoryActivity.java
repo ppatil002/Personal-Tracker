@@ -1,7 +1,6 @@
 package com.example.pp.features.category;
 
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -12,20 +11,21 @@ import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.pp.PPApplication;
 import com.example.pp.R;
 import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.data.repository.CategoryRepository;
 import com.example.pp.features.category.adapter.CategoryManagerAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 public class CategoryActivity extends AppCompatActivity {
 

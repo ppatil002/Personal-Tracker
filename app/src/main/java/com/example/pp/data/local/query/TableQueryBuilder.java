@@ -2,6 +2,7 @@ package com.example.pp.data.local.query;
 
 import androidx.sqlite.db.SimpleSQLiteQuery;
 import androidx.sqlite.db.SupportSQLiteQuery;
+
 import com.example.pp.ui.components.table.model.TableFilter;
 import com.example.pp.ui.components.table.model.TableQuery;
 

@@ -9,14 +9,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.EditText;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.pp.R;
 import com.example.pp.domain.model.CategoryTreeNode;
 import com.example.pp.features.category.adapter.CategoryBottomSheetAdapter;
 import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
+
 import java.util.List;
 
 public class CategoryBottomSheetFragment extends BottomSheetDialogFragment {

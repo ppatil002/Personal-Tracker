@@ -1,6 +1,7 @@
 package com.example.pp.domain.model;
 
 import com.example.pp.data.local.entity.CategoryEntity;
+
 import java.util.ArrayList;
 import java.util.List;
 

@@ -3,8 +3,12 @@ package com.example.pp.features.settings;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.ImageView;
+
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.pp.R;
+import com.example.pp.features.category.CategoryActivity;
+import com.example.pp.features.category.TagActivity;
 
 public class MoreActivity extends AppCompatActivity {
 
@@ -21,11 +25,11 @@ public class MoreActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnCategoryManager).setOnClickListener(v -> {
-            startActivity(new Intent(this, com.example.pp.features.category.CategoryActivity.class));
+            startActivity(new Intent(this, CategoryActivity.class));
         });
 
         findViewById(R.id.btnTagManager).setOnClickListener(v -> {
-            startActivity(new Intent(this, com.example.pp.features.category.TagActivity.class));
+            startActivity(new Intent(this, TagActivity.class));
         });
     }
 }

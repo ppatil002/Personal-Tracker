@@ -6,18 +6,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.pp.PPApplication;
 import com.example.pp.R;
 import com.example.pp.data.local.entity.TagEntity;
 import com.example.pp.data.repository.TagRepository;
 import com.example.pp.features.category.adapter.TagManagerAdapter;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import java.util.UUID;
 
 public class TagActivity extends AppCompatActivity {
 

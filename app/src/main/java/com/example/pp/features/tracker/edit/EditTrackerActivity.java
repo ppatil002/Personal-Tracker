@@ -9,13 +9,16 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+
 import com.example.pp.PPApplication;
 import com.example.pp.R;
 import com.example.pp.core.event.EventBus;
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.domain.model.CategoryTreeNode;
+import com.example.pp.features.analytics.AnalyticsActivity;
 import com.example.pp.features.category.CategoryBottomSheetFragment;
 import com.example.pp.features.category.TagBottomSheetFragment;
 import com.example.pp.features.category.model.Tag;
@@ -25,7 +28,6 @@ import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
-import com.prolificinteractive.materialcalendarview.OnDateSelectedListener;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -259,7 +261,7 @@ public class EditTrackerActivity extends AppCompatActivity {
         View navAnalytics = findViewById(R.id.navAnalytics);
         if (navAnalytics != null) {
             navAnalytics.setOnClickListener(v -> {
-                startActivity(new Intent(this, com.example.pp.features.analytics.AnalyticsActivity.class));
+                startActivity(new Intent(this, AnalyticsActivity.class));
             });
         }
 

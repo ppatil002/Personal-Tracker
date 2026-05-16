@@ -1,15 +1,17 @@
 package com.example.pp.data.repository;
 
 import android.content.Context;
+
+import androidx.sqlite.db.SupportSQLiteQuery;
+
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.TransactionDao;
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.local.query.TableQueryBuilder;
+import com.example.pp.features.analytics.model.MonthlyExpense;
 import com.example.pp.ui.components.table.model.TableQuery;
-import androidx.sqlite.db.SupportSQLiteQuery;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -245,7 +247,7 @@ public class TransactionRepository {
         return transactionDao.getTransactionsBetween(start, end);
     }
 
-    public List<com.example.pp.features.analytics.model.MonthlyExpense> getMonthlyExpensesBetween(long start, long end) {
+    public List<MonthlyExpense> getMonthlyExpensesBetween(long start, long end) {
         return transactionDao.getMonthlyExpensesBetween(start, end);
     }
 

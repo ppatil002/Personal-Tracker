@@ -11,6 +11,7 @@ import com.example.pp.PPApplication;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.data.local.entity.TransactionEntity;
+import com.example.pp.data.local.entity.TransactionTagCrossRef;
 import com.example.pp.data.repository.CategoryRepository;
 import com.example.pp.data.repository.TagRepository;
 import com.example.pp.data.repository.TransactionRepository;
@@ -21,19 +22,19 @@ import com.example.pp.features.analytics.model.CategoryTrendData;
 import com.example.pp.features.analytics.model.DailyExpense;
 import com.example.pp.features.analytics.model.MonthlyExpense;
 import com.example.pp.features.analytics.model.PeriodType;
+import com.example.pp.features.category.model.Tag;
 import com.example.pp.ui.components.table.model.TableCell;
 import com.example.pp.ui.components.table.model.TableColumn;
 import com.example.pp.ui.components.table.model.TableRow;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
-import java.text.SimpleDateFormat;
-import java.util.Locale;
 
 public class AnalyticsViewModel extends AndroidViewModel {
 
@@ -63,7 +64,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
     private final MutableLiveData<List<TransactionEntity>> periodTransactions = new MutableLiveData<>();
     private final MutableLiveData<List<CategoryTrendData>> categoryTrends = new MutableLiveData<>();
     
-    private final LiveData<List<com.example.pp.features.category.model.Tag>> availableTags;
+    private final LiveData<List<Tag>> availableTags;
     private final MutableLiveData<List<String>> selectedTagIds = new MutableLiveData<>(new ArrayList<>());
 
     public static class CategoryGroup {
@@ -109,7 +110,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
     public LiveData<List<TransactionEntity>> getPeriodTransactions() { return periodTransactions; }
     public LiveData<List<CategoryTrendData>> getCategoryTrends() { return categoryTrends; }
     
-    public LiveData<List<com.example.pp.features.category.model.Tag>> getAvailableTags() { return availableTags; }
+    public LiveData<List<Tag>> getAvailableTags() { return availableTags; }
     public LiveData<List<String>> getSelectedTagIds() { return selectedTagIds; }
 
     public void toggleTag(String tagId) {
@@ -159,7 +160,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
         executors.diskIO().execute(() -> {
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
             
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
             
@@ -258,7 +259,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
             long end = cal.getTimeInMillis();
 
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
             List<CategoryTreeNode> tree = categoryRepository.getCategoryTree().getValue();
@@ -350,7 +351,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
         executors.diskIO().execute(() -> {
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
             List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
@@ -534,7 +535,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
             }
 
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
             List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
@@ -782,7 +783,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
         executors.diskIO().execute(() -> {
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
             
             List<CategoryTreeNode> tree = categoryRepository.getCategoryTree().getValue();
@@ -815,7 +816,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
         executors.diskIO().execute(() -> {
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<com.example.pp.data.local.entity.TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
             List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
@@ -880,11 +881,11 @@ public class AnalyticsViewModel extends AndroidViewModel {
         periodLabel.setValue(sdf.format(cal.getTime()));
     }
 
-    private List<TransactionEntity> filterByTags(List<TransactionEntity> transactions, List<com.example.pp.data.local.entity.TransactionTagCrossRef> crossRefs, List<String> selectedTagIds) {
+    private List<TransactionEntity> filterByTags(List<TransactionEntity> transactions, List<TransactionTagCrossRef> crossRefs, List<String> selectedTagIds) {
         if (selectedTagIds == null || selectedTagIds.isEmpty()) return transactions;
         
         Map<String, List<String>> txTags = new HashMap<>();
-        for (com.example.pp.data.local.entity.TransactionTagCrossRef ref : crossRefs) {
+        for (TransactionTagCrossRef ref : crossRefs) {
             txTags.computeIfAbsent(ref.getTransactionId(), k -> new ArrayList<>()).add(ref.getTagId());
         }
         

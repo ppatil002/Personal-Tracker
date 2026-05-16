@@ -13,12 +13,9 @@ import androidx.sqlite.db.SupportSQLiteQuery;
 
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.local.entity.TransactionTagCrossRef;
-
-import com.example.pp.features.analytics.model.DailyExpense;
 import com.example.pp.features.analytics.model.MonthlyExpense;
-import java.util.List;
 
-import androidx.sqlite.db.SupportSQLiteQuery;
+import java.util.List;
 
 @Dao
 public interface TransactionDao {

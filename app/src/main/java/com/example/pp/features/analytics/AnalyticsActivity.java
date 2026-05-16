@@ -21,7 +21,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.pp.MainActivity;
 import com.example.pp.R;
+import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.features.analytics.adapter.CategoryExpenseAdapter;
 import com.example.pp.features.analytics.adapter.TransactionAdapter;
 import com.example.pp.features.analytics.chart.TrendMarkerView;
@@ -30,12 +32,12 @@ import com.example.pp.features.analytics.model.CategoryExpense;
 import com.example.pp.features.analytics.model.CategoryTrendData;
 import com.example.pp.features.analytics.model.DailyExpense;
 import com.example.pp.features.analytics.model.PeriodType;
+import com.example.pp.features.category.model.Tag;
+import com.example.pp.features.settings.MoreActivity;
+import com.example.pp.features.tracker.edit.EditTrackerActivity;
 import com.example.pp.ui.components.table.adapter.GenericTableAdapter;
 import com.example.pp.ui.components.table.model.TableColumn;
 import com.example.pp.ui.components.table.model.TableConfig;
-import com.example.pp.ui.components.table.model.TableRow;
-import com.example.pp.data.local.entity.CategoryEntity;
-import com.example.pp.features.settings.MoreActivity;
 import com.github.mikephil.charting.charts.CombinedChart;
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.charts.PieChart;
@@ -55,6 +57,7 @@ import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.github.mikephil.charting.formatter.ValueFormatter;
 import com.github.mikephil.charting.utils.ColorTemplate;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
+import com.google.android.material.chip.Chip;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -338,7 +341,7 @@ public class AnalyticsActivity extends AppCompatActivity {
 
         if (navDashboard != null) {
             navDashboard.setOnClickListener(v -> {
-                Intent intent = new Intent(this, com.example.pp.MainActivity.class);
+                Intent intent = new Intent(this, MainActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
             });
@@ -352,7 +355,7 @@ public class AnalyticsActivity extends AppCompatActivity {
             navMore.setOnClickListener(v -> startActivity(new Intent(this, MoreActivity.class)));
         }
         if (btnCenterFab != null) {
-            btnCenterFab.setOnClickListener(v -> startActivity(new Intent(this, com.example.pp.features.tracker.edit.EditTrackerActivity.class)));
+            btnCenterFab.setOnClickListener(v -> startActivity(new Intent(this, EditTrackerActivity.class)));
         }
     }
 
@@ -665,13 +668,13 @@ public class AnalyticsActivity extends AppCompatActivity {
         }
     }
 
-    private void updateTagChips(List<com.example.pp.features.category.model.Tag> tags, List<String> selectedIds) {
+    private void updateTagChips(List<Tag> tags, List<String> selectedIds) {
         if (tagChipGroup == null) return;
         tagChipGroup.removeAllViews();
         if (tags == null) return;
 
-        for (com.example.pp.features.category.model.Tag tag : tags) {
-            com.google.android.material.chip.Chip chip = new com.google.android.material.chip.Chip(this);
+        for (Tag tag : tags) {
+            Chip chip = new Chip(this);
             chip.setText(tag.getName());
             chip.setCheckable(false); // We'll handle selection state via background color
             boolean isChecked = selectedIds != null && selectedIds.contains(tag.getId());
