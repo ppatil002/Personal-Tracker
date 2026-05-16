@@ -83,7 +83,7 @@ public class TagRepository {
         executors.diskIO().execute(() -> {
             List<TagEntity> existing = tagDao.getAllTags();
             if (existing.isEmpty()) {
-                String[] seedNames = {"Office", "Outside", "Fruits", "Vegetables", "Eggs", "Gym", "Subscriptions", "Dreams", "Grooming"};
+                String[] seedNames = {"Office", "Outside", "Fruits", "Vegetables", "Eggs", "Gym", "Subscriptions", "Dreams", "Grooming", "Auto", "Bus", "Cab", "Train", "Flight"};
                 for (int i = 0; i < seedNames.length; i++) {
                     tagDao.insert(new TagEntity(String.valueOf(i + 1), seedNames[i]));
                 }

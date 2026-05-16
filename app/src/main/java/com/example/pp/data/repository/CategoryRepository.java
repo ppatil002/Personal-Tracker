@@ -158,18 +158,26 @@ public class CategoryRepository {
                 categoryDao.insert(new CategoryEntity("7", null,
                         "Miscellaneous", "📦", "#6B7280"));
 
-                // VACATIONS
+                // Medical
                 categoryDao.insert(new CategoryEntity("8", null,
-                        "Vacations", "🏖️", "#0EA5E9"));
+                        "Medical", "⚕️", "#0EA5E9"));
                 categoryDao.insert(new CategoryEntity("8.1", "8",
-                        "Conveyance", "✈️", "#14B8A6"));
+                        "Doctor Fees", "⚕️", "#14B8A6"));
                 categoryDao.insert(new CategoryEntity("8.2", "8",
+                        "Medicines", "💊", "#F97316"));
+
+                // VACATIONS
+                categoryDao.insert(new CategoryEntity("9", null,
+                        "Vacations", "🏖️", "#0EA5E9"));
+                categoryDao.insert(new CategoryEntity("9.1", "9",
+                        "Conveyance", "✈️", "#14B8A6"));
+                categoryDao.insert(new CategoryEntity("9.2", "9",
                         "Cuisine", "🍜", "#F97316"));
-                categoryDao.insert(new CategoryEntity("8.3", "8",
+                categoryDao.insert(new CategoryEntity("9.3", "9",
                         "Accommodation", "🏨", "#6366F1"));
-                categoryDao.insert(new CategoryEntity("8.4", "8",
+                categoryDao.insert(new CategoryEntity("9.4", "9",
                         "Shopping", "🛍️", "#EC4899"));
-                categoryDao.insert(new CategoryEntity("8.5", "8",
+                categoryDao.insert(new CategoryEntity("9.5", "9",
                         "Extra", "🎒", "#A1A1AA"));
                 cacheManager.setDirty(true);
                 refreshCategoryTree();
