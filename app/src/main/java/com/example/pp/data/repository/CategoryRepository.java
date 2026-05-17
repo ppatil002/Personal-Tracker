@@ -164,9 +164,9 @@ public class CategoryRepository {
                 categoryDao.insert(new CategoryEntity("8", null,
                         "Medical", "⚕️", "#0EA5E9"));
                 categoryDao.insert(new CategoryEntity("8.1", "8",
-                        "Doctor Fees", "⚕️", "#14B8A6"));
-                categoryDao.insert(new CategoryEntity("8.2", "8",
                         "Medicines", "💊", "#F97316"));
+                categoryDao.insert(new CategoryEntity("8.2", "8",
+                        "Doctor Fees", "🩺", "#14B8A6"));
 
                 // VACATIONS
                 categoryDao.insert(new CategoryEntity("9", null,
