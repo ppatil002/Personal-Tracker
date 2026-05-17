@@ -683,14 +683,24 @@ public class AnalyticsViewModel extends AndroidViewModel {
     }
 
     private int calculateDaysInPeriod(PeriodType type, int year, int month) {
+        Calendar today = Calendar.getInstance();
+        int curYear = today.get(Calendar.YEAR);
+        int curMonth = today.get(Calendar.MONTH);
+
         if (type == PeriodType.MONTH) {
-            Calendar cal = Calendar.getInstance();
-            cal.set(year, month, 1);
-            return cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+            if (year == curYear && month == curMonth) {
+                return today.get(Calendar.DAY_OF_MONTH);
+            } else {
+                Calendar cal = Calendar.getInstance();
+                cal.set(year, month, 1);
+                return cal.getActualMaximum(Calendar.DAY_OF_MONTH);
+            }
         } else {
-            Calendar cal = Calendar.getInstance();
-            cal.set(year, Calendar.JANUARY, 1);
-            return cal.getActualMaximum(Calendar.DAY_OF_YEAR);
+            if (year == curYear) {
+                return today.get(Calendar.DAY_OF_YEAR);
+            } else {
+                return 365;
+            }
         }
     }
 
