@@ -740,6 +740,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         tvSubtitle.setText("For " + sdf.format(timestamp));
 
         TransactionAdapter adapter = new TransactionAdapter();
+        if (type != null) adapter.setPeriodType(type);
         rvTransactions.setLayoutManager(new LinearLayoutManager(this));
         rvTransactions.setAdapter(adapter);
 
