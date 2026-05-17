@@ -127,6 +127,8 @@ public class CategoryRepository {
                         "Gym Membership", "🏋️", "#06B6D4"));
                 categoryDao.insert(new CategoryEntity("2.5", "2",
                         "Water", "🚰", "#3B82F6"));
+                categoryDao.insert(new CategoryEntity("2.6", "2",
+                        "Gas", "🔥", "#F97316"));
                 
                 // MONEY TRANSFER
                 categoryDao.insert(new CategoryEntity("3", null,
