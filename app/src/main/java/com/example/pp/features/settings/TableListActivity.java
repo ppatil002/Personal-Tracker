@@ -36,6 +36,7 @@ public class TableListActivity extends AppCompatActivity {
         tables.add(new TableInfo("tags", "Tags Table", "Labels and identifiers"));
         tables.add(new TableInfo("transactions", "Transactions Table", "Core transaction data"));
         tables.add(new TableInfo("transaction_tag_cross_ref", "Transaction Tags Table", "Many-to-many relationship"));
+        tables.add(new TableInfo("background_job_log", "Background Job Logs Table", "Backup Logs"));
 
         rvTables.setAdapter(new TableAdapter(tables));
     }

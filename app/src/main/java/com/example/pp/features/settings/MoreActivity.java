@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.pp.R;
 import com.example.pp.features.category.CategoryActivity;
 import com.example.pp.features.category.TagActivity;
+import com.example.pp.features.backup.BackupActivity;
 
 public class MoreActivity extends AppCompatActivity {
 
@@ -30,6 +31,10 @@ public class MoreActivity extends AppCompatActivity {
 
         findViewById(R.id.btnTagManager).setOnClickListener(v -> {
             startActivity(new Intent(this, TagActivity.class));
+        });
+
+        findViewById(R.id.btnBackup).setOnClickListener(v -> {
+            startActivity(new Intent(this, BackupActivity.class));
         });
     }
 }
