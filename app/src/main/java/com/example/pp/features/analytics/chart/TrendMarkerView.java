@@ -21,6 +21,7 @@ public class TrendMarkerView extends MarkerView {
     private final SimpleDateFormat dateFormat;
     private final Calendar calendar;
     private List<Long> dateTimestamps;
+    private List<String> xLabels;
 
     public TrendMarkerView(Context context) {
         super(context, R.layout.marker_trend);
@@ -32,6 +33,12 @@ public class TrendMarkerView extends MarkerView {
 
     public void setDateTimestamps(List<Long> timestamps) {
         this.dateTimestamps = timestamps;
+        this.xLabels = null;
+    }
+
+    public void setXLabels(List<String> labels) {
+        this.xLabels = labels;
+        this.dateTimestamps = null;
     }
 
     public void setDatePattern(String pattern) {
@@ -44,6 +51,8 @@ public class TrendMarkerView extends MarkerView {
         if (dateTimestamps != null && index >= 0 && index < dateTimestamps.size()) {
             calendar.setTimeInMillis(dateTimestamps.get(index));
             tvDate.setText(dateFormat.format(calendar.getTime()));
+        } else if (xLabels != null && index >= 0 && index < xLabels.size()) {
+            tvDate.setText(xLabels.get(index));
         } else {
             tvDate.setText("");
         }

@@ -24,6 +24,9 @@ public interface TagDao {
     void delete(TagEntity tag);
 
     @Query("SELECT * FROM tags ORDER BY name ASC")
+    List<TagEntity> getAllTagsList();
+
+    @Query("SELECT * FROM tags ORDER BY name ASC")
     List<TagEntity> getAllTags();
 
     @Query("SELECT * FROM tags WHERE tag_id = :id")

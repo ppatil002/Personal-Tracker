@@ -24,6 +24,9 @@ public interface CategoryDao {
     void delete(CategoryEntity category);
 
     @Query("SELECT * FROM categories ORDER BY category_id ASC")
+    List<CategoryEntity> getAllCategoriesList();
+
+    @Query("SELECT * FROM categories ORDER BY category_id ASC")
     List<CategoryEntity> getAllCategories();
 
     @Query("SELECT * FROM categories WHERE parent_category_id IS NULL ORDER BY category_id ASC")

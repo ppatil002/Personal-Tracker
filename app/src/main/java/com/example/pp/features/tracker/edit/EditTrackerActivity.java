@@ -339,6 +339,7 @@ public class EditTrackerActivity extends AppCompatActivity {
             TextUtils.isEmpty(notes) ? null : notes,
             transactionTimestamp,
             now,
+            now,
             selectedPayment,
             currentTransactionType
         );

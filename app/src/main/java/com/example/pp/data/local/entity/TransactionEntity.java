@@ -47,6 +47,9 @@ public class TransactionEntity {
     @ColumnInfo(name = "created_timestamp")
     private long createdTimestamp;
 
+    @ColumnInfo(name = "last_updated_timestamp")
+    private long lastUpdatedTimestamp;
+
     @ColumnInfo(name = "payment_method")
     private String paymentMethod;
 
@@ -56,7 +59,7 @@ public class TransactionEntity {
 
     public TransactionEntity(@NonNull String transactionId, @NonNull String categoryId, @NonNull String item, 
                              double amount, String notes, long transactionDate, 
-                             long createdTimestamp, String paymentMethod, @NonNull String transactionType) {
+                             long createdTimestamp, long lastUpdatedTimestamp, String paymentMethod, @NonNull String transactionType) {
         this.transactionId = transactionId;
         this.categoryId = categoryId;
         this.item = item;
@@ -64,6 +67,7 @@ public class TransactionEntity {
         this.notes = notes;
         this.transactionDate = transactionDate;
         this.createdTimestamp = createdTimestamp;
+        this.lastUpdatedTimestamp = lastUpdatedTimestamp;
         this.paymentMethod = paymentMethod;
         this.transactionType = transactionType;
     }
@@ -79,6 +83,7 @@ public class TransactionEntity {
 
     public long getTransactionDate() { return transactionDate; }
     public long getCreatedTimestamp() { return createdTimestamp; }
+    public long getLastUpdatedTimestamp() { return lastUpdatedTimestamp; }
     public String getPaymentMethod() { return paymentMethod; }
     @NonNull
     public String getTransactionType() { return transactionType; }
@@ -90,6 +95,7 @@ public class TransactionEntity {
     public void setNotes(String notes) { this.notes = notes; }
     public void setTransactionDate(long transactionDate) { this.transactionDate = transactionDate; }
     public void setCreatedTimestamp(long createdTimestamp) { this.createdTimestamp = createdTimestamp; }
+    public void setLastUpdatedTimestamp(long lastUpdatedTimestamp) { this.lastUpdatedTimestamp = lastUpdatedTimestamp; }
     public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
     public void setTransactionType(@NonNull String transactionType) { this.transactionType = transactionType; }
 }
