@@ -605,6 +605,7 @@ public class AnalyticsActivity extends AppCompatActivity {
         chart.getLegend().setEnabled(false);
         chart.getAxisRight().setEnabled(false);
         chart.setDrawGridBackground(false);
+        chart.setTouchEnabled(true);
 
         XAxis xAxis = chart.getXAxis();
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
@@ -626,6 +627,13 @@ public class AnalyticsActivity extends AppCompatActivity {
             labels.add(total.getLabel());
         }
 
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+
+        TrendMarkerView marker = new TrendMarkerView(this);
+        marker.setChartView(chart);
+        marker.setXLabels(labels);
+        chart.setMarker(marker);
+
         LineDataSet set = new LineDataSet(entries, "");
         try {
             set.setColor(Color.parseColor(data.getCategoryColor()));
@@ -645,8 +653,12 @@ public class AnalyticsActivity extends AppCompatActivity {
             set.setFillColor(ContextCompat.getColor(this, R.color.accent_purple));
         }
 
+        set.setDrawHorizontalHighlightIndicator(true);
+        set.setDrawVerticalHighlightIndicator(true);
+        set.setHighLightColor(ContextCompat.getColor(this, R.color.highlight_yellow));
+        set.setHighlightLineWidth(1.5f);
+
         chart.setData(new LineData(set));
-        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
         chart.animateX(1000, com.github.mikephil.charting.animation.Easing.EaseInOutQuad);
         chart.invalidate();
     }
@@ -912,6 +924,8 @@ public class AnalyticsActivity extends AppCompatActivity {
         set.setDrawFilled(true);
         set.setHighlightLineWidth(1.5f);
         set.setHighLightColor(ContextCompat.getColor(this, R.color.highlight_yellow));
+        set.setDrawHorizontalHighlightIndicator(true);
+        set.setDrawVerticalHighlightIndicator(true);
 
         trendChart.setData(new LineData(set));
         trendChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(labels));
