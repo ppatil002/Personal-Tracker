@@ -2,7 +2,6 @@ package com.example.pp.features.backup;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -44,47 +43,19 @@ public class BackupActivity extends AppCompatActivity {
     private TextView tvStatus;
     private View btnSignIn;
 
-    private static final String TAG = "BackupActivity";
-
-    private final ActivityResultLauncher<Intent> basicSignInLauncher = registerForActivityResult(
+    private final ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
-                Task<GoogleSignInAccount> task =
-                        GoogleSignIn.getSignedInAccountFromIntent(result.getData());
+                Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(result.getData());
                 try {
-                    GoogleSignInAccount account = task.getResult(ApiException.class);
-
-                    // Proceed to Step 2
-                    checkAndRequestDrivePermission(account);
-                    
-                } catch (Exception e) {
-                    Toast.makeText(this, "Basic sign-in failed: ", Toast.LENGTH_LONG).show();
-                }
-            }
-    );
-
-    private final ActivityResultLauncher<Intent> drivePermissionLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),
-            result -> {
-                if (result.getResultCode() == RESULT_OK) {
+                    task.getResult(ApiException.class);
                     GoogleDriveClient.getInstance(this).refresh(this);
                     updateSignInStatus();
-                } else {
-                    Toast.makeText(this, "Drive permission is required for backup", Toast.LENGTH_LONG).show();
+                } catch (ApiException e) {
+                    Toast.makeText(this, "Sign in failed: " + e.getStatusCode(), Toast.LENGTH_SHORT).show();
                 }
             }
     );
-
-    private void checkAndRequestDrivePermission(GoogleSignInAccount account) {
-        if (!GoogleSignIn.hasPermissions(account, GoogleDriveClient.getDriveScope())) {
-            Toast.makeText(this, "Basic sign-in OK. Now requesting Drive access...", Toast.LENGTH_SHORT).show();
-            Intent intent = GoogleDriveClient.getFullGoogleSignInClient(this).getSignInIntent();
-            drivePermissionLauncher.launch(intent);
-        } else {
-            GoogleDriveClient.getInstance(this).refresh(this);
-            updateSignInStatus();
-        }
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -100,8 +71,8 @@ public class BackupActivity extends AppCompatActivity {
         btnSignIn = findViewById(R.id.btnGoogleSignIn);
         
         btnSignIn.setOnClickListener(v -> {
-            Intent intent = GoogleDriveClient.getBasicGoogleSignInClient(this).getSignInIntent();
-            basicSignInLauncher.launch(intent);
+            Intent intent = GoogleDriveClient.getFullGoogleSignInClient(this).getSignInIntent();
+            signInLauncher.launch(intent);
         });
 
         findViewById(R.id.btnRunBackup).setOnClickListener(v -> {
@@ -114,29 +85,21 @@ public class BackupActivity extends AppCompatActivity {
         
         findViewById(R.id.btnRunRestore).setOnClickListener(v -> {
             if (GoogleDriveClient.getInstance(this).isAuthorized()) {
-                // For now, restoring from slot based on current week as a quick default
                 LocalDate now = LocalDate.now();
                 int slot = now.get(WeekFields.of(Locale.getDefault()).weekOfYear()) % 4;
-                String fileName = "backup_slot_" + slot + ".enc";
-                viewModel.runRestore(fileName);
+                viewModel.runRestore("backup_slot_" + slot + ".enc");
             } else {
                 Toast.makeText(this, "Please sign in to Google Drive first", Toast.LENGTH_SHORT).show();
             }
         });
 
         setupLogTable();
-        
-        // Try silent sign in first
-        GoogleDriveClient.getInstance(this).signInSilently(this, () -> {
-            updateSignInStatus();
-        });
-
+        GoogleDriveClient.getInstance(this).signInSilently(this, this::updateSignInStatus);
         viewModel.getLogs().observe(this, this::updateLogs);
     }
 
     private void updateSignInStatus() {
-        boolean authorized = GoogleDriveClient.getInstance(this).isAuthorized();
-        if (authorized) {
+        if (GoogleDriveClient.getInstance(this).isAuthorized()) {
             GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(this);
             String displayName = (account != null ? account.getDisplayName() : null);
             if (displayName == null || displayName.isEmpty()) {

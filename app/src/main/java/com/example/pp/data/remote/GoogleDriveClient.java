@@ -100,19 +100,6 @@ public class GoogleDriveClient {
         return instance;
     }
 
-    public static GoogleSignInClient getBasicGoogleSignInClient(Context context) {
-        GoogleSignInOptions.Builder builder = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .requestProfile();
-
-        String webClientId = BuildConfig.GOOGLE_WEB_CLIENT_ID;
-        if (webClientId != null && !webClientId.isEmpty()) {
-            builder.requestIdToken(webClientId);
-        }
-
-        return GoogleSignIn.getClient(context, builder.build());
-    }
-
     public static com.google.android.gms.common.api.Scope getDriveScope() {
         return new com.google.android.gms.common.api.Scope(DriveScopes.DRIVE_FILE);
     }
