@@ -12,8 +12,8 @@ import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.features.backup.worker.CloudDownloadWorker;
 import com.example.pp.features.backup.worker.CryptoDecryptWorker;
+import com.example.pp.features.backup.worker.DataImportWorker;
 import com.example.pp.infra.background.MainOrchestratorWorker;
-import com.example.pp.features.backup.BackupDiffEngine;
 
 import java.util.List;
 
@@ -45,9 +45,11 @@ public class BackupViewModel extends AndroidViewModel {
         OneTimeWorkRequest downloadTask = new OneTimeWorkRequest.Builder(CloudDownloadWorker.class)
                 .setInputData(data).build();
         OneTimeWorkRequest decryptTask = new OneTimeWorkRequest.Builder(CryptoDecryptWorker.class).build();
+        OneTimeWorkRequest importTask = new OneTimeWorkRequest.Builder(DataImportWorker.class).build();
 
         workManager.beginWith(downloadTask)
                    .then(decryptTask)
+                   .then(importTask)
                    .enqueue();
     }
 }

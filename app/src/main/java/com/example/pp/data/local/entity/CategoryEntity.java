@@ -36,12 +36,17 @@ public class CategoryEntity {
     @ColumnInfo(name = "colour")
     private String colour; // Hex string
 
-    public CategoryEntity(@NonNull String categoryId, String parentCategoryId, String name, String icon, String colour) {
+    @ColumnInfo(name = "last_updated_timestamp")
+    private long lastUpdatedTimestamp;
+
+    public CategoryEntity(@NonNull String categoryId, String parentCategoryId, String name, 
+                          String icon, String colour, long lastUpdatedTimestamp) {
         this.categoryId = categoryId;
         this.parentCategoryId = parentCategoryId;
         this.name = name;
         this.icon = icon;
         this.colour = colour;
+        this.lastUpdatedTimestamp = lastUpdatedTimestamp;
     }
 
     @NonNull
@@ -50,10 +55,12 @@ public class CategoryEntity {
     public String getName() { return name; }
     public String getIcon() { return icon; }
     public String getColour() { return colour; }
+    public long getLastUpdatedTimestamp() { return lastUpdatedTimestamp; }
 
     public void setCategoryId(@NonNull String categoryId) { this.categoryId = categoryId; }
     public void setParentCategoryId(String parentCategoryId) { this.parentCategoryId = parentCategoryId; }
     public void setName(String name) { this.name = name; }
     public void setIcon(String icon) { this.icon = icon; }
     public void setColour(String colour) { this.colour = colour; }
+    public void setLastUpdatedTimestamp(long lastUpdatedTimestamp) { this.lastUpdatedTimestamp = lastUpdatedTimestamp; }
 }

@@ -15,7 +15,10 @@ import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.local.entity.TransactionTagCrossRef;
 import com.example.pp.features.analytics.model.MonthlyExpense;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Dao
 public interface TransactionDao {
@@ -23,17 +26,32 @@ public interface TransactionDao {
     @RawQuery
     List<TransactionEntity> getTableData(SupportSQLiteQuery query);
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     long insert(TransactionEntity transaction);
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    void insertBatch(List<TransactionEntity> transactions);
 
     @Update
     void update(TransactionEntity transaction);
 
+    @Update
+    void updateBatch(List<TransactionEntity> transactions);
+
     @Delete
     void delete(TransactionEntity transaction);
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
     void insertTagCrossRef(TransactionTagCrossRef crossRef);
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    void insertBatchTagCrossRefs(List<TransactionTagCrossRef> crossRefs);
+
+    @Update
+    void updateTagCrossRef(TransactionTagCrossRef crossRef);
+
+    @Update
+    void updateBatchTagCrossRefs(List<TransactionTagCrossRef> crossRefs);
 
     @Query("DELETE FROM transaction_tag_cross_ref WHERE transaction_id = :transactionId")
     void deleteTagCrossRefsForTransaction(String transactionId);
@@ -76,12 +94,68 @@ public interface TransactionDao {
     @Query("SELECT * FROM transaction_tag_cross_ref")
     List<TransactionTagCrossRef> getAllTransactionTagCrossRefs();
 
+    @Query("SELECT * FROM transaction_tag_cross_ref WHERE transaction_id = :txId AND tag_id = :tagId")
+    TransactionTagCrossRef getTagCrossRefByIds(String txId, String tagId);
+
+    @Transaction
+    default void upsertAll(List<TransactionEntity> cloudItems) {
+        if (cloudItems == null || cloudItems.isEmpty()) return;
+
+        List<TransactionEntity> localItems = getAllTransactionsList();
+        Map<String, TransactionEntity> localMap = new HashMap<>();
+        for (TransactionEntity local : localItems) {
+            localMap.put(local.getTransactionId(), local);
+        }
+
+        List<TransactionEntity> toInsert = new ArrayList<>();
+        List<TransactionEntity> toUpdate = new ArrayList<>();
+
+        for (TransactionEntity cloud : cloudItems) {
+            TransactionEntity local = localMap.get(cloud.getTransactionId());
+            if (local == null) {
+                toInsert.add(cloud);
+            } else if (cloud.getLastUpdatedTimestamp() > local.getLastUpdatedTimestamp()) {
+                toUpdate.add(cloud);
+            }
+        }
+
+        if (!toInsert.isEmpty()) insertBatch(toInsert);
+        if (!toUpdate.isEmpty()) updateBatch(toUpdate);
+    }
+
+    @Transaction
+    default void upsertAllTagCrossRefs(List<TransactionTagCrossRef> cloudItems) {
+        if (cloudItems == null || cloudItems.isEmpty()) return;
+
+        List<TransactionTagCrossRef> localItems = getAllTransactionTagCrossRefs();
+        Map<String, TransactionTagCrossRef> localMap = new HashMap<>();
+        for (TransactionTagCrossRef local : localItems) {
+            localMap.put(local.getTransactionId() + "|" + local.getTagId(), local);
+        }
+
+        List<TransactionTagCrossRef> toInsert = new ArrayList<>();
+        List<TransactionTagCrossRef> toUpdate = new ArrayList<>();
+
+        for (TransactionTagCrossRef cloud : cloudItems) {
+            TransactionTagCrossRef local = localMap.get(cloud.getTransactionId() + "|" + cloud.getTagId());
+            if (local == null) {
+                toInsert.add(cloud);
+            } else if (cloud.getLastUpdatedTimestamp() > local.getLastUpdatedTimestamp()) {
+                toUpdate.add(cloud);
+            }
+        }
+
+        if (!toInsert.isEmpty()) insertBatchTagCrossRefs(toInsert);
+        if (!toUpdate.isEmpty()) updateBatchTagCrossRefs(toUpdate);
+    }
+
     @Transaction
     default void insertTransactionWithTags(TransactionEntity transaction, List<String> tagIds) {
         insert(transaction);
         deleteTagCrossRefsForTransaction(transaction.getTransactionId());
+        long now = System.currentTimeMillis();
         for (String tagId : tagIds) {
-            insertTagCrossRef(new TransactionTagCrossRef(transaction.getTransactionId(), tagId));
+            insertTagCrossRef(new TransactionTagCrossRef(transaction.getTransactionId(), tagId, now));
         }
     }
 }

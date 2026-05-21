@@ -53,7 +53,7 @@ public class TagRepository {
         executors.diskIO().execute(() -> {
             Integer maxId = tagDao.getMaxTagId();
             String tagId = String.valueOf(maxId == null ? 1 : maxId + 1);
-            TagEntity tag = new TagEntity(tagId, name);
+            TagEntity tag = new TagEntity(tagId, name, System.currentTimeMillis());
             tagDao.insert(tag);
             cacheManager.setDirty(true);
             refreshTags();
@@ -63,6 +63,7 @@ public class TagRepository {
 
     public void updateTag(TagEntity tag, Runnable onComplete) {
         executors.diskIO().execute(() -> {
+            tag.setLastUpdatedTimestamp(System.currentTimeMillis());
             tagDao.update(tag);
             cacheManager.setDirty(true);
             refreshTags();
@@ -83,9 +84,10 @@ public class TagRepository {
         executors.diskIO().execute(() -> {
             List<TagEntity> existing = tagDao.getAllTags();
             if (existing.isEmpty()) {
+                long now = System.currentTimeMillis();
                 String[] seedNames = {"Office", "Outside", "Fruits", "Vegetables", "Eggs", "Gym", "Subscriptions", "Dreams", "Grooming", "Auto", "Bus", "Cab", "Train", "Flight"};
                 for (int i = 0; i < seedNames.length; i++) {
-                    tagDao.insert(new TagEntity(String.valueOf(i + 1), seedNames[i]));
+                    tagDao.insert(new TagEntity(String.valueOf(i + 1), seedNames[i], now));
                 }
                 cacheManager.setDirty(true);
                 refreshTags();

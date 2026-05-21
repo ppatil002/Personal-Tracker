@@ -32,6 +32,7 @@ public class TransactionRepository {
     public void saveTransaction(TransactionEntity transaction, List<String> tagIds, Runnable onSuccess, Runnable onError) {
         executors.diskIO().execute(() -> {
             try {
+                transaction.setLastUpdatedTimestamp(System.currentTimeMillis());
                 if (tagIds == null || tagIds.isEmpty()) {
                     transactionDao.insert(transaction);
                 } else {

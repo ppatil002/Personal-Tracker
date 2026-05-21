@@ -64,7 +64,7 @@ public class CategoryRepository {
                     categoryId = String.format(java.util.Locale.US, "%.1f", maxId + 0.1);
                 }
             }
-            CategoryEntity category = new CategoryEntity(categoryId, parentId, name, icon, colour);
+            CategoryEntity category = new CategoryEntity(categoryId, parentId, name, icon, colour, System.currentTimeMillis());
             categoryDao.insert(category);
             cacheManager.setDirty(true);
             refreshCategoryTree();
@@ -74,7 +74,8 @@ public class CategoryRepository {
 
     public void updateCategory(CategoryEntity category, Runnable onComplete) {
         executors.diskIO().execute(() -> {
-            categoryDao.insert(category);
+            category.setLastUpdatedTimestamp(System.currentTimeMillis());
+            categoryDao.update(category);
             cacheManager.setDirty(true);
             refreshCategoryTree();
             if (onComplete != null) executors.mainThread().execute(onComplete);
@@ -94,93 +95,94 @@ public class CategoryRepository {
         executors.diskIO().execute(() -> {
             List<CategoryEntity> existing = categoryDao.getAllCategories();
             if (existing.isEmpty()) {
+                long now = System.currentTimeMillis();
                 // FOOD
                 categoryDao.insert(new CategoryEntity("1", null,
-                        "Food", "🍴", "#F97316"));
+                        "Food", "🍴", "#F97316", now));
                 categoryDao.insert(new CategoryEntity("1.1", "1",
-                        "Morning Breakfast", "🥞", "#FACC15"));
+                        "Morning Breakfast", "🥞", "#FACC15", now));
                 categoryDao.insert(new CategoryEntity("1.2", "1",
-                        "Lunch", "🥗", "#FB923C"));
+                        "Lunch", "🥗", "#FB923C", now));
                 categoryDao.insert(new CategoryEntity("1.3", "1",
-                        "Evening Breakfast", "☕", "#C084FC"));
+                        "Evening Breakfast", "☕", "#C084FC", now));
                 categoryDao.insert(new CategoryEntity("1.4", "1",
-                        "Dinner", "🍱", "#EF4444"));
+                        "Dinner", "🍱", "#EF4444", now));
                 categoryDao.insert(new CategoryEntity("1.5", "1",
-                        "Juice",  "🍹", "#22C55E"));
+                        "Juice",  "🍹", "#22C55E", now));
                 categoryDao.insert(new CategoryEntity("1.6", "1",
-                        "Grocery", "🛒", "#EC4899"));
+                        "Grocery", "🛒", "#EC4899", now));
                 categoryDao.insert(new CategoryEntity("1.7", "1",
-                        "Milk", "🥛", "#E5E7EB"));
+                        "Milk", "🥛", "#E5E7EB", now));
                 categoryDao.insert(new CategoryEntity("1.8", "1",
-                        "Gym", "🏋️", "#38BDF8"));
+                        "Gym", "🏋️", "#38BDF8", now));
                 
                 // RECURRING
                 categoryDao.insert(new CategoryEntity("2", null,
-                        "Recurring", "🔁", "#A855F7"));
+                        "Recurring", "🔁", "#A855F7", now));
                 categoryDao.insert(new CategoryEntity("2.1", "2",
-                        "Rent", "🏠", "#38BDF8"));
+                        "Rent", "🏠", "#38BDF8", now));
                 categoryDao.insert(new CategoryEntity("2.2", "2",
-                        "Phone Recharge", "📱", "#22D3EE"));
+                        "Phone Recharge", "📱", "#22D3EE", now));
                 categoryDao.insert(new CategoryEntity("2.3", "2",
-                        "Electricity Bill", "💡", "#FACC15"));
+                        "Electricity Bill", "💡", "#FACC15", now));
                 categoryDao.insert(new CategoryEntity("2.4", "2",
-                        "Gym Membership", "🏋️", "#06B6D4"));
+                        "Gym Membership", "🏋️", "#06B6D4", now));
                 categoryDao.insert(new CategoryEntity("2.5", "2",
-                        "Water", "🚰", "#3B82F6"));
+                        "Water", "🚰", "#3B82F6", now));
                 categoryDao.insert(new CategoryEntity("2.6", "2",
-                        "Gas", "🔥", "#F97316"));
+                        "Gas", "🔥", "#F97316", now));
                 
                 // MONEY TRANSFER
                 categoryDao.insert(new CategoryEntity("3", null,
-                        "Money Transfer", "💸", "#22D3EE"));
+                        "Money Transfer", "💸", "#22D3EE", now));
                 categoryDao.insert(new CategoryEntity("3.1", "3",
-                        "Dad", "👨", "#6366F1"));
+                        "Dad", "👨", "#6366F1", now));
                 categoryDao.insert(new CategoryEntity("3.2", "3",
-                        "Mom", "👩", "#EC4899"));
+                        "Mom", "👩", "#EC4899", now));
                 categoryDao.insert(new CategoryEntity("3.3", "3",
-                        "Sister", "👧", "#F472B6"));
+                        "Sister", "👧", "#F472B6", now));
 
                 // NEW PURCHASE
                 categoryDao.insert(new CategoryEntity("4", null,
-                        "New Purchase", "🎁", "#8B5CF6"));
+                        "New Purchase", "🎁", "#8B5CF6", now));
 
                 // Commute
                 categoryDao.insert(new CategoryEntity("5", null,
-                        "Commute", "🚗", "#0EA5E9"));
+                        "Commute", "🚗", "#0EA5E9", now));
 
                 // ENTERTAINMENT
                 categoryDao.insert(new CategoryEntity("6", null,
-                        "Entertainment", "🎮", "#D946EF"));
+                        "Entertainment", "🎮", "#D946EF", now));
                 categoryDao.insert(new CategoryEntity("6.1", "6",
-                        "Activity", "🎯", "#A855F7"));
+                        "Activity", "🎯", "#A855F7", now));
                 categoryDao.insert(new CategoryEntity("6.2", "6",
-                        "Transport", "🚕", "#F59E0B"));
+                        "Transport", "🚕", "#F59E0B", now));
 
                 // MISCELLANEOUS
                 categoryDao.insert(new CategoryEntity("7", null,
-                        "Miscellaneous", "📦", "#6B7280"));
+                        "Miscellaneous", "📦", "#6B7280", now));
 
                 // Medical
                 categoryDao.insert(new CategoryEntity("8", null,
-                        "Medical", "⚕️", "#0EA5E9"));
+                        "Medical", "⚕️", "#0EA5E9", now));
                 categoryDao.insert(new CategoryEntity("8.1", "8",
-                        "Medicines", "💊", "#F97316"));
+                        "Medicines", "💊", "#F97316", now));
                 categoryDao.insert(new CategoryEntity("8.2", "8",
-                        "Doctor Fees", "🩺", "#14B8A6"));
+                        "Doctor Fees", "🩺", "#14B8A6", now));
 
                 // VACATIONS
                 categoryDao.insert(new CategoryEntity("9", null,
-                        "Vacations", "🏖️", "#0EA5E9"));
+                        "Vacations", "🏖️", "#0EA5E9", now));
                 categoryDao.insert(new CategoryEntity("9.1", "9",
-                        "Conveyance", "✈️", "#14B8A6"));
+                        "Conveyance", "✈️", "#14B8A6", now));
                 categoryDao.insert(new CategoryEntity("9.2", "9",
-                        "Cuisine", "🍜", "#F97316"));
+                        "Cuisine", "🍜", "#F97316", now));
                 categoryDao.insert(new CategoryEntity("9.3", "9",
-                        "Accommodation", "🏨", "#6366F1"));
+                        "Accommodation", "🏨", "#6366F1", now));
                 categoryDao.insert(new CategoryEntity("9.4", "9",
-                        "Shopping", "🛍️", "#EC4899"));
+                        "Shopping", "🛍️", "#EC4899", now));
                 categoryDao.insert(new CategoryEntity("9.5", "9",
-                        "Extra", "🎒", "#A1A1AA"));
+                        "Extra", "🎒", "#A1A1AA", now));
                 cacheManager.setDirty(true);
                 refreshCategoryTree();
             }
