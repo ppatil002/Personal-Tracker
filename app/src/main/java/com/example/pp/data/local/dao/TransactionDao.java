@@ -13,6 +13,7 @@ import androidx.sqlite.db.SupportSQLiteQuery;
 
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.local.entity.TransactionTagCrossRef;
+import com.example.pp.data.local.model.SyncStats;
 import com.example.pp.features.analytics.model.MonthlyExpense;
 
 import java.util.ArrayList;
@@ -97,9 +98,20 @@ public interface TransactionDao {
     @Query("SELECT * FROM transaction_tag_cross_ref WHERE transaction_id = :txId AND tag_id = :tagId")
     TransactionTagCrossRef getTagCrossRefByIds(String txId, String tagId);
 
+    @Query("SELECT COUNT(*) FROM transactions")
+    int getTransactionCount();
+
+    @Query("SELECT COUNT(*) FROM transaction_tag_cross_ref")
+    int getTagCrossRefCount();
+
     @Transaction
-    default void upsertAll(List<TransactionEntity> cloudItems) {
-        if (cloudItems == null || cloudItems.isEmpty()) return;
+    default SyncStats upsertAll(List<TransactionEntity> cloudItems) {
+        SyncStats stats = new SyncStats("Transactions");
+        stats.previousCount = getTransactionCount();
+        if (cloudItems == null || cloudItems.isEmpty()) {
+            stats.finalCount = stats.previousCount;
+            return stats;
+        }
 
         List<TransactionEntity> localItems = getAllTransactionsList();
         Map<String, TransactionEntity> localMap = new HashMap<>();
@@ -121,11 +133,21 @@ public interface TransactionDao {
 
         if (!toInsert.isEmpty()) insertBatch(toInsert);
         if (!toUpdate.isEmpty()) updateBatch(toUpdate);
+
+        stats.inserted = toInsert.size();
+        stats.updated = toUpdate.size();
+        stats.finalCount = getTransactionCount();
+        return stats;
     }
 
     @Transaction
-    default void upsertAllTagCrossRefs(List<TransactionTagCrossRef> cloudItems) {
-        if (cloudItems == null || cloudItems.isEmpty()) return;
+    default SyncStats upsertAllTagCrossRefs(List<TransactionTagCrossRef> cloudItems) {
+        SyncStats stats = new SyncStats("Transaction Tags");
+        stats.previousCount = getTagCrossRefCount();
+        if (cloudItems == null || cloudItems.isEmpty()) {
+            stats.finalCount = stats.previousCount;
+            return stats;
+        }
 
         List<TransactionTagCrossRef> localItems = getAllTransactionTagCrossRefs();
         Map<String, TransactionTagCrossRef> localMap = new HashMap<>();
@@ -147,6 +169,11 @@ public interface TransactionDao {
 
         if (!toInsert.isEmpty()) insertBatchTagCrossRefs(toInsert);
         if (!toUpdate.isEmpty()) updateBatchTagCrossRefs(toUpdate);
+
+        stats.inserted = toInsert.size();
+        stats.updated = toUpdate.size();
+        stats.finalCount = getTagCrossRefCount();
+        return stats;
     }
 
     @Transaction

@@ -9,6 +9,7 @@ import androidx.room.Transaction;
 import androidx.room.Update;
 
 import com.example.pp.data.local.entity.CategoryEntity;
+import com.example.pp.data.local.model.SyncStats;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -54,9 +55,17 @@ public interface CategoryDao {
     @Query("SELECT MAX(CAST(category_id AS REAL)) FROM categories WHERE parent_category_id = :parentId")
     Double getMaxChildId(String parentId);
 
+    @Query("SELECT COUNT(*) FROM categories")
+    int getCount();
+
     @Transaction
-    default void upsertAll(List<CategoryEntity> cloudItems) {
-        if (cloudItems == null || cloudItems.isEmpty()) return;
+    default SyncStats upsertAll(List<CategoryEntity> cloudItems) {
+        SyncStats stats = new SyncStats("Categories");
+        stats.previousCount = getCount();
+        if (cloudItems == null || cloudItems.isEmpty()) {
+            stats.finalCount = stats.previousCount;
+            return stats;
+        }
 
         List<CategoryEntity> localItems = getAllCategoriesList();
         Map<String, CategoryEntity> localMap = new HashMap<>();
@@ -78,5 +87,10 @@ public interface CategoryDao {
 
         if (!toInsert.isEmpty()) insertBatch(toInsert);
         if (!toUpdate.isEmpty()) updateBatch(toUpdate);
+
+        stats.inserted = toInsert.size();
+        stats.updated = toUpdate.size();
+        stats.finalCount = getCount();
+        return stats;
     }
 }

@@ -9,10 +9,12 @@ import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.work.WorkInfo;
 
 import com.example.pp.R;
 import com.example.pp.data.local.entity.BackgroundJobLog;
@@ -35,6 +37,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 public class BackupActivity extends AppCompatActivity {
 
@@ -87,7 +90,8 @@ public class BackupActivity extends AppCompatActivity {
             if (GoogleDriveClient.getInstance(this).isAuthorized()) {
                 LocalDate now = LocalDate.now();
                 int slot = now.get(WeekFields.of(Locale.getDefault()).weekOfYear()) % 4;
-                viewModel.runRestore("backup_slot_" + slot + ".enc");
+                UUID workId = viewModel.runRestore("backup_slot_" + slot + ".enc");
+                observeRestoreWork(workId);
             } else {
                 Toast.makeText(this, "Please sign in to Google Drive first", Toast.LENGTH_SHORT).show();
             }
@@ -96,6 +100,27 @@ public class BackupActivity extends AppCompatActivity {
         setupLogTable();
         GoogleDriveClient.getInstance(this).signInSilently(this, this::updateSignInStatus);
         viewModel.getLogs().observe(this, this::updateLogs);
+    }
+
+    private void observeRestoreWork(UUID workId) {
+        viewModel.getWorkManager().getWorkInfoByIdLiveData(workId).observe(this, workInfo -> {
+            if (workInfo != null && workInfo.getState().isFinished()) {
+                if (workInfo.getState() == WorkInfo.State.SUCCEEDED) {
+                    String summary = workInfo.getOutputData().getString("IMPORT_SUMMARY");
+                    showRestoreSummaryDialog(summary);
+                } else {
+                    Toast.makeText(this, "Restore failed. Check logs.", Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+    }
+
+    private void showRestoreSummaryDialog(String summary) {
+        new AlertDialog.Builder(this)
+                .setTitle("Restore Complete")
+                .setMessage(summary != null ? summary : "Database updated successfully.")
+                .setPositiveButton("OK", null)
+                .show();
     }
 
     private void updateSignInStatus() {

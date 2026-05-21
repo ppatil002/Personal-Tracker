@@ -9,6 +9,7 @@ import androidx.room.Transaction;
 import androidx.room.Update;
 
 import com.example.pp.data.local.entity.TagEntity;
+import com.example.pp.data.local.model.SyncStats;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,9 +46,17 @@ public interface TagDao {
     @Query("SELECT MAX(CAST(tag_id AS INTEGER)) FROM tags")
     Integer getMaxTagId();
 
+    @Query("SELECT COUNT(*) FROM tags")
+    int getCount();
+
     @Transaction
-    default void upsertAll(List<TagEntity> cloudItems) {
-        if (cloudItems == null || cloudItems.isEmpty()) return;
+    default SyncStats upsertAll(List<TagEntity> cloudItems) {
+        SyncStats stats = new SyncStats("Tags");
+        stats.previousCount = getCount();
+        if (cloudItems == null || cloudItems.isEmpty()) {
+            stats.finalCount = stats.previousCount;
+            return stats;
+        }
 
         List<TagEntity> localItems = getAllTagsList();
         Map<String, TagEntity> localMap = new HashMap<>();
@@ -69,5 +78,10 @@ public interface TagDao {
 
         if (!toInsert.isEmpty()) insertBatch(toInsert);
         if (!toUpdate.isEmpty()) updateBatch(toUpdate);
+
+        stats.inserted = toInsert.size();
+        stats.updated = toUpdate.size();
+        stats.finalCount = getCount();
+        return stats;
     }
 }

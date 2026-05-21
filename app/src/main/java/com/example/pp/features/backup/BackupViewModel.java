@@ -16,6 +16,7 @@ import com.example.pp.features.backup.worker.DataImportWorker;
 import com.example.pp.infra.background.MainOrchestratorWorker;
 
 import java.util.List;
+import java.util.UUID;
 
 public class BackupViewModel extends AndroidViewModel {
 
@@ -37,7 +38,7 @@ public class BackupViewModel extends AndroidViewModel {
         workManager.enqueue(backupRequest);
     }
 
-    public void runRestore(String remoteFileName) {
+    public UUID runRestore(String remoteFileName) {
         androidx.work.Data data = new androidx.work.Data.Builder()
                 .putString("REMOTE_FILE_NAME", remoteFileName)
                 .build();
@@ -51,5 +52,11 @@ public class BackupViewModel extends AndroidViewModel {
                    .then(decryptTask)
                    .then(importTask)
                    .enqueue();
+
+        return importTask.getId();
+    }
+    
+    public WorkManager getWorkManager() {
+        return workManager;
     }
 }

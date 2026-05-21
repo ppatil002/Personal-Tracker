@@ -3,15 +3,19 @@ package com.example.pp.features.backup.worker;
 import android.content.Context;
 
 import androidx.annotation.NonNull;
+import androidx.work.Data;
 import androidx.work.WorkerParameters;
 
 import com.example.pp.data.local.AppDatabase;
+import com.example.pp.data.local.model.SyncStats;
 import com.example.pp.features.backup.model.BackupData;
 import com.example.pp.infra.background.BaseFeatureWorker;
 import com.google.gson.Gson;
 
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.List;
 
 public class DataImportWorker extends BaseFeatureWorker {
 
@@ -43,36 +47,31 @@ public class DataImportWorker extends BaseFeatureWorker {
             }
 
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            List<SyncStats> allStats = new ArrayList<>();
+
             db.runInTransaction(() -> {
-                // 1. Import Categories
-                if (backupData.categories != null && !backupData.categories.isEmpty()) {
-                    db.categoryDao().upsertAll(backupData.categories);
-                }
-                
-                // 2. Import Tags
-                if (backupData.tags != null && !backupData.tags.isEmpty()) {
-                    db.tagDao().upsertAll(backupData.tags);
-                }
-
-                // 3. Import Transactions
-                if (backupData.transactions != null && !backupData.transactions.isEmpty()) {
-                    db.transactionDao().upsertAll(backupData.transactions);
-                }
-
-                // 4. Import Cross-refs
-                if (backupData.transactionTags != null && !backupData.transactionTags.isEmpty()) {
-                    db.transactionDao().upsertAllTagCrossRefs(backupData.transactionTags);
-                }
+                allStats.add(db.categoryDao().upsertAll(backupData.categories));
+                allStats.add(db.tagDao().upsertAll(backupData.tags));
+                allStats.add(db.transactionDao().upsertAll(backupData.transactions));
+                allStats.add(db.transactionDao().upsertAllTagCrossRefs(backupData.transactionTags));
             });
 
-            updateLog("SUCCESS", "IMPORT_COMPLETE", "Database successfully updated from backup.");
+            StringBuilder summary = new StringBuilder("Restore Summary:\n");
+            for (SyncStats s : allStats) {
+                summary.append(s.toString()).append("\n\n");
+            }
+
+            updateLog("SUCCESS", "IMPORT_COMPLETE", summary.toString());
             
-            // Cleanup the decrypted file
             if (restoredFile.exists()) {
                 restoredFile.delete();
             }
+            
+            Data outputData = new Data.Builder()
+                    .putString("IMPORT_SUMMARY", summary.toString())
+                    .build();
 
-            return Result.success();
+            return Result.success(outputData);
 
         } catch (Exception e) {
             updateLog("FAILED", "IMPORT_ERROR", "Import failed: " + e.getMessage());
