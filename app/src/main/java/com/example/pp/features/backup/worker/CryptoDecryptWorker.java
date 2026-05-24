@@ -7,7 +7,7 @@ import androidx.work.Data;
 import androidx.work.WorkerParameters;
 
 import com.example.pp.BuildConfig;
-import com.example.pp.infra.background.BaseFeatureWorker;
+import com.example.pp.core.orchestrator.BaseFeatureWorker;
 
 import java.io.File;
 import java.io.FileInputStream;

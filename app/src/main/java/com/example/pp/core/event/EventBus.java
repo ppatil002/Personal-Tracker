@@ -3,6 +3,8 @@ package com.example.pp.core.event;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.pp.core.enums.AppEvent;
+
 /**
  * A simple centralized event bus using LiveData for the observer/publisher pattern.
  */
@@ -27,13 +29,5 @@ public class EventBus {
 
     public LiveData<AppEvent> observe() {
         return eventPublisher;
-    }
-
-    public enum AppEvent {
-        CATEGORIES_LOADED_FROM_DB,
-        TAGS_LOADED_FROM_DB,
-        DATABASE_SEEDING_COMPLETED,
-        SYNC_COMPLETED,
-        CACHE_REFRESHED
     }
 }

@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.core.cache.CategoryCacheManager;
+import com.example.pp.core.enums.AppEvent;
 import com.example.pp.core.event.EventBus;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
@@ -45,7 +46,7 @@ public class CategoryRepository {
                 categoryTreeLiveData.postValue(tree);
 
                 // Publish completion event
-                EventBus.getInstance().publish(EventBus.AppEvent.CATEGORIES_LOADED_FROM_DB);
+                EventBus.getInstance().publish(AppEvent.CATEGORIES_LOADED_FROM_DB);
             }
         });
     }

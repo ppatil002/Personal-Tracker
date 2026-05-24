@@ -10,8 +10,8 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.R;
+import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.entity.TransactionEntity;
-import com.example.pp.features.analytics.model.PeriodType;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

@@ -8,6 +8,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.PPApplication;
+import com.example.pp.core.enums.PeriodType;
+import com.example.pp.core.enums.TableColumnType;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.data.local.entity.TransactionEntity;
@@ -21,7 +23,6 @@ import com.example.pp.features.analytics.model.CategoryExpense;
 import com.example.pp.features.analytics.model.CategoryTrendData;
 import com.example.pp.features.analytics.model.DailyExpense;
 import com.example.pp.features.analytics.model.MonthlyExpense;
-import com.example.pp.features.analytics.model.PeriodType;
 import com.example.pp.features.category.model.Tag;
 import com.example.pp.ui.components.table.model.TableCell;
 import com.example.pp.ui.components.table.model.TableColumn;
@@ -272,9 +273,9 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
             // Columns: Month + Categories
             List<TableColumn> cols = new ArrayList<>();
-            cols.add(new TableColumn("month", "Month", TableColumn.ColumnType.TEXT));
+            cols.add(new TableColumn("month", "Month", TableColumnType.TEXT));
             for (CategoryEntity root : roots) {
-                cols.add(new TableColumn(root.getCategoryId(), root.getName(), TableColumn.ColumnType.AMOUNT));
+                cols.add(new TableColumn(root.getCategoryId(), root.getName(), TableColumnType.AMOUNT));
             }
 
             // Data: Month Index (0-11) -> Root Category Id -> Amount
@@ -301,11 +302,11 @@ public class AnalyticsViewModel extends AndroidViewModel {
             List<TableRow> rows = new ArrayList<>();
             for (int m = 0; m < 12; m++) {
                 List<TableCell> cells = new ArrayList<>();
-                cells.add(new TableCell("month", monthNames[m], m, TableColumn.ColumnType.TEXT));
+                cells.add(new TableCell("month", monthNames[m], m, TableColumnType.TEXT));
                 for (int c = 0; c < roots.size(); c++) {
                     double val = matrix[m][c];
                     String displayVal = val > 0 ? String.format(Locale.getDefault(), "%.0f", val) : "";
-                    TableCell cell = new TableCell(roots.get(c).getCategoryId(), displayVal, val, TableColumn.ColumnType.AMOUNT);
+                    TableCell cell = new TableCell(roots.get(c).getCategoryId(), displayVal, val, TableColumnType.AMOUNT);
                     
                     if (val > 0 && maxVal > 0) {
                         float ratio = (float) (val / maxVal);
@@ -394,9 +395,9 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
             // Map subcategories to column keys
             List<TableColumn> cols = new ArrayList<>();
-            cols.add(new TableColumn("date", type == PeriodType.YEAR ? "Month" : "Date", TableColumn.ColumnType.TEXT));
+            cols.add(new TableColumn("date", type == PeriodType.YEAR ? "Month" : "Date", TableColumnType.TEXT));
             for (CategoryEntity sc : subCats) {
-                cols.add(new TableColumn(sc.getCategoryId(), sc.getName(), TableColumn.ColumnType.AMOUNT));
+                cols.add(new TableColumn(sc.getCategoryId(), sc.getName(), TableColumnType.AMOUNT));
             }
 
             // Group by date -> subcategory -> total
@@ -431,13 +432,13 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
             for (Map.Entry<Long, Map<String, Double>> entry : matrix.entrySet()) {
                 List<TableCell> cells = new ArrayList<>();
-                cells.add(new TableCell("date", sdf.format(entry.getKey()), entry.getKey(), TableColumn.ColumnType.TEXT));
+                cells.add(new TableCell("date", sdf.format(entry.getKey()), entry.getKey(), TableColumnType.TEXT));
                 
                 boolean hasData = false;
                 for (CategoryEntity sc : subCats) {
                     Double amt = entry.getValue().get(sc.getCategoryId());
                     String val = (amt != null && amt != 0) ? String.format(Locale.getDefault(), "%.0f", amt) : "";
-                    cells.add(new TableCell(sc.getCategoryId(), val, amt, TableColumn.ColumnType.AMOUNT));
+                    cells.add(new TableCell(sc.getCategoryId(), val, amt, TableColumnType.AMOUNT));
                     if (amt != null && amt != 0) {
                         hasData = true;
                         totals.put(sc.getCategoryId(), totals.getOrDefault(sc.getCategoryId(), 0.0) + amt);
@@ -450,17 +451,17 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
             // Add Footer Row (Total)
             List<TableCell> footerCells = new ArrayList<>();
-            footerCells.add(new TableCell("date", "Total", null, TableColumn.ColumnType.TEXT));
+            footerCells.add(new TableCell("date", "Total", null, TableColumnType.TEXT));
             for (CategoryEntity sc : subCats) {
                 Double total = totals.get(sc.getCategoryId());
                 String val = (total != null && total != 0) ? String.format(Locale.getDefault(), "%.0f", total) : "0";
-                footerCells.add(new TableCell(sc.getCategoryId(), val, total, TableColumn.ColumnType.AMOUNT));
+                footerCells.add(new TableCell(sc.getCategoryId(), val, total, TableColumnType.AMOUNT));
             }
             rows.add(new TableRow("footer", footerCells, null));
 
             // Add Merged Category Total Row
             List<TableCell> groupFooterCells = new ArrayList<>();
-            groupFooterCells.add(new TableCell("date", "", null, TableColumn.ColumnType.TEXT));
+            groupFooterCells.add(new TableCell("date", "", null, TableColumnType.TEXT));
             
             if ("all".equals(rootCategoryId)) {
                 // For "All", we have groups
@@ -474,7 +475,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
                         groupTotal += totals.getOrDefault(sc.getCategoryId(), 0.0);
                     }
                     String val = groupTotal != 0 ? String.format(Locale.getDefault(), "%.0f", groupTotal) : "0";
-                    TableCell groupCell = new TableCell(firstSubCatId, val, groupTotal, TableColumn.ColumnType.AMOUNT);
+                    TableCell groupCell = new TableCell(firstSubCatId, val, groupTotal, TableColumnType.AMOUNT);
                     groupCell.setColSpan(group.span);
                     groupFooterCells.add(groupCell);
                 }
@@ -484,7 +485,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
                 for (Double v : totals.values()) totalAll += v;
                 String val = totalAll != 0 ? String.format(Locale.getDefault(), "%.0f", totalAll) : "0";
                 String firstSubCatId = !subCats.isEmpty() ? subCats.get(0).getCategoryId() : "unknown";
-                TableCell groupCell = new TableCell(firstSubCatId, val, totalAll, TableColumn.ColumnType.AMOUNT);
+                TableCell groupCell = new TableCell(firstSubCatId, val, totalAll, TableColumnType.AMOUNT);
                 groupCell.setColSpan(subCats.size());
                 groupFooterCells.add(groupCell);
             }
@@ -495,9 +496,9 @@ public class AnalyticsViewModel extends AndroidViewModel {
                 double grandTotal = 0;
                 for (Double v : totals.values()) grandTotal += v;
                 List<TableCell> grandFooterCells = new ArrayList<>();
-                grandFooterCells.add(new TableCell("date", "Grand Total", null, TableColumn.ColumnType.TEXT));
+                grandFooterCells.add(new TableCell("date", "Grand Total", null, TableColumnType.TEXT));
                 String firstSubCatId = !subCats.isEmpty() ? subCats.get(0).getCategoryId() : "unknown";
-                TableCell grandCell = new TableCell(firstSubCatId, String.format(Locale.getDefault(), "%.0f", grandTotal), grandTotal, TableColumn.ColumnType.AMOUNT);
+                TableCell grandCell = new TableCell(firstSubCatId, String.format(Locale.getDefault(), "%.0f", grandTotal), grandTotal, TableColumnType.AMOUNT);
                 grandCell.setColSpan(subCats.size());
                 grandFooterCells.add(grandCell);
                 rows.add(new TableRow("grand_footer", grandFooterCells, null));

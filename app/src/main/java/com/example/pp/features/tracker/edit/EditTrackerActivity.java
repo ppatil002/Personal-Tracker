@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.pp.PPApplication;
 import com.example.pp.R;
+import com.example.pp.core.enums.AppEvent;
 import com.example.pp.core.event.EventBus;
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.domain.model.CategoryTreeNode;
@@ -92,7 +93,7 @@ public class EditTrackerActivity extends AppCompatActivity {
         });
 
         EventBus.getInstance().observe().observe(this, event -> {
-            if (event == EventBus.AppEvent.CATEGORIES_LOADED_FROM_DB) {
+            if (event == AppEvent.CATEGORIES_LOADED_FROM_DB) {
                 Toast.makeText(this, "Categories loaded from Database", Toast.LENGTH_SHORT).show();
             }
         });

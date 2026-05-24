@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.core.cache.TagCacheManager;
+import com.example.pp.core.enums.AppEvent;
 import com.example.pp.core.event.EventBus;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
@@ -44,7 +45,7 @@ public class TagRepository {
                 cacheManager.updateCache(tags);
                 tagsLiveData.postValue(tags);
                 
-                EventBus.getInstance().publish(EventBus.AppEvent.TAGS_LOADED_FROM_DB);
+                EventBus.getInstance().publish(AppEvent.TAGS_LOADED_FROM_DB);
             }
         });
     }

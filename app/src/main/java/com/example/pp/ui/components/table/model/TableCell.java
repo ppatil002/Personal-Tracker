@@ -1,6 +1,6 @@
 package com.example.pp.ui.components.table.model;
 
-import com.example.pp.ui.components.table.model.TableColumn.ColumnType;
+import com.example.pp.core.enums.TableColumnType;
 
 public class TableCell {
     private String columnKey;
@@ -9,11 +9,11 @@ public class TableCell {
     private Integer color;
     private String emoji;
     private boolean editable;
-    private ColumnType cellType;
+    private TableColumnType cellType;
     private int colSpan = 1;
     private Integer backgroundColor;
 
-    public TableCell(String columnKey, String value, Object rawValue, ColumnType cellType) {
+    public TableCell(String columnKey, String value, Object rawValue, TableColumnType cellType) {
         this.columnKey = columnKey;
         this.value = value;
         this.rawValue = rawValue;
@@ -22,7 +22,7 @@ public class TableCell {
         this.colSpan = 1;
     }
 
-    public TableCell(String columnKey, String value, Object rawValue, ColumnType cellType, int colSpan) {
+    public TableCell(String columnKey, String value, Object rawValue, TableColumnType cellType, int colSpan) {
         this(columnKey, value, rawValue, cellType);
         this.colSpan = colSpan;
     }
@@ -46,8 +46,8 @@ public class TableCell {
     public boolean isEditable() { return editable; }
     public void setEditable(boolean editable) { this.editable = editable; }
 
-    public ColumnType getCellType() { return cellType; }
-    public void setCellType(ColumnType cellType) { this.cellType = cellType; }
+    public TableColumnType getCellType() { return cellType; }
+    public void setCellType(TableColumnType cellType) { this.cellType = cellType; }
 
     public int getColSpan() { return colSpan; }
     public void setColSpan(int colSpan) { this.colSpan = colSpan; }

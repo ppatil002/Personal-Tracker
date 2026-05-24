@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.work.WorkInfo;
 
 import com.example.pp.R;
+import com.example.pp.core.enums.TableColumnType;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.remote.GoogleDriveClient;
 import com.example.pp.ui.components.table.adapter.GenericTableAdapter;
@@ -145,13 +146,13 @@ public class BackupActivity extends AppCompatActivity {
         TableConfig config = new TableConfig();
         adapter = new GenericTableAdapter(config);
         
-        TableColumn timeCol = new TableColumn("time", "Time", TableColumn.ColumnType.TEXT);
+        TableColumn timeCol = new TableColumn("time", "Time", TableColumnType.TEXT);
         timeCol.setWidthWeight(2);
         
-        TableColumn stepCol = new TableColumn("step", "Step", TableColumn.ColumnType.TEXT);
+        TableColumn stepCol = new TableColumn("step", "Step", TableColumnType.TEXT);
         stepCol.setWidthWeight(3);
         
-        TableColumn statusCol = new TableColumn("status", "Status", TableColumn.ColumnType.TEXT);
+        TableColumn statusCol = new TableColumn("status", "Status", TableColumnType.TEXT);
         statusCol.setWidthWeight(2);
 
         List<TableColumn> columns = Arrays.asList(timeCol, stepCol, statusCol);
@@ -165,15 +166,15 @@ public class BackupActivity extends AppCompatActivity {
 
         for (BackgroundJobLog log : logs) {
             List<TableCell> cells = new ArrayList<>();
-            cells.add(new TableCell("time", sdf.format(new Date(log.getLastUpdatedTimestamp())), null, TableColumn.ColumnType.TEXT));
-            cells.add(new TableCell("step", log.getCurrentStep(), null, TableColumn.ColumnType.TEXT));
+            cells.add(new TableCell("time", sdf.format(new Date(log.getLastUpdatedTimestamp())), null, TableColumnType.TEXT));
+            cells.add(new TableCell("step", log.getCurrentStep(), null, TableColumnType.TEXT));
             
             String statusEmoji = "⚙️";
             if ("SUCCESS".equals(log.getStatus())) statusEmoji = "✅";
             else if ("FAILED".equals(log.getStatus())) statusEmoji = "❌";
             else if ("RUNNING".equals(log.getStatus())) statusEmoji = "🕒";
 
-            cells.add(new TableCell("status", statusEmoji + " " + log.getStatus(), null, TableColumn.ColumnType.TEXT));
+            cells.add(new TableCell("status", statusEmoji + " " + log.getStatus(), null, TableColumnType.TEXT));
             
             rows.add(new TableRow(log.getJobId() + log.getLastUpdatedTimestamp(), cells, log));
         }

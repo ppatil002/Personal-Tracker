@@ -5,12 +5,12 @@ import android.database.Cursor;
 
 import androidx.sqlite.db.SupportSQLiteQuery;
 
+import com.example.pp.core.enums.TableColumnType;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.CommonDao;
 import com.example.pp.data.local.query.TableQueryBuilder;
 import com.example.pp.ui.components.table.model.TableCell;
-import com.example.pp.ui.components.table.model.TableColumn;
 import com.example.pp.ui.components.table.model.TableQuery;
 import com.example.pp.ui.components.table.model.TableRow;
 
@@ -53,7 +53,7 @@ public class GenericTableRepository {
                             if (val == null) val = "NULL";
                             
                             // Map to generic TableCell
-                            cells.add(new TableCell(colArray[i], val, val, TableColumn.ColumnType.TEXT));
+                            cells.add(new TableCell(colArray[i], val, val, TableColumnType.TEXT));
                         }
                         rows.add(new TableRow(String.valueOf(rowIdCount++), cells, null));
                     }

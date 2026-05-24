@@ -1,14 +1,13 @@
 package com.example.pp.features.backup.worker;
 
 import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.WorkerParameters;
 
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.features.backup.model.BackupData;
-import com.example.pp.infra.background.BaseFeatureWorker;
+import com.example.pp.core.orchestrator.BaseFeatureWorker;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -24,7 +23,8 @@ public class DataExportWorker extends BaseFeatureWorker {
     @Override
     public Result doWork() {
         updateLog("RUNNING", "EXPORTING", "Serializing local SQLite tables to JSON stream.");
-        
+        updateTaskProgress(33);
+
         try {
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
             
@@ -43,16 +43,18 @@ public class DataExportWorker extends BaseFeatureWorker {
                 writer.write(json);
             }
 
-            updateLog("SUCCESS", "EXPORT_COMPLETE", "Local data exported successfully to " + exportFile.getAbsolutePath());
+            updateLog("SUCCESS", "EXPORT_COMPLETE", "Local data exported successfully.");
             
             Data outputData = new Data.Builder()
                     .putString("RAW_FILE_PATH", exportFile.getAbsolutePath())
+                    .putString("TASK_ID", taskId)
                     .build();
             
             return Result.success(outputData);
             
         } catch (Exception e) {
-            updateLog("FAILED", "EXPORT_ERROR", "Error during data export: " + e.getMessage());
+            updateLog("FAILED", "EXPORT_ERROR", e.getMessage());
+            failTask(e.getMessage());
             return Result.failure();
         }
     }

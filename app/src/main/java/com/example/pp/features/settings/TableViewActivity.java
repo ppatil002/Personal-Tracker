@@ -18,6 +18,8 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.PPApplication;
 import com.example.pp.R;
+import com.example.pp.core.enums.TableAlignment;
+import com.example.pp.core.enums.TableColumnType;
 import com.example.pp.data.repository.GenericTableRepository;
 import com.example.pp.ui.components.table.adapter.GenericTableAdapter;
 import com.example.pp.ui.components.table.model.TableColumn;
@@ -102,9 +104,9 @@ public class TableViewActivity extends AppCompatActivity {
                 // Build Column Models if not yet built
                 if (columns.isEmpty()) {
                     for (String name : columnNames) {
-                        TableColumn col = new TableColumn(name, name, TableColumn.ColumnType.TEXT);
+                        TableColumn col = new TableColumn(name, name, TableColumnType.TEXT);
                         col.setWidthWeight(1.0f);
-                        col.setAlignment(TableColumn.Alignment.CENTER);
+                        col.setAlignment(TableAlignment.CENTER);
                         columns.add(col);
                     }
                     adapter.setColumns(columns);

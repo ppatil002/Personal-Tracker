@@ -1,4 +1,4 @@
-package com.example.pp.infra.background;
+package com.example.pp.core.orchestrator;
 
 import android.app.Notification;
 import android.app.NotificationChannel;
@@ -13,22 +13,32 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.example.pp.R;
+import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.BackgroundJobLogDao;
+import com.example.pp.data.local.dao.TaskDao;
 import com.example.pp.data.local.entity.BackgroundJobLog;
+import com.example.pp.data.local.entity.TaskDefinition;
+import com.example.pp.data.local.entity.TaskState;
 
 public abstract class BaseFeatureWorker extends Worker {
 
     protected final BackgroundJobLogDao logDao;
+    protected final TaskDao taskDao;
     protected final String jobId;
+    protected final String taskId;
+
     private static final String CHANNEL_ID = "BG_SYNC_CHANNEL";
-    private static final int NOTIFICATION_ID = 1001;
+    private static final int NOTIFICATION_ID = 2001;
 
     public BaseFeatureWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
-        this.logDao = AppDatabase.getInstance(context).backgroundJobLogDao();
+        AppDatabase db = AppDatabase.getInstance(context);
+        this.logDao = db.backgroundJobLogDao();
+        this.taskDao = db.taskDao();
         this.jobId = params.getInputData().getString("EXECUTION_SESSION_ID") != null ? 
                      params.getInputData().getString("EXECUTION_SESSION_ID") : getId().toString();
+        this.taskId = params.getInputData().getString("TASK_ID");
     }
 
     protected void updateLog(String status, String step, String message) {
@@ -43,14 +53,53 @@ public abstract class BaseFeatureWorker extends Worker {
         logDao.insert(log);
     }
 
+    protected void updateTaskProgress(int progress) {
+        if (taskId != null) {
+            TaskState state = taskDao.getStateForTask(taskId);
+            if (state != null) {
+                state.setProgress(progress);
+                taskDao.updateState(state);
+            }
+        }
+    }
+
+    protected void completeTask() {
+        if (taskId != null) {
+            TaskState state = taskDao.getStateForTask(taskId);
+            TaskDefinition def = taskDao.getDefinitionById(taskId);
+            if (state != null && def != null) {
+                long now = System.currentTimeMillis();
+                state.setCurrentState(TaskStatus.COMPLETED);
+                state.setRunning(false);
+                state.setLastRunTime(now);
+                state.setNextRunTime(now + def.getRepeatInterval());
+                state.setProgress(100);
+                state.setLastFailureReason(null);
+                taskDao.updateState(state);
+            }
+        }
+    }
+
+    protected void failTask(String reason) {
+        if (taskId != null) {
+            TaskState state = taskDao.getStateForTask(taskId);
+            if (state != null) {
+                state.setCurrentState(TaskStatus.FAILED);
+                state.setRunning(false);
+                state.setLastFailureReason(reason);
+                taskDao.updateState(state);
+            }
+        }
+    }
+
     protected ForegroundInfo createForegroundInfo(String taskName, String currentStep, int statusStyle) {
         Context ctx = getApplicationContext();
         createNotificationChannel();
 
         Notification notification = new NotificationCompat.Builder(ctx, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_launcher_foreground) // Fallback icon
-                .setContentTitle("PP Tracker Ecosystem Engine")
-                .setContentText("Running: " + taskName + " [" + currentStep + "]")
+                .setSmallIcon(R.drawable.ic_cloud_upload)
+                .setContentTitle("Task Engine: " + taskName)
+                .setContentText("[" + currentStep + "] in progress...")
                 .setPriority(NotificationCompat.PRIORITY_LOW)
                 .setColor(statusStyle == 1 ? Color.parseColor("#22D3EE") : Color.parseColor("#B3B3C3"))
                 .setOngoing(statusStyle == 1)
@@ -62,7 +111,7 @@ public abstract class BaseFeatureWorker extends Worker {
     private void createNotificationChannel() {
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,
-                "Background Sync",
+                "Background Tasks",
                 NotificationManager.IMPORTANCE_LOW
         );
         NotificationManager manager = getApplicationContext().getSystemService(NotificationManager.class);

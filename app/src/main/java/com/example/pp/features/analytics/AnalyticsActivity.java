@@ -23,6 +23,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.MainActivity;
 import com.example.pp.R;
+import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.features.analytics.adapter.CategoryExpenseAdapter;
 import com.example.pp.features.analytics.adapter.TransactionAdapter;
@@ -31,7 +32,6 @@ import com.example.pp.features.analytics.model.AnalyticsSummary;
 import com.example.pp.features.analytics.model.CategoryExpense;
 import com.example.pp.features.analytics.model.CategoryTrendData;
 import com.example.pp.features.analytics.model.DailyExpense;
-import com.example.pp.features.analytics.model.PeriodType;
 import com.example.pp.features.category.model.Tag;
 import com.example.pp.features.settings.MoreActivity;
 import com.example.pp.features.tracker.edit.EditTrackerActivity;
