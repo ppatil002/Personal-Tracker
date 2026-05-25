@@ -54,6 +54,9 @@ public class DataImportWorker extends BaseFeatureWorker {
                 allStats.add(db.tagDao().upsertAll(backupData.tags));
                 allStats.add(db.transactionDao().upsertAll(backupData.transactions));
                 allStats.add(db.transactionDao().upsertAllTagCrossRefs(backupData.transactionTags));
+                allStats.add(db.taskDao().upsertAllDefinitions(backupData.taskDefinitions));
+                allStats.add(db.taskDao().upsertAllStates(backupData.taskStates));
+                allStats.add(db.backgroundJobLogDao().upsertAll(backupData.backgroundJobLogs));
             });
 
             StringBuilder summary = new StringBuilder("Restore Summary:\n");

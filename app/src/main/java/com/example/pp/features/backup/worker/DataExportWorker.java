@@ -32,7 +32,10 @@ public class DataExportWorker extends BaseFeatureWorker {
                 db.categoryDao().getAllCategoriesList(),
                 db.tagDao().getAllTagsList(),
                 db.transactionDao().getAllTransactionsList(),
-                db.transactionDao().getAllTransactionTagCrossRefs()
+                db.transactionDao().getAllTransactionTagCrossRefs(),
+                db.taskDao().getAllDefinitions(),
+                db.taskDao().getAllStates(),
+                db.backgroundJobLogDao().getAllLogsList()
             );
 
             Gson gson = new Gson();

@@ -12,9 +12,13 @@ import com.example.pp.core.enums.TaskType;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.core.enums.TaskStatus;
+import com.example.pp.data.local.model.SyncStats;
 
 import androidx.lifecycle.LiveData;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Dao
 public interface TaskDao {
@@ -74,5 +78,106 @@ public interface TaskDao {
                 entityColumn = "task_id"
         )
         public TaskState state;
+    }
+
+    @Query("SELECT * FROM task_definitions")
+    List<TaskDefinition> getAllDefinitions();
+
+    @Query("SELECT * FROM task_states")
+    List<TaskState> getAllStates();
+
+    @Query("SELECT COUNT(*) FROM task_definitions")
+    int getDefinitionsCount();
+
+    @Query("SELECT COUNT(*) FROM task_states")
+    int getStatesCount();
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    void insertDefinitionsBatch(List<TaskDefinition> definitions);
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    void insertStatesBatch(List<TaskState> states);
+
+    @Update
+    void updateDefinitionsBatch(List<TaskDefinition> definitions);
+
+    @Update
+    void updateStatesBatch(List<TaskState> states);
+
+    @Transaction
+    default SyncStats upsertAllDefinitions(List<TaskDefinition> cloudItems) {
+        SyncStats stats = new SyncStats("Task Definitions");
+        stats.previousCount = getDefinitionsCount();
+        if (cloudItems == null || cloudItems.isEmpty()) {
+            stats.finalCount = stats.previousCount;
+            return stats;
+        }
+
+        List<TaskDefinition> localItems = getAllDefinitions();
+        Map<String, TaskDefinition> localMap = new HashMap<>();
+        for (TaskDefinition local : localItems) {
+            localMap.put(local.getTaskId(), local);
+        }
+
+        List<TaskDefinition> toInsert = new ArrayList<>();
+        List<TaskDefinition> toUpdate = new ArrayList<>();
+
+        for (TaskDefinition cloud : cloudItems) {
+            TaskDefinition local = localMap.get(cloud.getTaskId());
+            if (local == null) {
+                toInsert.add(cloud);
+            } else if (cloud.getUpdatedAt() > local.getUpdatedAt()) {
+                toUpdate.add(cloud);
+            }
+        }
+
+        if (!toInsert.isEmpty()) insertDefinitionsBatch(toInsert);
+        if (!toUpdate.isEmpty()) updateDefinitionsBatch(toUpdate);
+
+        stats.inserted = toInsert.size();
+        stats.updated = toUpdate.size();
+        stats.finalCount = getDefinitionsCount();
+        return stats;
+    }
+
+    @Transaction
+    default SyncStats upsertAllStates(List<TaskState> cloudItems) {
+        SyncStats stats = new SyncStats("Task States");
+        stats.previousCount = getStatesCount();
+        if (cloudItems == null || cloudItems.isEmpty()) {
+            stats.finalCount = stats.previousCount;
+            return stats;
+        }
+
+        List<TaskState> localItems = getAllStates();
+        Map<String, TaskState> localMap = new HashMap<>();
+        for (TaskState local : localItems) {
+            localMap.put(local.getTaskId(), local);
+        }
+
+        List<TaskState> toInsert = new ArrayList<>();
+        List<TaskState> toUpdate = new ArrayList<>();
+
+        for (TaskState cloud : cloudItems) {
+            TaskState local = localMap.get(cloud.getTaskId());
+            if (local == null) {
+                toInsert.add(cloud);
+            } else if (cloud.getLastRunTime() > local.getLastRunTime() 
+                    || cloud.getCurrentState() != local.getCurrentState()
+                    || cloud.getPausedAt() != local.getPausedAt()
+                    || cloud.getSnoozedUntil() != local.getSnoozedUntil()
+                    || cloud.getProgress() != local.getProgress()
+                    || cloud.isRunning() != local.isRunning()) {
+                toUpdate.add(cloud);
+            }
+        }
+
+        if (!toInsert.isEmpty()) insertStatesBatch(toInsert);
+        if (!toUpdate.isEmpty()) updateStatesBatch(toUpdate);
+
+        stats.inserted = toInsert.size();
+        stats.updated = toUpdate.size();
+        stats.finalCount = getStatesCount();
+        return stats;
     }
 }
