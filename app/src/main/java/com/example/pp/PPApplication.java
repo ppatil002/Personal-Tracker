@@ -7,6 +7,7 @@ import com.example.pp.data.repository.CategoryRepository;
 import com.example.pp.data.repository.GenericTableRepository;
 import com.example.pp.data.repository.TagRepository;
 import com.example.pp.data.repository.TransactionRepository;
+import com.jakewharton.threetenabp.AndroidThreeTen;
 
 public class PPApplication extends Application {
     private CategoryRepository categoryRepository;
@@ -18,6 +19,7 @@ public class PPApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
+        AndroidThreeTen.init(this);
         categoryRepository = new CategoryRepository(this);
         tagRepository = new TagRepository(this);
         transactionRepository = new TransactionRepository(this);

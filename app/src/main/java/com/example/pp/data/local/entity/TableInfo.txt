@@ -1,0 +1,60 @@
+1. Category Table (categories)
+- category_id (Primary Key)
+- parent_category_id
+- name
+- icon
+- colour
+
+2. Transaction Table (transactions)
+- transaction_id (Primary Key)
+- category_id (Foreign Key)
+- amount
+- transaction_date
+- notes
+- item
+- payment_method
+- transaction_type
+- created_timestamp
+
+3. Tag Table (tags)
+- tag_id (Primary Key)
+- name
+- colour
+
+4. Transaction_Tag Cross Reference Table (transaction_tag_cross_ref)
+- transaction_id (Foreign Key)
+- tag_id (Foreign Key)
+
+5. Background Job Log (background_job_log)
+- job_id (Primary Key)
+- worker_name
+- status (PENDING, RUNNING, SUCCESS, FAILED, STALLED)
+- current_step
+- log_message
+- last_updated_timestamp
+
+6. Task Definitions (task_definitions)
+- task_id (Primary Key)
+- task_type (BACKUP, etc.)
+- enabled
+- repeat_interval
+- priority
+- requires_internet
+- minimum_battery
+- foreground_required
+- snooze_interval_minutes
+- created_at
+- updated_at
+
+7. Task States (task_states)
+- task_id (Primary Key)
+- current_state (SCHEDULED, RUNNING, COMPLETED, FAILED, SNOOZED)
+- last_run_time
+- next_run_time
+- paused_at
+- snoozed_until
+- retry_count
+- last_failure_reason
+- awaiting_user_action
+- is_running
+- progress
