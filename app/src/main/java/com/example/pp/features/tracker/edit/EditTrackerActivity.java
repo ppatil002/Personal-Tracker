@@ -73,11 +73,11 @@ public class EditTrackerActivity extends AppCompatActivity {
         calendarView = findViewById(R.id.calendarView);
         progressBar = findViewById(R.id.progressBar);
 
+        setupNewFlow();
         setupCalendar();
         setupDropdowns();
         setupBottomNavigation();
         setupActions();
-        setupNewFlow();
         observeData();
     }
 
@@ -209,16 +209,22 @@ public class EditTrackerActivity extends AppCompatActivity {
 
     private void setupCalendar() {
         if (calendarView == null) return;
-        calendarView.setOnDateChangedListener((widget, date, selected) -> {
-            Calendar calendar = Calendar.getInstance();
-            calendar.set(date.getYear(), date.getMonth() - 1, date.getDay());
-            SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM, yyyy", Locale.getDefault());
-            SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
-            if (tvSelectedDate != null) tvSelectedDate.setText(dateFormat.format(calendar.getTime()));
-            if (tvSelectedDay != null) tvSelectedDay.setText(dayFormat.format(calendar.getTime()));
-        });
+        calendarView.setOnDateChangedListener((widget, date, selected) -> updateDateDisplay(date));
+        
         Calendar today = Calendar.getInstance();
-        calendarView.setSelectedDate(CalendarDay.from(today.get(Calendar.YEAR), today.get(Calendar.MONTH) + 1, today.get(Calendar.DAY_OF_MONTH)));
+        CalendarDay todayDay = CalendarDay.from(today.get(Calendar.YEAR), today.get(Calendar.MONTH) + 1, today.get(Calendar.DAY_OF_MONTH));
+        calendarView.setSelectedDate(todayDay);
+        updateDateDisplay(todayDay);
+    }
+
+    private void updateDateDisplay(CalendarDay date) {
+        if (date == null) return;
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(date.getYear(), date.getMonth() - 1, date.getDay());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM, yyyy", Locale.getDefault());
+        SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
+        if (tvSelectedDate != null) tvSelectedDate.setText(dateFormat.format(calendar.getTime()));
+        if (tvSelectedDay != null) tvSelectedDay.setText(dayFormat.format(calendar.getTime()));
     }
 
     private void setupDropdowns() {
@@ -370,6 +376,10 @@ public class EditTrackerActivity extends AppCompatActivity {
         updateSelectedTagsUI(new ArrayList<>());
         setTransactionType("Expense");
         Calendar today = Calendar.getInstance();
-        if (calendarView != null) calendarView.setSelectedDate(CalendarDay.from(today.get(Calendar.YEAR), today.get(Calendar.MONTH) + 1, today.get(Calendar.DAY_OF_MONTH)));
+        if (calendarView != null) {
+            CalendarDay todayDay = CalendarDay.from(today.get(Calendar.YEAR), today.get(Calendar.MONTH) + 1, today.get(Calendar.DAY_OF_MONTH));
+            calendarView.setSelectedDate(todayDay);
+            updateDateDisplay(todayDay);
+        }
     }
 }
