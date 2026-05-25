@@ -14,6 +14,7 @@ import androidx.work.WorkerParameters;
 
 import com.example.pp.R;
 import com.example.pp.core.enums.TaskStatus;
+import com.example.pp.core.enums.TaskType;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.BackgroundJobLogDao;
 import com.example.pp.data.local.dao.TaskDao;
@@ -72,7 +73,22 @@ public abstract class BaseFeatureWorker extends Worker {
                 state.setCurrentState(TaskStatus.COMPLETED);
                 state.setRunning(false);
                 state.setLastRunTime(now);
-                state.setNextRunTime(now + def.getRepeatInterval());
+                
+                // For Backup, set next run to tomorrow at 8 PM (as per scheduler logic)
+                // For others, use repeat interval.
+                if (def.getTaskType() == TaskType.BACKUP) {
+                    java.util.Calendar next = java.util.Calendar.getInstance();
+                    next.set(java.util.Calendar.HOUR_OF_DAY, 20);
+                    next.set(java.util.Calendar.MINUTE, 0);
+                    next.set(java.util.Calendar.SECOND, 0);
+                    if (next.getTimeInMillis() <= now) {
+                        next.add(java.util.Calendar.DAY_OF_YEAR, 1);
+                    }
+                    state.setNextRunTime(next.getTimeInMillis());
+                } else {
+                    state.setNextRunTime(now + def.getRepeatInterval());
+                }
+
                 state.setProgress(100);
                 state.setLastFailureReason(null);
                 taskDao.updateState(state);

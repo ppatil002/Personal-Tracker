@@ -1,0 +1,81 @@
+package com.example.pp.data.local.entity;
+
+import androidx.annotation.NonNull;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.PrimaryKey;
+
+import com.example.pp.core.enums.TaskType;
+
+@Entity(tableName = "task_definitions")
+public class TaskDefinition {
+    @PrimaryKey
+    @NonNull
+    @ColumnInfo(name = "task_id")
+    private String taskId;
+
+    @NonNull
+    @ColumnInfo(name = "task_type")
+    private TaskType taskType;
+
+    @ColumnInfo(name = "enabled")
+    private boolean enabled;
+
+    @ColumnInfo(name = "repeat_interval")
+    private long repeatInterval;
+
+    @ColumnInfo(name = "priority")
+    private int priority;
+
+    @ColumnInfo(name = "requires_internet")
+    private boolean requiresInternet;
+
+    @ColumnInfo(name = "minimum_battery")
+    private int minimumBattery;
+
+    @ColumnInfo(name = "foreground_required")
+    private boolean foregroundRequired;
+
+    @ColumnInfo(name = "snooze_interval_minutes")
+    private int snoozeIntervalMinutes;
+
+    @ColumnInfo(name = "created_at")
+    private long createdAt;
+
+    @ColumnInfo(name = "updated_at")
+    private long updatedAt;
+
+    public TaskDefinition(@NonNull String taskId, @NonNull TaskType taskType, boolean enabled,
+                          long repeatInterval, int priority, boolean requiresInternet, 
+                          int minimumBattery, boolean foregroundRequired, int snoozeIntervalMinutes,
+                          long createdAt, long updatedAt) {
+        this.taskId = taskId;
+        this.taskType = taskType;
+        this.enabled = enabled;
+        this.repeatInterval = repeatInterval;
+        this.priority = priority;
+        this.requiresInternet = requiresInternet;
+        this.minimumBattery = minimumBattery;
+        this.foregroundRequired = foregroundRequired;
+        this.snoozeIntervalMinutes = snoozeIntervalMinutes;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    @NonNull
+    public String getTaskId() { return taskId; }
+    @NonNull
+    public TaskType getTaskType() { return taskType; }
+    public boolean isEnabled() { return enabled; }
+    public long getRepeatInterval() { return repeatInterval; }
+    public int getPriority() { return priority; }
+    public boolean isRequiresInternet() { return requiresInternet; }
+    public int getMinimumBattery() { return minimumBattery; }
+    public boolean isForegroundRequired() { return foregroundRequired; }
+    public int getSnoozeIntervalMinutes() { return snoozeIntervalMinutes; }
+    public long getCreatedAt() { return createdAt; }
+    public long getUpdatedAt() { return updatedAt; }
+
+    public void setEnabled(boolean enabled) { this.enabled = enabled; }
+    public void setUpdatedAt(long updatedAt) { this.updatedAt = updatedAt; }
+}

@@ -13,6 +13,7 @@ import com.example.pp.features.analytics.model.MonthlyExpense;
 import com.example.pp.ui.components.table.model.TableQuery;
 
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
 public class TransactionRepository {
@@ -261,9 +262,9 @@ public class TransactionRepository {
     }
 
     private long getTimestamp(int year, int month, int day) {
-        java.util.Calendar cal = java.util.Calendar.getInstance();
+        Calendar cal = Calendar.getInstance();
         cal.set(year, month - 1, day, 12, 0, 0);
-        cal.set(java.util.Calendar.MILLISECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
         return cal.getTimeInMillis();
     }
 }

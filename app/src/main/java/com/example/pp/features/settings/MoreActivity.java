@@ -36,5 +36,9 @@ public class MoreActivity extends AppCompatActivity {
         findViewById(R.id.btnBackup).setOnClickListener(v -> {
             startActivity(new Intent(this, BackupActivity.class));
         });
+
+        findViewById(R.id.btnWorkers).setOnClickListener(v -> {
+            startActivity(new Intent(this, WorkerListActivity.class));
+        });
     }
 }
