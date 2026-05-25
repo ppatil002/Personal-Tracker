@@ -36,8 +36,10 @@ import java.time.temporal.WeekFields;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 public class BackupActivity extends AppCompatActivity {
@@ -46,6 +48,12 @@ public class BackupActivity extends AppCompatActivity {
     private GenericTableAdapter adapter;
     private TextView tvStatus;
     private View btnSignIn;
+    
+    private TextView tvPageIndicator;
+    private View btnPrevPage, btnNextPage;
+    private int currentPage = 0;
+    private static final int DATES_PER_PAGE = 3;
+    private List<BackgroundJobLog> allLogs = new ArrayList<>();
 
     private final ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -98,9 +106,30 @@ public class BackupActivity extends AppCompatActivity {
             }
         });
 
+        tvPageIndicator = findViewById(R.id.tvPageIndicator);
+        btnPrevPage = findViewById(R.id.btnPrevPage);
+        btnNextPage = findViewById(R.id.btnNextPage);
+
+        btnPrevPage.setOnClickListener(v -> {
+            if (currentPage > 0) {
+                currentPage--;
+                updateLogsDisplay();
+            }
+        });
+
+        btnNextPage.setOnClickListener(v -> {
+            currentPage++;
+            updateLogsDisplay();
+        });
+
         setupLogTable();
         GoogleDriveClient.getInstance(this).signInSilently(this, this::updateSignInStatus);
-        viewModel.getLogs().observe(this, this::updateLogs);
+        viewModel.getLogs().observe(this, logs -> {
+            if (logs != null) {
+                this.allLogs = logs;
+                updateLogsDisplay();
+            }
+        });
     }
 
     private void observeRestoreWork(UUID workId) {
@@ -160,23 +189,66 @@ public class BackupActivity extends AppCompatActivity {
         rvLogs.setAdapter(adapter);
     }
 
-    private void updateLogs(List<BackgroundJobLog> logs) {
+    private void updateLogsDisplay() {
+        if (allLogs.isEmpty()) {
+            adapter.setRows(new ArrayList<>());
+            tvPageIndicator.setText("Page 0/0");
+            return;
+        }
+
+        SimpleDateFormat dayFormat = new SimpleDateFormat("dd-MMM", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+
+        // Group by Date
+        Map<String, List<BackgroundJobLog>> groupedLogs = new LinkedHashMap<>();
+        for (BackgroundJobLog log : allLogs) {
+            String dateKey = dayFormat.format(new Date(log.getLastUpdatedTimestamp()));
+            if (!groupedLogs.containsKey(dateKey)) {
+                groupedLogs.put(dateKey, new ArrayList<>());
+            }
+            groupedLogs.get(dateKey).add(log);
+        }
+
+        List<String> sortedDates = new ArrayList<>(groupedLogs.keySet());
+        int totalPages = (int) Math.ceil((double) sortedDates.size() / DATES_PER_PAGE);
+        
+        if (currentPage >= totalPages) currentPage = Math.max(0, totalPages - 1);
+        
+        tvPageIndicator.setText(String.format(Locale.getDefault(), "Page %d/%d", currentPage + 1, totalPages));
+        btnPrevPage.setEnabled(currentPage > 0);
+        btnNextPage.setEnabled(currentPage < totalPages - 1);
+        btnPrevPage.setAlpha(currentPage > 0 ? 1.0f : 0.4f);
+        btnNextPage.setAlpha(currentPage < totalPages - 1 ? 1.0f : 0.4f);
+
         List<TableRow> rows = new ArrayList<>();
-        SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+        int start = currentPage * DATES_PER_PAGE;
+        int end = Math.min(start + DATES_PER_PAGE, sortedDates.size());
 
-        for (BackgroundJobLog log : logs) {
-            List<TableCell> cells = new ArrayList<>();
-            cells.add(new TableCell("time", sdf.format(new Date(log.getLastUpdatedTimestamp())), null, TableColumnType.TEXT));
-            cells.add(new TableCell("step", log.getCurrentStep(), null, TableColumnType.TEXT));
+        for (int i = start; i < end; i++) {
+            String dateStr = sortedDates.get(i);
             
-            String statusEmoji = "⚙️";
-            if ("SUCCESS".equals(log.getStatus())) statusEmoji = "✅";
-            else if ("FAILED".equals(log.getStatus())) statusEmoji = "❌";
-            else if ("RUNNING".equals(log.getStatus())) statusEmoji = "🕒";
+            // Add Header Row for Date
+            List<TableCell> headerCells = new ArrayList<>();
+            headerCells.add(new TableCell("time", dateStr, null, TableColumnType.TEXT, 3));
+            rows.add(new TableRow("header_" + dateStr, headerCells, null));
 
-            cells.add(new TableCell("status", statusEmoji + " " + log.getStatus(), null, TableColumnType.TEXT));
-            
-            rows.add(new TableRow(log.getJobId() + log.getLastUpdatedTimestamp(), cells, log));
+            // Add Log Rows
+            List<BackgroundJobLog> dayLogs = groupedLogs.get(dateStr);
+            if (dayLogs != null) {
+                for (BackgroundJobLog log : dayLogs) {
+                    List<TableCell> cells = new ArrayList<>();
+                    cells.add(new TableCell("time", timeFormat.format(new Date(log.getLastUpdatedTimestamp())), null, TableColumnType.TEXT));
+                    cells.add(new TableCell("step", log.getCurrentStep(), null, TableColumnType.TEXT));
+                    
+                    String statusEmoji = "⚙️";
+                    if ("SUCCESS".equals(log.getStatus())) statusEmoji = "✅";
+                    else if ("FAILED".equals(log.getStatus())) statusEmoji = "❌";
+                    else if ("RUNNING".equals(log.getStatus())) statusEmoji = "🕒";
+
+                    cells.add(new TableCell("status", statusEmoji + " " + log.getStatus(), null, TableColumnType.TEXT));
+                    rows.add(new TableRow(log.getJobId() + log.getLastUpdatedTimestamp(), cells, log));
+                }
+            }
         }
         adapter.setRows(rows);
     }
