@@ -35,16 +35,18 @@ public class GoogleDriveClient {
     }
 
     private void init(Context context) {
-        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(context);
+        Context appContext = context.getApplicationContext();
+        GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(appContext);
         if (account != null) {
-            setupDriveService(context, account);
+            setupDriveService(appContext, account);
         }
     }
 
     private void setupDriveService(Context context, GoogleSignInAccount account) {
+        Context appContext = context.getApplicationContext();
         try {
             GoogleAccountCredential credential = GoogleAccountCredential.usingOAuth2(
-                    context, Collections.singleton(DriveScopes.DRIVE_FILE));
+                    appContext, Collections.singleton(DriveScopes.DRIVE_FILE));
             credential.setSelectedAccount(account.getAccount());
 
             driveService = new Drive.Builder(
@@ -59,13 +61,14 @@ public class GoogleDriveClient {
     }
 
     public void refresh(Context context) {
-        init(context);
+        init(context.getApplicationContext());
     }
 
     public void signInSilently(Context context, Runnable onComplete) {
-        getFullGoogleSignInClient(context).silentSignIn()
+        Context appContext = context.getApplicationContext();
+        getFullGoogleSignInClient(appContext).silentSignIn()
                 .addOnSuccessListener(account -> {
-                    setupDriveService(context, account);
+                    setupDriveService(appContext, account);
                     if (onComplete != null) onComplete.run();
                 })
                 .addOnFailureListener(e -> {
@@ -76,11 +79,12 @@ public class GoogleDriveClient {
     public boolean authorizeSync(Context context) {
         if (isAuthorized()) return true;
 
+        Context appContext = context.getApplicationContext();
         try {
             GoogleSignInAccount account = Tasks.await(
-                    getFullGoogleSignInClient(context).silentSignIn());
+                    getFullGoogleSignInClient(appContext).silentSignIn());
             if (account != null) {
-                setupDriveService(context, account);
+                setupDriveService(appContext, account);
                 return true;
             }
         } catch (Exception e) {
@@ -105,6 +109,7 @@ public class GoogleDriveClient {
     }
 
     public static GoogleSignInClient getFullGoogleSignInClient(Context context) {
+        Context appContext = context.getApplicationContext();
         GoogleSignInOptions.Builder builder = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestEmail()
                 .requestProfile()
@@ -115,7 +120,7 @@ public class GoogleDriveClient {
             builder.requestIdToken(webClientId);
         }
 
-        return GoogleSignIn.getClient(context, builder.build());
+        return GoogleSignIn.getClient(appContext, builder.build());
     }
 
     @Deprecated

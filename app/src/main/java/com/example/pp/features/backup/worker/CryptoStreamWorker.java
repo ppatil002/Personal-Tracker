@@ -40,7 +40,7 @@ public class CryptoStreamWorker extends BaseFeatureWorker {
         if (rawPath == null) {
             updateLog("FAILED", "CRYPTO_ERROR", "Raw path missing.");
             failTask("Raw path missing in encryption stage.");
-            return Result.failure();
+            return Result.failure(new androidx.work.Data.Builder().putString("ERROR_DETAIL", "Raw path missing").build());
         }
 
         updateLog("RUNNING", "ENCRYPTING", "Applying AES-GCM encryption.");
@@ -89,7 +89,7 @@ public class CryptoStreamWorker extends BaseFeatureWorker {
         } catch (Exception e) {
             updateLog("FAILED", "CRYPTO_ERROR", e.getMessage());
             failTask(e.getMessage());
-            return Result.failure();
+            return Result.failure(new androidx.work.Data.Builder().putString("ERROR_DETAIL", e.getMessage()).build());
         }
     }
 }

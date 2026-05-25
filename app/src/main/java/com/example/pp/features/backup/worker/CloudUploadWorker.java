@@ -2,6 +2,7 @@ package com.example.pp.features.backup.worker;
 
 import android.content.Context;
 import androidx.annotation.NonNull;
+import androidx.work.Data;
 import androidx.work.WorkerParameters;
 
 import com.example.pp.core.orchestrator.BaseFeatureWorker;
@@ -24,7 +25,7 @@ public class CloudUploadWorker extends BaseFeatureWorker {
         if (encryptedPath == null || remoteName == null) {
             updateLog("FAILED", "UPLOAD_ERROR", "Data missing from input pipeline.");
             failTask("Missing file path or name in upload stage.");
-            return Result.failure();
+            return Result.failure(new Data.Builder().putString("ERROR_DETAIL", "Missing pipeline data").build());
         }
 
         updateLog("RUNNING", "UPLOADING", "Streaming stream to Google Drive.");
@@ -35,7 +36,7 @@ public class CloudUploadWorker extends BaseFeatureWorker {
             if (!driveClient.authorizeSync(getApplicationContext())) {
                 updateLog("FAILED", "UPLOAD_ERROR", "Authentication failed during background sync.");
                 failTask("Google Drive authentication failed.");
-                return Result.failure();
+                return Result.failure(new Data.Builder().putString("ERROR_DETAIL", "Google Drive Auth Failed").build());
             }
 
             File file = new File(encryptedPath);
@@ -48,13 +49,13 @@ public class CloudUploadWorker extends BaseFeatureWorker {
             } else {
                 updateLog("FAILED", "UPLOAD_ERROR", "Upload failed: Unknown error.");
                 failTask("Google Drive upload failed.");
-                return Result.failure();
+                return Result.failure(new Data.Builder().putString("ERROR_DETAIL", "Google Drive upload failed").build());
             }
 
         } catch (Exception e) {
             updateLog("FAILED", "UPLOAD_ERROR", e.getMessage());
             failTask(e.getMessage());
-            return Result.failure();
+            return Result.failure(new Data.Builder().putString("ERROR_DETAIL", e.getMessage()).build());
         }
     }
 }

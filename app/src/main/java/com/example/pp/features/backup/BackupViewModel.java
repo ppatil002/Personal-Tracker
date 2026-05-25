@@ -1,6 +1,7 @@
 package com.example.pp.features.backup;
 
 import android.app.Application;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
@@ -8,12 +9,12 @@ import androidx.lifecycle.LiveData;
 import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
+import com.example.pp.PPApplication;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.features.backup.worker.CloudDownloadWorker;
 import com.example.pp.features.backup.worker.CryptoDecryptWorker;
 import com.example.pp.features.backup.worker.DataImportWorker;
-import com.example.pp.infra.background.MainOrchestratorWorker;
 
 import java.util.List;
 import java.util.UUID;
@@ -34,8 +35,10 @@ public class BackupViewModel extends AndroidViewModel {
     }
 
     public void runManualBackup() {
-        OneTimeWorkRequest backupRequest = new OneTimeWorkRequest.Builder(MainOrchestratorWorker.class).build();
-        workManager.enqueue(backupRequest);
+        Log.i("BackupViewModel", "Manual backup requested by user.");
+        // Use the TaskRepository to trigger the task immediately, bypassing normal scheduling/constraints
+        PPApplication app = (PPApplication) getApplication();
+        app.getTaskRepository().runTaskNow("BACKUP_TASK_001");
     }
 
     public UUID runRestore(String remoteFileName) {

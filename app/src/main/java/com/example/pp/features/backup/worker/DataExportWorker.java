@@ -55,7 +55,7 @@ public class DataExportWorker extends BaseFeatureWorker {
         } catch (Exception e) {
             updateLog("FAILED", "EXPORT_ERROR", e.getMessage());
             failTask(e.getMessage());
-            return Result.failure();
+            return Result.failure(new Data.Builder().putString("ERROR_DETAIL", e.getMessage()).build());
         }
     }
 }
