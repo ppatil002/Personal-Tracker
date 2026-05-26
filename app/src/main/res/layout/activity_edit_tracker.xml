@@ -32,17 +32,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="@id/btnBack" />
 
-    <ImageView
-        android:id="@+id/btnRefresh"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:padding="12dp"
-        android:src="@android:drawable/stat_notify_sync"
-        android:contentDescription="@string/app_name"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/text_muted" />
-
     <androidx.core.widget.NestedScrollView
         android:id="@+id/scrollContent"
         android:layout_width="0dp"
@@ -352,7 +341,7 @@
                     android:layout_marginTop="10dp"
                     android:visibility="gone"
                     app:chipSpacingHorizontal="8dp"
-                    app:chipSpacingVertical="8dp" />
+                    app:chipSpacingVertical="-4dp" />
             </LinearLayout>
 
 

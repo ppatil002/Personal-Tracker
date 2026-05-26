@@ -1,6 +1,7 @@
 package com.example.pp.features.category;
 
 import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
@@ -28,6 +29,9 @@ public class TagBottomSheetFragment extends BottomSheetDialogFragment {
     private OnTagsAppliedListener listener;
     private List<Tag> tags;
 
+    private TagBottomSheetAdapter adapter;
+    private boolean isApplied = false;
+
     public interface OnTagsAppliedListener {
         void onTagsApplied(List<Tag> selectedTags);
     }
@@ -38,6 +42,14 @@ public class TagBottomSheetFragment extends BottomSheetDialogFragment {
 
     public void setTags(List<Tag> tags) {
         this.tags = tags;
+    }
+
+    @Override
+    public void onDismiss(@NonNull DialogInterface dialog) {
+        super.onDismiss(dialog);
+        if (!isApplied && listener != null && adapter != null) {
+            listener.onTagsApplied(adapter.getSelectedTags());
+        }
     }
 
     @Override
@@ -62,7 +74,7 @@ public class TagBottomSheetFragment extends BottomSheetDialogFragment {
         EditText etSearch = view.findViewById(R.id.etSearchTag);
         AppCompatButton btnApply = view.findViewById(R.id.btnApplyTags);
 
-        TagBottomSheetAdapter adapter = new TagBottomSheetAdapter(tags);
+        adapter = new TagBottomSheetAdapter(tags);
         rvTags.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvTags.setAdapter(adapter);
 
@@ -82,8 +94,10 @@ public class TagBottomSheetFragment extends BottomSheetDialogFragment {
         });
 
         btnApply.setOnClickListener(v -> {
+            isApplied = true;
+            List<Tag> selected = adapter.getSelectedTags();
             if (listener != null) {
-                listener.onTagsApplied(adapter.getSelectedTags());
+                listener.onTagsApplied(selected);
             }
             dismiss();
         });

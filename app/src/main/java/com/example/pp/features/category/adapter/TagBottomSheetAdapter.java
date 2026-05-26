@@ -21,8 +21,8 @@ public class TagBottomSheetAdapter extends RecyclerView.Adapter<TagBottomSheetAd
     private final List<Tag> displayList;
 
     public TagBottomSheetAdapter(List<Tag> tags) {
-        this.allTags = new ArrayList<>(tags);
-        this.displayList = new ArrayList<>(tags);
+        this.allTags = tags != null ? new ArrayList<>(tags) : new ArrayList<>();
+        this.displayList = new ArrayList<>(allTags);
     }
 
     public void filter(String query) {
@@ -76,8 +76,13 @@ public class TagBottomSheetAdapter extends RecyclerView.Adapter<TagBottomSheetAd
             tvTagName.setText(tag.getName());
             cbTag.setOnCheckedChangeListener(null);
             cbTag.setChecked(tag.isSelected());
-            cbTag.setOnCheckedChangeListener((buttonView, isChecked) -> tag.setSelected(isChecked));
-            itemView.setOnClickListener(v -> cbTag.setChecked(!cbTag.isChecked()));
+            cbTag.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                tag.setSelected(isChecked);
+            });
+            itemView.setOnClickListener(v -> {
+                boolean newState = !cbTag.isChecked();
+                cbTag.setChecked(newState);
+            });
         }
     }
 }

@@ -3,6 +3,8 @@ package com.example.pp.features.tracker.edit;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -189,20 +191,25 @@ public class EditTrackerActivity extends AppCompatActivity {
         if (tvNoTagsSelected != null) tvNoTagsSelected.setVisibility(View.GONE);
         chipGroupSelectedTags.setVisibility(View.VISIBLE);
 
+        float strokeWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1f, getResources().getDisplayMetrics());
+
         for (Tag tag : tags) {
             Chip chip = new Chip(this);
             chip.setText(tag.getName());
-            chip.setChipBackgroundColor(ContextCompat.getColorStateList(this, R.color.tag_chip_background));
-            chip.setChipStrokeColor(ContextCompat.getColorStateList(this, R.color.accent_purple));
-            chip.setChipStrokeWidth(1f);
+            
+            chip.setChipBackgroundColorResource(R.color.tag_chip_background);
+            chip.setChipStrokeColorResource(R.color.accent_purple);
+            chip.setChipStrokeWidth(strokeWidth);
             chip.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
             chip.setCloseIconVisible(true);
             chip.setCloseIconTint(ContextCompat.getColorStateList(this, R.color.text_muted));
             chip.setOnCloseIconClickListener(v -> {
+                Log.d("EditTrackerActivity", "Removing tag: " + tag.getName());
                 tag.setSelected(false);
                 selectedTags.remove(tag);
                 updateSelectedTagsUI(selectedTags);
             });
+
             chipGroupSelectedTags.addView(chip);
         }
     }
@@ -259,10 +266,8 @@ public class EditTrackerActivity extends AppCompatActivity {
 
     private void setupBottomNavigation() {
         View back = findViewById(R.id.btnBack);
-        View refresh = findViewById(R.id.btnRefresh);
         View fab = findViewById(R.id.btnCenterFab);
         if (back != null) back.setOnClickListener(v -> finish());
-        if (refresh != null) refresh.setOnClickListener(v -> Toast.makeText(this, "Refreshing...", Toast.LENGTH_SHORT).show());
         if (fab != null) fab.setOnClickListener(v -> clearUI());
 
         View navAnalytics = findViewById(R.id.navAnalytics);
