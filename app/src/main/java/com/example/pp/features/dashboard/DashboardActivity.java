@@ -3,12 +3,17 @@ package com.example.pp.features.dashboard;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
 import android.widget.TextView;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import com.example.pp.R;
-import com.example.pp.data.local.model.NutritionSummary;
 import com.example.pp.features.analytics.AnalyticsActivity;
 import com.example.pp.features.settings.MoreActivity;
 import com.example.pp.features.tracker.edit.EditTrackerActivity;
@@ -25,7 +30,18 @@ public class DashboardActivity extends AppCompatActivity {
     private TextView tvWelcomeName, tvWaterPercent, tvWaterTarget, tvLastIntake, tvWaterCount;
     private CircularProgressIndicator calorieProgress;
     private LinearProgressIndicator carbsProgress, proteinProgress, fatsProgress;
-    private TextView tvRemainingCals, tvCarbsStats, tvProteinStats, tvFatsStats;
+    private TextView tvRemainingCals, tvCarbsStats, tvProteinStats, tvFatsStats, tvLastNutritionIntake;
+
+    private Long lastWaterTimestamp = null;
+    private Long lastNutritionTimestamp = null;
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private final Runnable refreshRunnable = new Runnable() {
+        @Override
+        public void run() {
+            updateLastIntakeStrings();
+            refreshHandler.postDelayed(this, 60000); // Update every minute
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +52,18 @@ public class DashboardActivity extends AppCompatActivity {
         initViews();
         setupBottomNav();
         observeViewModel();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        refreshHandler.post(refreshRunnable);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        refreshHandler.removeCallbacks(refreshRunnable);
     }
 
     private void initViews() {
@@ -54,10 +82,11 @@ public class DashboardActivity extends AppCompatActivity {
         tvCarbsStats = findViewById(R.id.tvCarbsStats);
         tvProteinStats = findViewById(R.id.tvProteinStats);
         tvFatsStats = findViewById(R.id.tvFatsStats);
+        tvLastNutritionIntake = findViewById(R.id.tvLastNutritionIntake);
 
         findViewById(R.id.btnSmallWater).setOnClickListener(v -> viewModel.addWater(100, System.currentTimeMillis()));
         findViewById(R.id.btnMedWater).setOnClickListener(v -> viewModel.addWater(250, System.currentTimeMillis()));
-        findViewById(R.id.btnCustomWater).setOnClickListener(v -> showCustomWaterDialog());
+        findViewById(R.id.btnCustomWater).setOnClickListener(v -> showCustomIntakeDialog());
     }
 
     private void setupBottomNav() {
@@ -84,14 +113,13 @@ public class DashboardActivity extends AppCompatActivity {
         });
 
         viewModel.getLastWaterIntake().observe(this, intake -> {
-            if (intake != null) {
-                SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-                String time = sdf.format(new Date(intake.timestamp));
-                long diff = (System.currentTimeMillis() - intake.timestamp) / (60 * 1000);
-                tvLastIntake.setText(time + " (" + diff + "m ago)");
-            } else {
-                tvLastIntake.setText("No intake yet");
-            }
+            lastWaterTimestamp = (intake != null) ? intake.timestamp : null;
+            updateLastIntakeStrings();
+        });
+
+        viewModel.getLastNutritionIntake().observe(this, intake -> {
+            lastNutritionTimestamp = (intake != null) ? intake.timestamp : null;
+            updateLastIntakeStrings();
         });
 
         viewModel.getTodayNutritionSummary().observe(this, summary -> {
@@ -119,35 +147,56 @@ public class DashboardActivity extends AppCompatActivity {
         });
     }
 
-    private void showCustomWaterDialog() {
-        String[] options = {"100", "150", "200", "250", "300", "500", "1000", "Pick Time & Amount"};
-        new AlertDialog.Builder(this)
-                .setTitle("Select Amount (ml)")
-                .setItems(options, (dialog, which) -> {
-                    if (which == options.length - 1) {
-                        showTimeAndAmountPicker();
-                    } else {
-                        viewModel.addWater(Integer.parseInt(options[which]), System.currentTimeMillis());
-                    }
-                })
-                .show();
+    private void updateLastIntakeStrings() {
+        tvLastIntake.setText(formatDuration(lastWaterTimestamp));
+        tvLastNutritionIntake.setText(formatDuration(lastNutritionTimestamp));
     }
 
-    private void showTimeAndAmountPicker() {
-        Calendar calendar = Calendar.getInstance();
-        new TimePickerDialog(this, (view, hourOfDay, minute) -> {
-            Calendar selectedTime = Calendar.getInstance();
-            selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            selectedTime.set(Calendar.MINUTE, minute);
-            
-            // Now ask for amount
-            String[] amounts = {"100", "250", "500", "750", "1000"};
-            new AlertDialog.Builder(this)
-                    .setTitle("Select Amount (ml)")
-                    .setItems(amounts, (dialog, which) -> {
-                        viewModel.addWater(Integer.parseInt(amounts[which]), selectedTime.getTimeInMillis());
-                    })
-                    .show();
-        }, calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE), false).show();
+    private String formatDuration(Long timestamp) {
+        if (timestamp == null) return "--";
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        String time = sdf.format(new Date(timestamp));
+        long diffMinutes = (System.currentTimeMillis() - timestamp) / (60 * 1000);
+        if (diffMinutes < 1) return time + " (Just now)";
+        if (diffMinutes < 60) return time + " (" + diffMinutes + "m ago)";
+        long hours = diffMinutes / 60;
+        return time + " (" + hours + "h ago)";
+    }
+
+    private void showCustomIntakeDialog() {
+        Calendar selectedTime = Calendar.getInstance();
+        String[] amounts = {"100", "150", "200", "250", "300", "500", "750", "1000"};
+
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_custom_intake, null);
+        TextView tvTime = dialogView.findViewById(R.id.tvSelectedTime);
+        ListView lvAmounts = dialogView.findViewById(R.id.lvAmounts);
+
+        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        tvTime.setText(sdf.format(selectedTime.getTime()));
+
+        tvTime.setOnClickListener(v -> {
+            new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+                selectedTime.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                selectedTime.set(Calendar.MINUTE, minute);
+                tvTime.setText(sdf.format(selectedTime.getTime()));
+            }, selectedTime.get(Calendar.HOUR_OF_DAY), selectedTime.get(Calendar.MINUTE), false).show();
+        });
+
+        AlertDialog dialog = new com.google.android.material.dialog.MaterialAlertDialogBuilder(this)
+                .setView(dialogView)
+                .setTitle("Log Water Intake")
+                .setNegativeButton("Cancel", null)
+                .create();
+
+        lvAmounts.setAdapter(new ArrayAdapter<>(this, R.layout.item_amount_selector, amounts));
+        lvAmounts.setOnItemClickListener((parent, view, position, id) -> {
+            viewModel.addWater(Integer.parseInt(amounts[position]), selectedTime.getTimeInMillis());
+            dialog.dismiss();
+        });
+
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.color.card_background);
+        }
     }
 }

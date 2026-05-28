@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.example.pp.data.local.model.NutritionSummary;
 import com.example.pp.data.local.entity.HydrationIntake;
+import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.repository.HydrationRepository;
 import com.example.pp.data.repository.NutritionRepository;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
@@ -51,6 +52,10 @@ public class DashboardViewModel extends AndroidViewModel {
 
     public LiveData<NutritionSummary> getTodayNutritionSummary() {
         return nutritionRepository.getTodaySummary(getStartOfDay());
+    }
+
+    public LiveData<NutritionIntake> getLastNutritionIntake() {
+        return nutritionRepository.getLastIntake(getStartOfDay());
     }
 
     public void addWater(int ml, long timestamp) {

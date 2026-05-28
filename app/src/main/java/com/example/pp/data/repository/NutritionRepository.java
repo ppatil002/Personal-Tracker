@@ -30,4 +30,8 @@ public class NutritionRepository {
     public LiveData<NutritionSummary> getTodaySummary(long startOfDay) {
         return nutritionDao.getTodaySummary(startOfDay);
     }
+
+    public LiveData<NutritionIntake> getLastIntake(long startOfDay) {
+        return nutritionDao.getLastIntake(startOfDay);
+    }
 }

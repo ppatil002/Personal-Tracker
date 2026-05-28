@@ -41,4 +41,7 @@ public interface NutritionDao {
 
     @Query("SELECT * FROM nutrition_intake")
     List<NutritionIntake> getAllIntakes();
+
+    @Query("SELECT * FROM nutrition_intake WHERE timestamp >= :startOfDay ORDER BY timestamp DESC LIMIT 1")
+    LiveData<NutritionIntake> getLastIntake(long startOfDay);
 }
