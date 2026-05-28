@@ -54,6 +54,17 @@
                 android:textColor="#FFFFFF"
                 android:layout_marginBottom="12dp" />
 
+
+            <!-- Google Drive Access -->
+            <Button
+                android:id="@+id/btnGoogleDrive"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Connect Google Drive"
+                android:backgroundTint="#1E293B"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="12dp" />
+
             <!-- Exact Alarm Permission -->
             <Button
                 android:id="@+id/btnAlarmPermission"
@@ -73,7 +84,6 @@
                 android:backgroundTint="#1E293B"
                 android:textColor="#FFFFFF"
                 android:layout_marginBottom="12dp" />
-
         </LinearLayout>
     </ScrollView>
 
