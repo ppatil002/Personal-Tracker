@@ -39,6 +39,8 @@ public class TableListActivity extends AppCompatActivity {
         tables.add(new TableInfo("background_job_log", "Background Job Logs Table", "Backup Logs"));
         tables.add(new TableInfo("task_definitions", "Task Definition Table", "Background Task"));
         tables.add(new TableInfo("task_states", "Task Status Table", "Task Current Status"));
+        tables.add(new TableInfo("hydration_intakes", "Hydration Table", "Daily Water Intake"));
+        tables.add(new TableInfo("nutrition_intake", "Nutrients Table", "Daily Calorie Intake"));
 
         rvTables.setAdapter(new TableAdapter(tables));
     }

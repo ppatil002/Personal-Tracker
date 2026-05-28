@@ -1,13 +1,14 @@
 package com.example.pp.features.backup.worker;
 
 import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.WorkerParameters;
 
+import com.example.pp.core.orchestrator.BaseFeatureWorker;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.features.backup.model.BackupData;
-import com.example.pp.core.orchestrator.BaseFeatureWorker;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -35,7 +36,9 @@ public class DataExportWorker extends BaseFeatureWorker {
                 db.transactionDao().getAllTransactionTagCrossRefs(),
                 db.taskDao().getAllDefinitions(),
                 db.taskDao().getAllStates(),
-                db.backgroundJobLogDao().getAllLogsList()
+                db.backgroundJobLogDao().getAllLogsList(),
+                db.hydrationDao().getAllIntakes(),
+                db.nutritionDao().getAllIntakes()
             );
 
             Gson gson = new Gson();

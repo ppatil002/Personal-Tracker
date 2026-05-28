@@ -6,10 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.WorkerParameters;
 
+import com.example.pp.core.orchestrator.BaseFeatureWorker;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.model.SyncStats;
 import com.example.pp.features.backup.model.BackupData;
-import com.example.pp.core.orchestrator.BaseFeatureWorker;
 import com.google.gson.Gson;
 
 import java.io.File;
@@ -57,6 +57,8 @@ public class DataImportWorker extends BaseFeatureWorker {
                 allStats.add(db.taskDao().upsertAllDefinitions(backupData.taskDefinitions));
                 allStats.add(db.taskDao().upsertAllStates(backupData.taskStates));
                 allStats.add(db.backgroundJobLogDao().upsertAll(backupData.backgroundJobLogs));
+                allStats.add(db.hydrationDao().upsertAll(backupData.hydrationIntakes));
+                allStats.add(db.nutritionDao().upsertAll(backupData.nutritionIntakes));
             });
 
             StringBuilder summary = new StringBuilder("Restore Summary:\n");
