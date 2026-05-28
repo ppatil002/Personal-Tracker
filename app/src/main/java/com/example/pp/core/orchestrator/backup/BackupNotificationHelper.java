@@ -39,6 +39,7 @@ public class BackupNotificationHelper {
         if (!isOngoing) {
             Intent intent = new Intent(context, WorkerListActivity.class);
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.putExtra("FROM_NOTIFICATION", true);
             PendingIntent pendingIntent = PendingIntent.getActivity(
                     context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             builder.setContentIntent(pendingIntent);

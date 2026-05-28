@@ -1,5 +1,6 @@
 package com.example.pp.features.settings;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.ImageView;
@@ -33,8 +34,15 @@ public class WorkerListActivity extends AppCompatActivity {
 
         taskRepository = ((PPApplication) getApplication()).getTaskRepository();
 
+        boolean fromNotification = getIntent().getBooleanExtra("FROM_NOTIFICATION", false);
+
         ImageView btnBack = findViewById(R.id.btnBack);
-        btnBack.setOnClickListener(v -> finish());
+        btnBack.setOnClickListener(v -> {
+            if (fromNotification) {
+                startActivity(new Intent(this, MoreActivity.class));
+            }
+            finish();
+        });
 
         findViewById(R.id.btnRefresh).setOnClickListener(v -> {
             executors.diskIO().execute(() -> {
@@ -57,6 +65,16 @@ public class WorkerListActivity extends AppCompatActivity {
         });
 
         syncWithWorkManager();
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        boolean fromNotification = getIntent().getBooleanExtra("FROM_NOTIFICATION", false);
+        if (fromNotification) {
+            startActivity(new Intent(this, MoreActivity.class));
+        }
+        finish();
     }
 
     private void syncWithWorkManager() {
