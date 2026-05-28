@@ -58,6 +58,11 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity
+            android:name=".features.dashboard.DashboardActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize" />
+
+        <activity
             android:name=".MainActivity"
             android:exported="false" />
 

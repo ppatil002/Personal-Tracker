@@ -15,7 +15,8 @@ import androidx.core.content.ContextCompat;
 
 import com.example.pp.PPApplication;
 import com.example.pp.R;
-import com.example.pp.features.tracker.edit.EditTrackerActivity;
+import com.example.pp.data.remote.GoogleDriveClient;
+import com.example.pp.features.dashboard.DashboardActivity;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -32,12 +33,12 @@ public class SplashActivity extends AppCompatActivity {
 
         ((PPApplication) getApplication()).getCategoryRepository().seedDatabaseIfEmpty();
         ((PPApplication) getApplication()).getTagRepository().seedTagsIfEmpty();
-        ((PPApplication) getApplication()).getTransactionRepository().seedTransactionsIfEmpty();
+//        ((PPApplication) getApplication()).getTransactionRepository().seedTransactionsIfEmpty();
         ((PPApplication) getApplication()).getTaskRepository().seedTasksIfEmpty();
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (checkAllCriticalPermissions()) {
-                startActivity(new Intent(SplashActivity.this, EditTrackerActivity.class));
+                startActivity(new Intent(SplashActivity.this, DashboardActivity.class));
             } else {
                 startActivity(new Intent(SplashActivity.this, PermissionActivity.class));
             }
@@ -46,13 +47,11 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private boolean checkAllCriticalPermissions() {
-        boolean notifications = true;
-        notifications = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
-
-        boolean alarms = true;
+        boolean notifications = ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED;
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        alarms = am != null && am.canScheduleExactAlarms();
+        boolean alarms = am != null && am.canScheduleExactAlarms();
+        boolean googleDrive = GoogleDriveClient.getInstance(this).isAuthorized();
 
-        return notifications && alarms;
+        return notifications && alarms && googleDrive;
     }
 }

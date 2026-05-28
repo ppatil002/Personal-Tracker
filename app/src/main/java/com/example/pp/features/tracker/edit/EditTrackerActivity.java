@@ -25,6 +25,7 @@ import com.example.pp.features.analytics.AnalyticsActivity;
 import com.example.pp.features.category.CategoryBottomSheetFragment;
 import com.example.pp.features.category.TagBottomSheetFragment;
 import com.example.pp.features.category.model.Tag;
+import com.example.pp.features.dashboard.DashboardActivity;
 import com.example.pp.features.settings.MoreActivity;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
@@ -269,6 +270,15 @@ public class EditTrackerActivity extends AppCompatActivity {
         View fab = findViewById(R.id.btnCenterFab);
         if (back != null) back.setOnClickListener(v -> finish());
         if (fab != null) fab.setOnClickListener(v -> clearUI());
+
+        View navDashboard = findViewById(R.id.navDashboard);
+        if (navDashboard != null) {
+            navDashboard.setOnClickListener(v -> {
+                Intent intent = new Intent(this, DashboardActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+            });
+        }
 
         View navAnalytics = findViewById(R.id.navAnalytics);
         if (navAnalytics != null) {

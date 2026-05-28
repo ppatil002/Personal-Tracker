@@ -21,7 +21,6 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.example.pp.MainActivity;
 import com.example.pp.R;
 import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.entity.CategoryEntity;
@@ -33,6 +32,7 @@ import com.example.pp.features.analytics.model.CategoryExpense;
 import com.example.pp.features.analytics.model.CategoryTrendData;
 import com.example.pp.features.analytics.model.DailyExpense;
 import com.example.pp.features.category.model.Tag;
+import com.example.pp.features.dashboard.DashboardActivity;
 import com.example.pp.features.settings.MoreActivity;
 import com.example.pp.features.tracker.edit.EditTrackerActivity;
 import com.example.pp.ui.components.table.adapter.GenericTableAdapter;
@@ -341,7 +341,7 @@ public class AnalyticsActivity extends AppCompatActivity {
 
         if (navDashboard != null) {
             navDashboard.setOnClickListener(v -> {
-                Intent intent = new Intent(this, MainActivity.class);
+                Intent intent = new Intent(this, DashboardActivity.class);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
             });
