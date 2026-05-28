@@ -38,8 +38,23 @@
     <color name="glow_border_purple">#C084FC</color>
     <color name="tag_chip_background">#2A1F3D</color>
 
+    <!--  Dashboard Colors -->
+    <color name="hydration_blue">#38BDF8</color>
+    <color name="nutrition_purple">#DDB7FF</color>
+    <color name="carbs_pink">#EC4899</color>
+    <color name="fats_green">#22C55E</color>
+    <color name="surface_container">#231E27</color>
+    <color name="on_surface">#EADFED</color>
+
     <!-- Specific components -->
     <color name="selected_date_bg">#9333EA</color>
+
+    <!--    Consistency Heatmap Colour-->
+    <color name="heatmap_empty">#151520</color>
+    <color name="heatmap_level_1">#86EFAC</color>
+    <color name="heatmap_level_2">#22C55E</color>
+    <color name="heatmap_level_3">#1F6F54</color>
+    <color name="heatmap_level_4">#16352B</color>
 
     <!-- Standard Colors -->
     <color name="black">#FF000000</color>

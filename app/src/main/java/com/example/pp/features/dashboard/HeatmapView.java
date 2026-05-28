@@ -6,21 +6,39 @@ import android.graphics.Paint;
 import android.graphics.RectF;
 import android.util.AttributeSet;
 import android.view.View;
+
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
+
 import com.example.pp.R;
+
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
+import java.util.Locale;
 
 public class HeatmapView extends View {
+
     private Paint cellPaint;
     private Paint textPaint;
+
     private int[] heatColors;
+
     private List<Integer> data = new ArrayList<>();
-    private float spacing = 8f;
-    private float labelWidth = 60f;
-    private float legendHeight = 40f;
-    private RectF rect = new RectF();
+
+    private final RectF rect = new RectF();
+
+    // Reduced spacing for dense GitHub-like feel
+    private final float spacing = 6f;
+
+    // Outer card padding
+    private final float outerPadding = 24f;
+
+    // Width reserved for week labels
+    private final float weekLabelWidth = 64f;
+
+    // Space reserved for legend
+    private final float legendHeight = 70f;
 
     public HeatmapView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
@@ -28,19 +46,28 @@ public class HeatmapView extends View {
     }
 
     private void init() {
+
+        // Needed for glow shadow rendering
+        setLayerType(LAYER_TYPE_SOFTWARE, null);
+
         cellPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+
         textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        textPaint.setColor(ContextCompat.getColor(getContext(), R.color.text_muted));
-        textPaint.setTextSize(24f);
-        
+        textPaint.setColor(
+                ContextCompat.getColor(getContext(), R.color.text_muted)
+        );
+        textPaint.setTextSize(18f);
+
+        // AMOLED Neon Futuristic Palette
         heatColors = new int[]{
-                ContextCompat.getColor(getContext(), R.color.surface_container),
-                0xFF0E4429,
-                0xFF006D32,
-                0xFF26A641,
-                ContextCompat.getColor(getContext(), R.color.emerald_green)
+                ContextCompat.getColor(getContext(), R.color.heatmap_empty),
+                ContextCompat.getColor(getContext(), R.color.heatmap_level_1),
+                ContextCompat.getColor(getContext(), R.color.heatmap_level_2),
+                ContextCompat.getColor(getContext(), R.color.heatmap_level_3),
+                ContextCompat.getColor(getContext(), R.color.heatmap_level_4)
         };
-        // Dummy data for 4 weeks (28 days)
+
+        // Dummy data
         for (int i = 0; i < 28; i++) {
             data.add((int) (Math.random() * 5));
         }
@@ -54,61 +81,260 @@ public class HeatmapView extends View {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (data.isEmpty()) return;
+
+        if (data == null || data.isEmpty()) return;
 
         float width = getWidth();
-        float height = getHeight() - legendHeight;
-        
-        float availableWidth = width - labelWidth - spacing;
-        float cellSize = Math.min((availableWidth - (7 * spacing)) / 7f, (height - (5 * spacing)) / 4f);
+        float height = getHeight();
 
-        // Draw Week labels and cells
+        int columns = 7;
+        int rows = (int) Math.ceil(data.size() / 7f);
+
+        // -----------------------------
+        // AVAILABLE SPACE
+        // -----------------------------
+
+        float availableWidth =
+                width
+                        - (2 * outerPadding)
+                        - weekLabelWidth;
+
+        float availableHeight =
+                height
+                        - legendHeight
+                        - outerPadding;
+
+        // -----------------------------
+        // CELL SIZE CALCULATION
+        // -----------------------------
+
+        float cellSizeFromWidth =
+                (availableWidth - ((columns - 1) * spacing))
+                        / columns;
+
+        float cellSizeFromHeight =
+                (availableHeight - ((rows - 1) * spacing))
+                        / rows;
+
+        float cellSize =
+                Math.min(cellSizeFromWidth, cellSizeFromHeight);
+
+        // -----------------------------
+        // GRID SIZE
+        // -----------------------------
+
+        float gridWidth =
+                weekLabelWidth
+                        + (columns * cellSize)
+                        + ((columns - 1) * spacing);
+
+        float gridHeight =
+                (rows * cellSize)
+                        + ((rows - 1) * spacing);
+
+        // -----------------------------
+        // CENTER ENTIRE GRAPH
+        // -----------------------------
+
+        float startX =
+                (width - gridWidth) / 2f;
+
+        float startY =
+                outerPadding;
+
+        // -----------------------------
+        // CURRENT WEEK NUMBER
+        // -----------------------------
+
+        Calendar calendar =
+                Calendar.getInstance(Locale.getDefault());
+
+        int currentWeek =
+                calendar.get(Calendar.WEEK_OF_YEAR);
+
+        // -----------------------------
+        // DRAW HEATMAP
+        // -----------------------------
+
         for (int i = 0; i < data.size(); i++) {
-            int row = i / 7;
-            int col = i % 7;
 
-            // Draw "Wn" label only once per row
+            int row = i / columns;
+            int col = i % columns;
+
+            // -----------------------------
+            // DRAW WEEK LABEL
+            // -----------------------------
+
             if (col == 0) {
-                float labelY = row * (cellSize + spacing) + spacing + (cellSize / 2f) + (textPaint.getTextSize() / 3f);
-                canvas.drawText("W" + (row + 1), spacing, labelY, textPaint);
+
+                int weekNumber =
+                        currentWeek - row;
+
+                float labelY =
+                        startY
+                                + row * (cellSize + spacing)
+                                + (cellSize / 2f)
+                                + 6f;
+
+                canvas.drawText(
+                        "W" + weekNumber,
+                        startX,
+                        labelY,
+                        textPaint
+                );
             }
 
-            float left = labelWidth + col * (cellSize + spacing) + spacing;
-            float top = row * (cellSize + spacing) + spacing;
-            rect.set(left, top, left + cellSize, top + cellSize);
+            // -----------------------------
+            // CELL POSITION
+            // -----------------------------
 
-            int level = data.get(i);
-            cellPaint.setColor(heatColors[Math.min(level, heatColors.length - 1)]);
-            
+            float left =
+                    startX
+                            + weekLabelWidth
+                            + col * (cellSize + spacing);
+
+            float top =
+                    startY
+                            + row * (cellSize + spacing);
+
+            rect.set(
+                    left,
+                    top,
+                    left + cellSize,
+                    top + cellSize
+            );
+
+            int level =
+                    data.get(i);
+
+            int color =
+                    heatColors[
+                            Math.min(level, heatColors.length - 1)
+                            ];
+
+            cellPaint.setColor(color);
+
+            // -----------------------------
+            // GLOW EFFECT
+            // -----------------------------
+
             if (level >= 4) {
-                cellPaint.setShadowLayer(8, 0, 0, ContextCompat.getColor(getContext(), R.color.emerald_green));
+
+                cellPaint.setShadowLayer(
+                        12f,
+                        0f,
+                        0f,
+                        color
+                );
+
             } else {
+
                 cellPaint.clearShadowLayer();
             }
 
-            canvas.drawRoundRect(rect, 6f, 6f, cellPaint);
+            // -----------------------------
+            // DRAW CELL
+            // -----------------------------
+
+            canvas.drawRoundRect(
+                    rect,
+                    6f,
+                    6f,
+                    cellPaint
+            );
         }
 
-        // Draw Legend at bottom right
-        float legendCellSize = 20f;
-        float legendSpacing = 4f;
-        float legendWidth = (heatColors.length * (legendCellSize + legendSpacing)) + 120f;
-        float legendX = width - legendWidth;
-        float legendY = height + (legendHeight / 2f);
+        // -----------------------------
+        // LEGEND
+        // -----------------------------
 
-        textPaint.setTextSize(20f);
-        canvas.drawText("Less", legendX, legendY + 5, textPaint);
-        
-        float startCells = legendX + 50f;
+        float legendCellSize = 22f;
+
+        float legendSpacing = 6f;
+
+        float gap = 12f;
+
+        float legendY =
+                startY + gridHeight + 42f;
+
+        float lessWidth =
+                textPaint.measureText("Less");
+
+        float moreWidth =
+                textPaint.measureText("More");
+
+        float cellsWidth =
+                heatColors.length * legendCellSize
+                        + ((heatColors.length - 1) * legendSpacing);
+
+        float totalLegendWidth =
+                lessWidth
+                        + gap
+                        + cellsWidth
+                        + gap
+                        + moreWidth;
+
+        // Right align legend relative to graph
+        float legendStartX =
+                startX
+                        + gridWidth
+                        - totalLegendWidth;
+
+        // -----------------------------
+        // DRAW LESS TEXT
+        // -----------------------------
+
+        canvas.drawText(
+                "Less",
+                legendStartX,
+                legendY + 6f,
+                textPaint
+        );
+
+        float cellsStartX =
+                legendStartX + lessWidth + gap;
+
+        // -----------------------------
+        // DRAW LEGEND CELLS
+        // -----------------------------
+
         for (int i = 0; i < heatColors.length; i++) {
+
             cellPaint.setColor(heatColors[i]);
+
             cellPaint.clearShadowLayer();
-            float left = startCells + i * (legendCellSize + legendSpacing);
-            float top = legendY - (legendCellSize / 2f);
-            rect.set(left, top, left + legendCellSize, top + legendCellSize);
-            canvas.drawRoundRect(rect, 2f, 2f, cellPaint);
+
+            float left =
+                    cellsStartX
+                            + i * (legendCellSize + legendSpacing);
+
+            float top =
+                    legendY - (legendCellSize / 2f);
+
+            rect.set(
+                    left,
+                    top,
+                    left + legendCellSize,
+                    top + legendCellSize
+            );
+
+            canvas.drawRoundRect(
+                    rect,
+                    4f,
+                    4f,
+                    cellPaint
+            );
         }
-        
-        canvas.drawText("More", startCells + (heatColors.length * (legendCellSize + legendSpacing)) + 5f, legendY + 5, textPaint);
+
+        // -----------------------------
+        // DRAW MORE TEXT
+        // -----------------------------
+
+        canvas.drawText(
+                "More",
+                cellsStartX + cellsWidth + gap,
+                legendY + 6f,
+                textPaint
+        );
     }
 }
