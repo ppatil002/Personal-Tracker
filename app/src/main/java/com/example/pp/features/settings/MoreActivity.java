@@ -18,9 +18,6 @@ public class MoreActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_more);
 
-        ImageView btnBack = findViewById(R.id.btnBack);
-        btnBack.setOnClickListener(v -> finish());
-
         findViewById(R.id.btnViewTables).setOnClickListener(v -> {
             startActivity(new Intent(this, TableListActivity.class));
         });

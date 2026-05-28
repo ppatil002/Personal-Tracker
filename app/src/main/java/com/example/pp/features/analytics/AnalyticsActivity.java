@@ -127,8 +127,6 @@ public class AnalyticsActivity extends AppCompatActivity {
         
         periodDropdown = findViewById(R.id.periodDropdown);
         btnCalendar = findViewById(R.id.btnCalendar);
-
-        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
 
     private void setupCharts() {

@@ -109,7 +109,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         viewModel.getTodayWaterCount().observe(this, count -> {
             int current = count != null ? count : 0;
-            tvWaterCount.setText(current + " INTKS TODAY");
+            tvWaterCount.setText(current + " INTAKES TODAY");
         });
 
         viewModel.getLastWaterIntake().observe(this, intake -> {

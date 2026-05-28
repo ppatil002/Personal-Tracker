@@ -266,9 +266,7 @@ public class EditTrackerActivity extends AppCompatActivity {
     }
 
     private void setupBottomNavigation() {
-        View back = findViewById(R.id.btnBack);
         View fab = findViewById(R.id.btnCenterFab);
-        if (back != null) back.setOnClickListener(v -> finish());
         if (fab != null) fab.setOnClickListener(v -> clearUI());
 
         View navDashboard = findViewById(R.id.navDashboard);
