@@ -56,6 +56,10 @@ public class WorkerListActivity extends AppCompatActivity {
         RecyclerView rvWorkers = findViewById(R.id.rvWorkers);
         rvWorkers.setLayoutManager(new LinearLayoutManager(this));
         adapter = new WorkerAdapter();
+        adapter.setOnTaskActionListener(taskId -> {
+            taskRepository.runTaskNow(taskId);
+            Toast.makeText(this, taskId + " triggered manually", Toast.LENGTH_SHORT).show();
+        });
         rvWorkers.setAdapter(adapter);
 
         taskRepository.getAllTasksWithStateLiveData().observe(this, tasks -> {

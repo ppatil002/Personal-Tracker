@@ -147,21 +147,40 @@
 
         </GridLayout>
 
-        <ProgressBar
-            android:id="@+id/pbProgress"
-            style="@android:style/Widget.ProgressBar.Horizontal"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="4dp"
-            android:layout_marginTop="16dp"
-            android:progress="45"
-            android:progressDrawable="@drawable/bg_progress_horizontal" />
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp">
+
+            <ProgressBar
+                android:id="@+id/pbProgress"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="0dp"
+                android:layout_height="4dp"
+                android:layout_weight="1"
+                android:layout_gravity="center_vertical"
+                android:progress="45"
+                android:progressDrawable="@drawable/bg_progress_horizontal" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnRunNow"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="Run Now"
+                android:textColor="@color/accent_purple"
+                android:textSize="12sp"
+                app:rippleColor="@color/accent_purple_low_alpha" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/tvProgress"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="-8dp"
             android:text="45%"
             android:textColor="@color/accent_purple"
             android:textSize="11sp"

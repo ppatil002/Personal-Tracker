@@ -25,6 +25,16 @@ public class WorkerAdapter extends RecyclerView.Adapter<WorkerAdapter.WorkerView
     private List<TaskDao.TaskWithState> tasks = new ArrayList<>();
     private final SimpleDateFormat sdf = new SimpleDateFormat("MMM dd, hh:mm a", Locale.getDefault());
 
+    private OnTaskActionListener actionListener;
+
+    public interface OnTaskActionListener {
+        void onRunNow(String taskId);
+    }
+
+    public void setOnTaskActionListener(OnTaskActionListener listener) {
+        this.actionListener = listener;
+    }
+
     public void setTasks(List<TaskDao.TaskWithState> tasks) {
         this.tasks = tasks;
         notifyDataSetChanged();
@@ -50,7 +60,7 @@ public class WorkerAdapter extends RecyclerView.Adapter<WorkerAdapter.WorkerView
     class WorkerViewHolder extends RecyclerView.ViewHolder {
         TextView tvTaskType, tvStatus, tvTaskId, tvLastRun, tvNextRun, tvInterval, tvConstraints, tvProgress, tvFailureReason;
         ProgressBar pbProgress;
-        View layoutFailure;
+        View layoutFailure, btnRunNow;
 
         WorkerViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -65,6 +75,7 @@ public class WorkerAdapter extends RecyclerView.Adapter<WorkerAdapter.WorkerView
             pbProgress = itemView.findViewById(R.id.pbProgress);
             layoutFailure = itemView.findViewById(R.id.layoutFailure);
             tvFailureReason = itemView.findViewById(R.id.tvFailureReason);
+            btnRunNow = itemView.findViewById(R.id.btnRunNow);
         }
 
         void bind(TaskDao.TaskWithState task) {
@@ -74,6 +85,12 @@ public class WorkerAdapter extends RecyclerView.Adapter<WorkerAdapter.WorkerView
             tvTaskType.setText(def.getTaskType().name());
             tvStatus.setText(state.getCurrentState().name());
             tvTaskId.setText("ID: " + def.getTaskId());
+
+            btnRunNow.setOnClickListener(v -> {
+                if (actionListener != null) {
+                    actionListener.onRunNow(def.getTaskId());
+                }
+            });
 
             tvLastRun.setText(state.getLastRunTime() > 0 ? sdf.format(new Date(state.getLastRunTime())) : "Never");
             
