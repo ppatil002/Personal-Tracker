@@ -5,6 +5,8 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+
+import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
 import com.example.pp.data.local.model.NutritionSummary;
 import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutritionIntake;
@@ -59,7 +61,7 @@ public class DashboardViewModel extends AndroidViewModel {
     }
 
     public void addWater(int ml, long timestamp) {
-        hydrationRepository.addIntake(ml, timestamp);
+        WaterIntakeScheduler.logIntakeAndReschedule(getApplication(), ml, timestamp);
     }
 
     public void addNutrition(String food, double cal, double carbs, double protein, double fats, long timestamp) {

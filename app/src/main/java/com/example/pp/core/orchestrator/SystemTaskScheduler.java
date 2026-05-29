@@ -8,6 +8,7 @@ import com.example.pp.data.local.dao.TaskDao;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.repository.TaskRepository;
 import com.example.pp.core.orchestrator.backup.BackupScheduler;
+import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
 import java.util.List;
 
 public class SystemTaskScheduler {
@@ -34,6 +35,9 @@ public class SystemTaskScheduler {
         switch (def.getTaskType()) {
             case BACKUP:
                 BackupScheduler.schedule(context, def);
+                break;
+            case WATER_REMINDER:
+                WaterIntakeScheduler.schedule(context, def);
                 break;
             default:
                 Log.w(TAG, "No native scheduler found for task type: " + def.getTaskType());

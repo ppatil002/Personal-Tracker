@@ -10,6 +10,7 @@ import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.core.orchestrator.SystemTaskScheduler;
 import com.example.pp.core.orchestrator.backup.BackupForegroundService;
+import com.example.pp.core.orchestrator.water.WaterNotificationHelper;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.TaskDao;
@@ -48,40 +49,23 @@ public class TaskRepository {
                 }
 
                 if (existing.isEmpty()) {
-                    Log.i(TAG, "DB is empty. Seeding initial BACKUP task definition.");
-                    TaskDefinition backupDef = new TaskDefinition(
-                            "BACKUP_TASK_001",
-                            TaskType.BACKUP,
-                            true,
-                            TimeUnit.HOURS.toMillis(24), // 24-hour interval
-                            1,
-                            true,
-                            20, // Minimum Battery: 20%
-                            false,
-                            120, // Snooze for 2 hours (120 minutes)
-                            System.currentTimeMillis(),
-                            System.currentTimeMillis()
-                    );
-                    
-                    TaskState backupState = new TaskState(
-                            "BACKUP_TASK_001",
-                            TaskStatus.SCHEDULED,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0,
-                            null,
-                            false,
-                            false,
-                            0
-                    );
-                    
-                    taskDao.insertDefinition(backupDef);
-                    taskDao.insertState(backupState);
+                    Log.i(TAG, "DB is empty. Seeding initial tasks.");
+                    seedDefaultTasks();
                     Log.i(TAG, "Task seeding complete.");
                 } else {
                     Log.d(TAG, "Tasks already exist in DB. Found " + existing.size() + " tasks.");
+                    // Check if WATER_REMINDER is missing
+                    boolean waterExists = false;
+                    for (TaskDao.TaskWithState t : existing) {
+                        if (t.definition.getTaskType() == TaskType.WATER_REMINDER) {
+                            waterExists = true;
+                            break;
+                        }
+                    }
+                    if (!waterExists) {
+                        Log.i(TAG, "WATER_REMINDER task missing. Adding it.");
+                        seedWaterTask();
+                    }
                 }
                 
                 // Schedule the periodic tasks via the new SystemTaskScheduler
@@ -91,6 +75,77 @@ public class TaskRepository {
                 Log.e(TAG, "CRITICAL ERROR while seeding tasks", e);
             }
         });
+    }
+
+    private void seedDefaultTasks() {
+        seedBackupTask();
+        seedWaterTask();
+    }
+
+    private void seedBackupTask() {
+        TaskDefinition backupDef = new TaskDefinition(
+                "BACKUP_TASK_001",
+                TaskType.BACKUP,
+                true,
+                TimeUnit.HOURS.toMillis(24), // 24-hour interval
+                1,
+                true,
+                20, // Minimum Battery: 20%
+                false,
+                120, // Snooze for 2 hours (120 minutes)
+                System.currentTimeMillis(),
+                System.currentTimeMillis()
+        );
+
+        TaskState backupState = new TaskState(
+                "BACKUP_TASK_001",
+                TaskStatus.SCHEDULED,
+                0,
+                0,
+                0,
+                0,
+                0,
+                null,
+                false,
+                false,
+                0
+        );
+
+        taskDao.insertDefinition(backupDef);
+        taskDao.insertState(backupState);
+    }
+
+    private void seedWaterTask() {
+        TaskDefinition waterDef = new TaskDefinition(
+                "WATER_TASK_001",
+                TaskType.WATER_REMINDER,
+                true,
+                TimeUnit.HOURS.toMillis(2), // 2-hour interval
+                1,
+                false,
+                0, // Minimum Battery: 0%
+                false,
+                20, // Snooze for 20 minutes
+                System.currentTimeMillis(),
+                System.currentTimeMillis()
+        );
+
+        TaskState waterState = new TaskState(
+                "WATER_TASK_001",
+                TaskStatus.SCHEDULED,
+                0,
+                0,
+                0,
+                0,
+                0,
+                null,
+                false,
+                false,
+                0
+        );
+
+        taskDao.insertDefinition(waterDef);
+        taskDao.insertState(waterState);
     }
 
     public List<TaskDao.TaskWithState> getEnabledTasksWithState() {
@@ -140,6 +195,8 @@ public class TaskRepository {
                     Intent serviceIntent = new Intent(context, BackupForegroundService.class);
                     serviceIntent.putExtra("TASK_ID", taskId);
                     context.startForegroundService(serviceIntent);
+                } else if (def.getTaskType() == TaskType.WATER_REMINDER) {
+                    WaterNotificationHelper.showNotification(context, taskId);
                 }
             }
         });

@@ -20,10 +20,20 @@ public class HydrationRepository {
         this.hydrationDao = db.hydrationDao();
     }
 
+    public void addIntakeSync(int amountMl, long timestamp) {
+        executor.execute(() -> {
+            hydrationDao.insert(new HydrationIntake(amountMl, timestamp));
+        });
+    }
+
     public void addIntake(int amountMl, long timestamp) {
         executor.execute(() -> {
             hydrationDao.insert(new HydrationIntake(amountMl, timestamp));
         });
+    }
+
+    public HydrationIntake getLastIntakeSync(long startOfDay) {
+        return hydrationDao.getLastIntakeSync(startOfDay);
     }
 
     public LiveData<Integer> getTodayTotal(long startOfDay) {

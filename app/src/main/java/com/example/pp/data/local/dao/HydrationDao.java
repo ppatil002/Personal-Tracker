@@ -35,6 +35,9 @@ public interface HydrationDao {
         return stats;
     }
 
+    @Query("SELECT * FROM hydration_intakes WHERE timestamp >= :startOfDay ORDER BY timestamp DESC LIMIT 1")
+    HydrationIntake getLastIntakeSync(long startOfDay);
+
     @Query("SELECT SUM(amount_ml) FROM hydration_intakes WHERE timestamp >= :startOfDay")
     LiveData<Integer> getTodayTotalMl(long startOfDay);
 
