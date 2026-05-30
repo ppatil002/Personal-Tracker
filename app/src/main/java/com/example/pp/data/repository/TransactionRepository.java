@@ -245,6 +245,13 @@ public class TransactionRepository {
         });
     }
 
+    public void deleteTransaction(TransactionEntity transaction, Runnable onComplete) {
+        executors.diskIO().execute(() -> {
+            transactionDao.deleteTransactionWithTags(transaction);
+            if (onComplete != null) executors.mainThread().execute(onComplete);
+        });
+    }
+
     public List<TransactionEntity> getTransactionsBetween(long start, long end) {
         return transactionDao.getTransactionsBetween(start, end);
     }

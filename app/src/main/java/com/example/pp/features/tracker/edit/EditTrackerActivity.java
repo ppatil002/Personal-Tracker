@@ -172,8 +172,11 @@ public class EditTrackerActivity extends AppCompatActivity {
     }
 
     private void showTagBottomSheet() {
+        long timestamp = getSelectedDateTimestamp();
+        List<Tag> filteredTags = filterTagsByDate(allTags, timestamp);
+
         TagBottomSheetFragment bottomSheet = new TagBottomSheetFragment();
-        bottomSheet.setTags(allTags);
+        bottomSheet.setTags(filteredTags);
         bottomSheet.setOnTagsAppliedListener(tags -> {
             this.selectedTags = tags;
             updateSelectedTagsUI(tags);
@@ -189,12 +192,22 @@ public class EditTrackerActivity extends AppCompatActivity {
             chipGroupSelectedTags.setVisibility(View.GONE);
             return;
         }
+
+        long timestamp = getSelectedDateTimestamp();
+        List<Tag> validSelectedTags = filterTagsByDate(tags, timestamp);
+
+        if (validSelectedTags.isEmpty()) {
+            if (tvNoTagsSelected != null) tvNoTagsSelected.setVisibility(View.VISIBLE);
+            chipGroupSelectedTags.setVisibility(View.GONE);
+            return;
+        }
+
         if (tvNoTagsSelected != null) tvNoTagsSelected.setVisibility(View.GONE);
         chipGroupSelectedTags.setVisibility(View.VISIBLE);
 
         float strokeWidth = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1f, getResources().getDisplayMetrics());
 
-        for (Tag tag : tags) {
+        for (Tag tag : validSelectedTags) {
             Chip chip = new Chip(this);
             chip.setText(tag.getName());
             
@@ -215,6 +228,27 @@ public class EditTrackerActivity extends AppCompatActivity {
         }
     }
 
+    private long getSelectedDateTimestamp() {
+        CalendarDay date = calendarView.getSelectedDate();
+        if (date == null) date = CalendarDay.today();
+        Calendar cal = Calendar.getInstance();
+        // date.getMonth() is 1-based, Calendar.set expects 0-based month
+        cal.set(date.getYear(), date.getMonth() - 1, date.getDay(), 12, 0, 0);
+        return cal.getTimeInMillis();
+    }
+
+    private List<Tag> filterTagsByDate(List<Tag> tagsToFilter, long timestamp) {
+        List<Tag> filtered = new ArrayList<>();
+        for (Tag tag : tagsToFilter) {
+            boolean validFrom = tag.getValidFrom() == null || timestamp >= tag.getValidFrom();
+            boolean validTill = tag.getValidTill() == null || timestamp <= tag.getValidTill();
+            if (validFrom && validTill) {
+                filtered.add(tag);
+            }
+        }
+        return filtered;
+    }
+
     private void setupCalendar() {
         if (calendarView == null) return;
         calendarView.setOnDateChangedListener((widget, date, selected) -> updateDateDisplay(date));
@@ -233,6 +267,9 @@ public class EditTrackerActivity extends AppCompatActivity {
         SimpleDateFormat dayFormat = new SimpleDateFormat("EEEE", Locale.getDefault());
         if (tvSelectedDate != null) tvSelectedDate.setText(dateFormat.format(calendar.getTime()));
         if (tvSelectedDay != null) tvSelectedDay.setText(dayFormat.format(calendar.getTime()));
+        
+        // Refresh selected tags UI if date changes, as some tags might become invalid
+        updateSelectedTagsUI(selectedTags);
     }
 
     private void setupDropdowns() {
@@ -388,11 +425,13 @@ public class EditTrackerActivity extends AppCompatActivity {
         for (Tag t : allTags) t.setSelected(false);
         updateSelectedTagsUI(new ArrayList<>());
         setTransactionType("Expense");
-        Calendar today = Calendar.getInstance();
-        if (calendarView != null) {
-            CalendarDay todayDay = CalendarDay.from(today.get(Calendar.YEAR), today.get(Calendar.MONTH) + 1, today.get(Calendar.DAY_OF_MONTH));
-            calendarView.setSelectedDate(todayDay);
-            updateDateDisplay(todayDay);
+
+        // Reset payment method
+        selectedPayment = "UPI";
+        View paymentView = findViewById(R.id.paymentDropdown);
+        if (paymentView != null) {
+            TextView tvPayment = paymentView.findViewById(R.id.dropdownText);
+            if (tvPayment != null) tvPayment.setText(selectedPayment);
         }
     }
 }

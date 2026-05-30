@@ -34,13 +34,13 @@ public class TagRepository {
         return tagsLiveData;
     }
 
-    private void refreshTags() {
+    public void refreshTags() {
         executors.diskIO().execute(() -> {
             if (cacheManager.isDirty() || tagsLiveData.getValue() == null) {
                 List<TagEntity> entities = tagDao.getAllTags();
                 List<Tag> tags = new ArrayList<>();
                 for (TagEntity entity : entities) {
-                    tags.add(new Tag(entity.getTagId(), entity.getName()));
+                    tags.add(new Tag(entity.getTagId(), entity.getName(), entity.getValidFrom(), entity.getValidTill()));
                 }
                 cacheManager.updateCache(tags);
                 tagsLiveData.postValue(tags);
@@ -50,11 +50,13 @@ public class TagRepository {
         });
     }
 
-    public void addTag(String name, Runnable onComplete) {
+    public void addTag(String name, Long validFrom, Long validTill, Runnable onComplete) {
         executors.diskIO().execute(() -> {
             Integer maxId = tagDao.getMaxTagId();
             String tagId = String.valueOf(maxId == null ? 1 : maxId + 1);
             TagEntity tag = new TagEntity(tagId, name, System.currentTimeMillis());
+            tag.setValidFrom(validFrom);
+            tag.setValidTill(validTill);
             tagDao.insert(tag);
             cacheManager.setDirty(true);
             refreshTags();
@@ -88,7 +90,10 @@ public class TagRepository {
                 long now = System.currentTimeMillis();
                 String[] seedNames = {"Office", "Outside", "Fruits", "Vegetables", "Eggs", "Gym", "Subscriptions", "Dreams", "Grooming", "Auto", "Bus", "Cab", "Train", "Flight"};
                 for (int i = 0; i < seedNames.length; i++) {
-                    tagDao.insert(new TagEntity(String.valueOf(i + 1), seedNames[i], now));
+                    TagEntity tag = new TagEntity(String.valueOf(i + 1), seedNames[i], now);
+                    tag.setValidFrom(null);
+                    tag.setValidTill(null);
+                    tagDao.insert(tag);
                 }
                 cacheManager.setDirty(true);
                 refreshTags();

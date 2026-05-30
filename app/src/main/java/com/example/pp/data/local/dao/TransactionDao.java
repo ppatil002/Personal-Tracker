@@ -57,6 +57,12 @@ public interface TransactionDao {
     @Query("DELETE FROM transaction_tag_cross_ref WHERE transaction_id = :transactionId")
     void deleteTagCrossRefsForTransaction(String transactionId);
 
+    @Transaction
+    default void deleteTransactionWithTags(TransactionEntity transaction) {
+        deleteTagCrossRefsForTransaction(transaction.getTransactionId());
+        delete(transaction);
+    }
+
     @Query("SELECT * FROM transactions ORDER BY transaction_date DESC, created_timestamp DESC")
     LiveData<List<TransactionEntity>> getAllTransactions();
 

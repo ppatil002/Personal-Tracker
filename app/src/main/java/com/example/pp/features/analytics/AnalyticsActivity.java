@@ -751,6 +751,20 @@ public class AnalyticsActivity extends AppCompatActivity {
 
         TransactionAdapter adapter = new TransactionAdapter();
         if (type != null) adapter.setPeriodType(type);
+        adapter.setOnTransactionActionListener(transaction -> {
+            new AlertDialog.Builder(this)
+                    .setTitle("Delete Transaction")
+                    .setMessage("Are you sure you want to delete this entry?\n\n" +
+                            "Item: " + transaction.getItem() + "\n" +
+                            "Amount: ₹ " + transaction.getAmount() + "\n" +
+                            "Date: " + sdf.format(transaction.getTransactionDate()))
+                    .setPositiveButton("Delete", (dialogInterface, i) -> {
+                        viewModel.deleteTransaction(transaction);
+                        Toast.makeText(this, "Transaction deleted", Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
         rvTransactions.setLayoutManager(new LinearLayoutManager(this));
         rvTransactions.setAdapter(adapter);
 

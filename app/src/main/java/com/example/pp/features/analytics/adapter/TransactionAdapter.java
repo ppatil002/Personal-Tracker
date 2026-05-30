@@ -24,6 +24,15 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("hh:mm a", Locale.getDefault());
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy", Locale.getDefault());
     private PeriodType periodType = PeriodType.MONTH;
+    private OnTransactionActionListener listener;
+
+    public interface OnTransactionActionListener {
+        void onDelete(TransactionEntity transaction);
+    }
+
+    public void setOnTransactionActionListener(OnTransactionActionListener listener) {
+        this.listener = listener;
+    }
 
     public void submitList(List<TransactionEntity> list) {
         this.transactions = list;
@@ -66,6 +75,11 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             holder.ivArrow.setVisibility(View.GONE);
             holder.tvNotes.setVisibility(View.GONE);
         }
+
+        holder.ivDelete.setVisibility(View.VISIBLE);
+        holder.ivDelete.setOnClickListener(v -> {
+            if (listener != null) listener.onDelete(t);
+        });
     }
 
     @Override
@@ -75,7 +89,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
 
     static class ViewHolder extends RecyclerView.ViewHolder {
         TextView tvIcon, tvName, tvAmount, tvPercent, tvNotes;
-        ImageView ivArrow;
+        ImageView ivArrow, ivDelete;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -85,6 +99,7 @@ public class TransactionAdapter extends RecyclerView.Adapter<TransactionAdapter.
             tvPercent = itemView.findViewById(R.id.tvCategoryPercent);
             tvNotes = itemView.findViewById(R.id.tvNotes);
             ivArrow = itemView.findViewById(R.id.ivArrow);
+            ivDelete = itemView.findViewById(R.id.ivDelete);
         }
     }
 }

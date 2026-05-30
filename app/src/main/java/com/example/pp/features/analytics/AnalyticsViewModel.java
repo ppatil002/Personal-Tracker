@@ -5,6 +5,7 @@ import android.app.Application;
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.PPApplication;
@@ -65,7 +66,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
     private final MutableLiveData<List<TransactionEntity>> periodTransactions = new MutableLiveData<>();
     private final MutableLiveData<List<CategoryTrendData>> categoryTrends = new MutableLiveData<>();
     
-    private final LiveData<List<Tag>> availableTags;
+    private final MediatorLiveData<List<Tag>> filteredTags = new MediatorLiveData<>();
     private final MutableLiveData<List<String>> selectedTagIds = new MutableLiveData<>(new ArrayList<>());
 
     public static class CategoryGroup {
@@ -87,7 +88,36 @@ public class AnalyticsViewModel extends AndroidViewModel {
         selectedMonth.setValue(now.get(Calendar.MONTH));
         updatePeriodLabel();
         
-        availableTags = tagRepository.getTags();
+        LiveData<List<Tag>> allTags = tagRepository.getTags();
+        filteredTags.addSource(allTags, tags -> updateFilteredTags(tags, periodType.getValue(), selectedYear.getValue(), selectedMonth.getValue()));
+        filteredTags.addSource(periodType, type -> updateFilteredTags(allTags.getValue(), type, selectedYear.getValue(), selectedMonth.getValue()));
+        filteredTags.addSource(selectedYear, year -> updateFilteredTags(allTags.getValue(), periodType.getValue(), year, selectedMonth.getValue()));
+        filteredTags.addSource(selectedMonth, month -> updateFilteredTags(allTags.getValue(), periodType.getValue(), selectedYear.getValue(), month));
+    }
+
+    private void updateFilteredTags(List<Tag> tags, PeriodType type, Integer year, Integer month) {
+        if (tags == null) return;
+        if (type == null || year == null || month == null) {
+            filteredTags.setValue(tags);
+            return;
+        }
+
+        long[] range = calculateDateRange(type, year, month);
+        long start = range[0];
+        long end = range[1];
+
+        List<Tag> filtered = new ArrayList<>();
+        for (Tag tag : tags) {
+            // Overlap check: tag is visible if its validity period overlaps with the selected range
+            // or if validity dates are null
+            boolean validFromMatch = tag.getValidFrom() == null || tag.getValidFrom() < end;
+            boolean validTillMatch = tag.getValidTill() == null || tag.getValidTill() >= start;
+            
+            if (validFromMatch && validTillMatch) {
+                filtered.add(tag);
+            }
+        }
+        filteredTags.setValue(filtered);
     }
 
     public LiveData<PeriodType> getPeriodType() { return periodType; }
@@ -111,7 +141,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
     public LiveData<List<TransactionEntity>> getPeriodTransactions() { return periodTransactions; }
     public LiveData<List<CategoryTrendData>> getCategoryTrends() { return categoryTrends; }
     
-    public LiveData<List<Tag>> getAvailableTags() { return availableTags; }
+    public LiveData<List<Tag>> getAvailableTags() { return filteredTags; }
     public LiveData<List<String>> getSelectedTagIds() { return selectedTagIds; }
 
     public void toggleTag(String tagId) {
@@ -169,11 +199,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
             double total = 0;
             for (TransactionEntity t : transactions) total += t.getAmount();
 
-            List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
-            if (categoryTree == null) {
-                categoryTree = fetchCategoryTreeSync();
-            }
-
+            List<CategoryTreeNode> categoryTree = fetchCategoryTreeSync();
             Map<String, CategoryEntity> allCategories = flattenCategories(categoryTree);
             Map<String, String> categoryToRoot = buildCategoryToRootMap(categoryTree);
 
@@ -355,8 +381,8 @@ public class AnalyticsViewModel extends AndroidViewModel {
             List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
-            List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
-            if (categoryTree == null) categoryTree = fetchCategoryTreeSync();
+            List<CategoryTreeNode> categoryTree = fetchCategoryTreeSync();
+            if (categoryTree == null) categoryTree = new ArrayList<>();
 
             // Find subcategories
             List<CategoryEntity> subCats = new ArrayList<>();
@@ -414,11 +440,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
                 if (!relevant) continue;
 
                 long periodKey = type == PeriodType.YEAR ? floorToMonth(t.getTransactionDate()) : floorToDay(t.getTransactionDate());
-                Map<String, Double> dayMap = matrix.get(periodKey);
-                if (dayMap == null) {
-                    dayMap = new HashMap<>();
-                    matrix.put(periodKey, dayMap);
-                }
+                Map<String, Double> dayMap = matrix.computeIfAbsent(periodKey, k -> new HashMap<>());
                 Double current = dayMap.get(t.getCategoryId());
                 dayMap.put(t.getCategoryId(), (current != null ? current : 0.0) + t.getAmount());
             }
@@ -539,8 +561,8 @@ public class AnalyticsViewModel extends AndroidViewModel {
             List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
-            List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
-            if (categoryTree == null) categoryTree = fetchCategoryTreeSync();
+            List<CategoryTreeNode> categoryTree = fetchCategoryTreeSync();
+            if (categoryTree == null) categoryTree = new ArrayList<>();
             Map<String, String> catToRoot = buildCategoryToRootMap(categoryTree);
 
             List<CategoryEntity> relevantRoots = new ArrayList<>();
@@ -797,8 +819,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
             List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
             
-            List<CategoryTreeNode> tree = categoryRepository.getCategoryTree().getValue();
-            if (tree == null) tree = fetchCategoryTreeSync();
+            List<CategoryTreeNode> tree = fetchCategoryTreeSync();
             
             Map<String, String> catToRoot = buildCategoryToRootMap(tree);
             List<TransactionEntity> filtered = new ArrayList<>();
@@ -830,11 +851,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
             List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
-            List<CategoryTreeNode> categoryTree = categoryRepository.getCategoryTree().getValue();
-            if (categoryTree == null) {
-                categoryTree = fetchCategoryTreeSync();
-            }
-
+            List<CategoryTreeNode> categoryTree = fetchCategoryTreeSync();
             Map<String, CategoryEntity> allCategories = flattenCategories(categoryTree);
             Map<String, String> categoryToRoot = buildCategoryToRootMap(categoryTree);
 
@@ -890,6 +907,17 @@ public class AnalyticsViewModel extends AndroidViewModel {
             sdf = new java.text.SimpleDateFormat("yyyy", java.util.Locale.getDefault());
         }
         periodLabel.setValue(sdf.format(cal.getTime()));
+    }
+
+    public void deleteTransaction(TransactionEntity transaction) {
+        transactionRepository.deleteTransaction(transaction, () -> {
+            refreshAnalytics();
+            // Re-load the specific list that was open
+            if (periodTransactions.getValue() != null && !periodTransactions.getValue().isEmpty()) {
+                long currentTimestamp = periodTransactions.getValue().get(0).getTransactionDate();
+                loadTransactionsForPeriod(currentTimestamp, selectedTableCategoryId.getValue());
+            }
+        });
     }
 
     private List<TransactionEntity> filterByTags(List<TransactionEntity> transactions, List<TransactionTagCrossRef> crossRefs, List<String> selectedTagIds) {

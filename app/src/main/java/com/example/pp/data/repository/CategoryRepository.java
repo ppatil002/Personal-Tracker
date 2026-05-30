@@ -37,7 +37,7 @@ public class CategoryRepository {
         return categoryTreeLiveData;
     }
 
-    private void refreshCategoryTree() {
+    public void refreshCategoryTree() {
         executors.diskIO().execute(() -> {
             if (cacheManager.isDirty() || categoryTreeLiveData.getValue() == null) {
                 List<CategoryEntity> entities = categoryDao.getAllCategories();

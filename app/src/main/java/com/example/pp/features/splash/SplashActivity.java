@@ -31,10 +31,10 @@ public class SplashActivity extends AppCompatActivity {
             notificationManager.cancelAll();
         }
 
-        ((PPApplication) getApplication()).getCategoryRepository().seedDatabaseIfEmpty();
-        ((PPApplication) getApplication()).getTagRepository().seedTagsIfEmpty();
+//        ((PPApplication) getApplication()).getCategoryRepository().seedDatabaseIfEmpty();
+//        ((PPApplication) getApplication()).getTagRepository().seedTagsIfEmpty();
 //        ((PPApplication) getApplication()).getTransactionRepository().seedTransactionsIfEmpty();
-        ((PPApplication) getApplication()).getTaskRepository().seedTasksIfEmpty();
+//        ((PPApplication) getApplication()).getTaskRepository().seedTasksIfEmpty();
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (checkAllCriticalPermissions()) {

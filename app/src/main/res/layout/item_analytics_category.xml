@@ -55,6 +55,16 @@
             android:rotation="-90"
             android:visibility="gone"
             app:tint="@color/text_muted" />
+
+        <ImageView
+            android:id="@+id/ivDelete"
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_marginStart="8dp"
+            android:padding="2dp"
+            android:src="@drawable/ic_delete"
+            android:visibility="gone"
+            app:tint="@color/accent_pink" />
     </LinearLayout>
 
     <TextView

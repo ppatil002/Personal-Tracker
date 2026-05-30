@@ -74,11 +74,11 @@ public abstract class BaseFeatureWorker extends Worker {
                 state.setRunning(false);
                 state.setLastRunTime(now);
                 
-                // For Backup, set next run to tomorrow at 8 PM (as per scheduler logic)
+                // For Backup, set next run to tomorrow at 12 PM (as per scheduler logic)
                 // For others, use repeat interval.
                 if (def.getTaskType() == TaskType.BACKUP) {
                     java.util.Calendar next = java.util.Calendar.getInstance();
-                    next.set(java.util.Calendar.HOUR_OF_DAY, 20);
+                    next.set(java.util.Calendar.HOUR_OF_DAY, 12);
                     next.set(java.util.Calendar.MINUTE, 0);
                     next.set(java.util.Calendar.SECOND, 0);
                     if (next.getTimeInMillis() <= now) {
