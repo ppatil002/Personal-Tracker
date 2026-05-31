@@ -16,4 +16,41 @@
         android:background="@drawable/bg_input_field"
         android:padding="12dp" />
 
+    <TextView
+        android:id="@+id/tvValidFrom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:hint="Valid From (Optional)"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_hint"
+        android:background="@drawable/bg_input_field"
+        android:padding="12dp"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <TextView
+        android:id="@+id/tvValidTill"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:hint="Valid Till (Optional)"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_hint"
+        android:background="@drawable/bg_input_field"
+        android:padding="12dp"
+        android:clickable="true"
+        android:focusable="true" />
+
+    <Button
+        android:id="@+id/btnClearDates"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:text="Clear Dates"
+        android:textAllCaps="false"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/accent_pink" />
+
 </LinearLayout>
