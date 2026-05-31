@@ -35,43 +35,6 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Highlights Section -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/stroke_color"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/highlights"
-                        android:textColor="@color/accent_purple"
-                        android:textSize="14sp"
-                        android:fontFamily="sans-serif-medium" />
-
-                    <TextView
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:text="@string/quote"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:textStyle="italic"
-                        android:textAlignment="center"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
             <!-- Date and Calendar Row -->
             <LinearLayout
                 android:layout_width="match_parent"
@@ -515,7 +478,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="80dp">
+                android:layout_marginBottom="20dp">
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/btnCancel"
                     android:layout_width="0dp"
