@@ -5,6 +5,7 @@ import android.app.Application;
 import com.example.pp.data.repository.TaskRepository;
 import com.example.pp.data.repository.CategoryRepository;
 import com.example.pp.data.repository.GenericTableRepository;
+import com.example.pp.data.repository.ScreenTimeRepository;
 import com.example.pp.data.repository.TagRepository;
 import com.example.pp.data.repository.TransactionRepository;
 import com.jakewharton.threetenabp.AndroidThreeTen;

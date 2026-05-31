@@ -40,9 +40,9 @@ public class TableListActivity extends AppCompatActivity {
         tables.add(new TableInfo("task_definitions", "Task Definition Table", "Background Task"));
         tables.add(new TableInfo("task_states", "Task Status Table", "Task Current Status"));
         tables.add(new TableInfo("hydration_intakes", "Hydration Table", "Daily Water Intake"));
-        tables.add(new TableInfo("nutrition_intake", "Nutrients Table", "Daily Calorie Intake"));
         tables.add(new TableInfo("nutrition_intake", "Nutrients Intake Table", "Daily Calorie Intake"));
         tables.add(new TableInfo("screen_time", "Screen Time Table", "Daily Screen Time Monitoring"));
+        tables.add(new TableInfo("sleep", "Sleep Table", "Daily Sleep Monitoring"));
 
         rvTables.setAdapter(new TableAdapter(tables));
     }

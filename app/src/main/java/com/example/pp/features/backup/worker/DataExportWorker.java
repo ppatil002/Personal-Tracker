@@ -38,8 +38,8 @@ public class DataExportWorker extends BaseFeatureWorker {
                 db.taskDao().getAllStates(),
                 db.backgroundJobLogDao().getAllLogsList(),
                 db.hydrationDao().getAllIntakes(),
-                db.nutritionDao().getAllIntakes()
                 db.nutritionDao().getAllIntakes(),
+                db.sleepDao().getAllSleepEntries(),
                 db.screenTimeDao().getAllEntriesSync()
             );
 

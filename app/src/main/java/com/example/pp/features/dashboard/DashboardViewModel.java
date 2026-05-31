@@ -82,6 +82,14 @@ public class DashboardViewModel extends AndroidViewModel {
         return screenTimeRepository.getTodayAppUsage(getStartOfDay());
     }
 
+    public LiveData<SleepEntity> getLastSleep() {
+        return sleepRepository.getLastSleep();
+    }
+
+    public void updateTargetWakeTime(long targetWakeTime) {
+        sleepRepository.updateTargetWakeTime(targetWakeTime);
+    }
+
     private long getStartOfDay() {
         return DateUtils.getStartOfDay(System.currentTimeMillis());
     }
