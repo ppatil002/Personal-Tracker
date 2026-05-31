@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.example.pp.PPApplication;
+import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.core.task.AppExecutors;
@@ -22,7 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 public class WaterIntakeScheduler {
     private static final String TAG = "WaterIntakeScheduler";
-    public static final int ALARM_REQUEST_CODE = 8001;
+    public static final int ALARM_REQUEST_CODE = AppConstants.RC_WATER_ALARM;
 
     /**
      * Reschedules the water intake alarm based on the latest database state.
@@ -88,6 +89,7 @@ public class WaterIntakeScheduler {
             TaskState state = repo.getStateForTask(taskId);
             if (state != null) {
                 state.setNextRunTime(nextRunTime);
+                state.setLastRunTime(System.currentTimeMillis());
                 state.setCurrentState(TaskStatus.SCHEDULED);
                 repo.updateState(state);
             }

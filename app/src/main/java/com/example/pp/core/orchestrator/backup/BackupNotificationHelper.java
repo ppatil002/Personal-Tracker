@@ -10,13 +10,14 @@ import android.content.Intent;
 import androidx.core.app.NotificationCompat;
 
 import com.example.pp.R;
+import com.example.pp.core.constants.AppConstants;
 import com.example.pp.features.settings.WorkerListActivity;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
 
 public class BackupNotificationHelper {
-    public static final String CHANNEL_ID = "BACKUP_SERVICE_CHANNEL";
-    public static final int NOTIFICATION_ID = 5001;
+    public static final String CHANNEL_ID = AppConstants.CHANNEL_BACKUP;
+    public static final int NOTIFICATION_ID = AppConstants.NOTIFY_ID_BACKUP;
 
     public static void createNotificationChannel(Context context) {
         NotificationChannel channel = new NotificationChannel(

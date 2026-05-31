@@ -13,6 +13,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 import com.example.pp.R;
+import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.data.local.AppDatabase;
@@ -29,8 +30,8 @@ public abstract class BaseFeatureWorker extends Worker {
     protected final String jobId;
     protected final String taskId;
 
-    private static final String CHANNEL_ID = "BG_SYNC_CHANNEL";
-    private static final int NOTIFICATION_ID = 2001;
+    private static final String CHANNEL_ID = AppConstants.CHANNEL_TASK_ENGINE;
+    private static final int NOTIFICATION_ID = AppConstants.NOTIFY_ID_TASK_ENGINE;
 
     public BaseFeatureWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);

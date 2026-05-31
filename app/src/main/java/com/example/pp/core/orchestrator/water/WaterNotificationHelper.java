@@ -9,10 +9,11 @@ import android.content.Intent;
 import androidx.core.app.NotificationCompat;
 
 import com.example.pp.R;
+import com.example.pp.core.constants.AppConstants;
 
 public class WaterNotificationHelper {
-    public static final String CHANNEL_ID = "WATER_REMINDER_CHANNEL";
-    public static final int NOTIFICATION_ID = 5002;
+    public static final String CHANNEL_ID = AppConstants.CHANNEL_WATER;
+    public static final int NOTIFICATION_ID = AppConstants.NOTIFY_ID_WATER;
     
     public static final String ACTION_100ML = "com.example.pp.ACTION_100ML";
     public static final String ACTION_250ML = "com.example.pp.ACTION_250ML";
