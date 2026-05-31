@@ -8,6 +8,7 @@ import android.util.Log;
 import com.example.pp.PPApplication;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.data.local.entity.TaskDefinition;
+import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.data.repository.HydrationRepository;
 import com.example.pp.data.repository.TaskRepository;
 import com.example.pp.core.task.AppExecutors;
@@ -24,9 +25,22 @@ public class WaterIntakeReceiver extends BroadcastReceiver {
         if (action == null) {
             // Regular alarm trigger
             WaterNotificationHelper.showNotification(context, taskId);
+            updateTaskLastRun(context, taskId);
         } else {
             handleAction(context, action, taskId);
         }
+    }
+
+    private void updateTaskLastRun(Context context, String taskId) {
+        if (taskId == null) return;
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            TaskRepository repo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
+            TaskState state = repo.getStateForTask(taskId);
+            if (state != null) {
+                state.setLastRunTime(System.currentTimeMillis());
+                repo.updateState(state);
+            }
+        });
     }
 
     private void handleAction(Context context, String action, String taskId) {
