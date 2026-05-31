@@ -34,7 +34,7 @@ public class SleepReceiver extends BroadcastReceiver {
     }
 
     private void handleStartSleep(Context context) {
-        SleepRepository sleepRepo = new SleepRepository(context);
+        SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
         long now = System.currentTimeMillis();
         
         // Target wake time (default 6 AM next)
@@ -53,7 +53,7 @@ public class SleepReceiver extends BroadcastReceiver {
     }
 
     private void handleStopSleep(Context context) {
-        SleepRepository sleepRepo = new SleepRepository(context);
+        SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
         sleepRepo.stopSleep(System.currentTimeMillis());
         SleepNotificationHelper.cancelNotification(context);
         SleepScheduler.reschedule(context);
@@ -61,7 +61,7 @@ public class SleepReceiver extends BroadcastReceiver {
 
     private void handleAlarmTrigger(Context context) {
         new Thread(() -> {
-            SleepRepository sleepRepo = new SleepRepository(context);
+            SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
             SleepEntity lastSleep = sleepRepo.getLastSleepSync();
             long now = System.currentTimeMillis();
 

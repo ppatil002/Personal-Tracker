@@ -50,7 +50,7 @@ public class SleepScheduler {
     }
 
     private static void calculateAndSetNextAlarm(Context context, String taskId) {
-        SleepRepository sleepRepo = new SleepRepository(context);
+        SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
         SleepEntity lastSleep = sleepRepo.getLastSleepSync();
         
         long now = System.currentTimeMillis();

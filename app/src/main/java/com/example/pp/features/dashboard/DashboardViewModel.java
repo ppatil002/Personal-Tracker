@@ -7,6 +7,7 @@ import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.pp.PPApplication;
 import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.entity.HydrationIntake;
@@ -32,10 +33,10 @@ public class DashboardViewModel extends AndroidViewModel {
 
     public DashboardViewModel(@NonNull Application application) {
         super(application);
-        hydrationRepository = new HydrationRepository(application);
-        nutritionRepository = new NutritionRepository(application);
-        screenTimeRepository = new ScreenTimeRepository(application);
-        sleepRepository = new SleepRepository(application);
+        hydrationRepository = ((PPApplication) application).getHydrationRepository();
+        nutritionRepository = ((PPApplication) application).getNutritionRepository();
+        screenTimeRepository = ((PPApplication) application).getScreenTimeRepository();
+        sleepRepository = ((PPApplication) application).getSleepRepository();
         loadUserName();
     }
 

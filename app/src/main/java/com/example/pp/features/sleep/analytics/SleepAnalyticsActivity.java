@@ -41,7 +41,7 @@ public class SleepAnalyticsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_sleep_analytics);
 
-        repository = new SleepRepository(this);
+        repository = ((PPApplication) getApplication()).getSleepRepository();
         initViews();
         setupChart();
         updateRange(PeriodType.WEEK);
