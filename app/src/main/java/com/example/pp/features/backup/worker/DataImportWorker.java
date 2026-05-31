@@ -6,6 +6,9 @@ import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.WorkerParameters;
 
+import com.example.pp.PPApplication;
+import com.example.pp.core.cache.CategoryCacheManager;
+import com.example.pp.core.cache.TagCacheManager;
 import com.example.pp.core.orchestrator.BaseFeatureWorker;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.model.SyncStats;
@@ -59,6 +62,7 @@ public class DataImportWorker extends BaseFeatureWorker {
                 allStats.add(db.backgroundJobLogDao().upsertAll(backupData.backgroundJobLogs));
                 allStats.add(db.hydrationDao().upsertAll(backupData.hydrationIntakes));
                 allStats.add(db.nutritionDao().upsertAll(backupData.nutritionIntakes));
+                allStats.add(db.screenTimeDao().upsertAll(backupData.screenTime));
             });
 
             StringBuilder summary = new StringBuilder("Restore Summary:\n");
@@ -67,6 +71,14 @@ public class DataImportWorker extends BaseFeatureWorker {
             }
 
             updateLog("SUCCESS", "IMPORT_COMPLETE", summary.toString());
+            
+            // Invalidate caches after successful restore
+            CategoryCacheManager.getInstance().setDirty(true);
+            TagCacheManager.getInstance().setDirty(true);
+            
+            PPApplication app = (PPApplication) getApplicationContext();
+            app.getCategoryRepository().refreshCategoryTree();
+            app.getTagRepository().refreshTags();
             
             if (restoredFile.exists()) {
                 restoredFile.delete();

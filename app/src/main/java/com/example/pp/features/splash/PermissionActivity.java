@@ -2,6 +2,7 @@ package com.example.pp.features.splash;
 
 import android.Manifest;
 import android.app.AlarmManager;
+import android.app.AppOpsManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -30,7 +31,7 @@ public class PermissionActivity extends AppCompatActivity {
 
     private static final int REQUEST_CODE_NOTIFICATION = 101;
     private static final int REQUEST_CODE_GOOGLE_SIGN_IN = 102;
-    private Button btnNotification, btnAlarm, btnBattery, btnGoogleDrive, btnContinue;
+    private Button btnNotification, btnAlarm, btnBattery, btnGoogleDrive, btnUsageStats, btnAccessibility, btnContinue;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,12 +42,16 @@ public class PermissionActivity extends AppCompatActivity {
         btnAlarm = findViewById(R.id.btnAlarmPermission);
         btnBattery = findViewById(R.id.btnBatteryOptimization);
         btnGoogleDrive = findViewById(R.id.btnGoogleDrive);
+        btnUsageStats = findViewById(R.id.btnUsageStats);
+        btnAccessibility = findViewById(R.id.btnAccessibility);
         btnContinue = findViewById(R.id.btnContinue);
 
         btnNotification.setOnClickListener(v -> requestNotificationPermission());
         btnAlarm.setOnClickListener(v -> requestAlarmPermission());
         btnBattery.setOnClickListener(v -> requestIgnoreBatteryOptimization());
         btnGoogleDrive.setOnClickListener(v -> requestGoogleDriveAccess());
+        btnUsageStats.setOnClickListener(v -> requestUsageStatsPermission());
+        btnAccessibility.setOnClickListener(v -> requestAccessibilityPermission());
         
         btnContinue.setOnClickListener(v -> {
             if (checkAllCriticalPermissions()) {
@@ -86,6 +91,16 @@ public class PermissionActivity extends AppCompatActivity {
         btnGoogleDrive.setText(googleDriveAuthorized ? "Google Drive: CONNECTED" : "Connect Google Drive");
         btnGoogleDrive.setEnabled(!googleDriveAuthorized);
         btnGoogleDrive.setAlpha(googleDriveAuthorized ? 0.6f : 1.0f);
+
+        boolean usageStatsGranted = hasUsageStatsPermission();
+        btnUsageStats.setText(usageStatsGranted ? "Usage Stats: GRANTED" : "Grant Usage Stats Access");
+        btnUsageStats.setEnabled(!usageStatsGranted);
+        btnUsageStats.setAlpha(usageStatsGranted ? 0.6f : 1.0f);
+
+        boolean accessibilityGranted = isAccessibilityServiceEnabled();
+        btnAccessibility.setText(accessibilityGranted ? "Accessibility Service: ENABLED" : "Enable Accessibility Service");
+        btnAccessibility.setEnabled(!accessibilityGranted);
+        btnAccessibility.setAlpha(accessibilityGranted ? 0.6f : 1.0f);
     }
 
     private boolean checkAllCriticalPermissions() {
@@ -93,8 +108,44 @@ public class PermissionActivity extends AppCompatActivity {
         AlarmManager am = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
         boolean alarms = am != null && am.canScheduleExactAlarms();
         boolean googleDrive = GoogleDriveClient.getInstance(this).isAuthorized();
+        boolean usageStats = hasUsageStatsPermission();
+        boolean accessibility = isAccessibilityServiceEnabled();
 
-        return notifications && alarms && googleDrive;
+        return notifications && alarms && googleDrive && usageStats && accessibility;
+    }
+
+    private boolean hasUsageStatsPermission() {
+        AppOpsManager appOps = (AppOpsManager) getSystemService(android.content.Context.APP_OPS_SERVICE);
+        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(), getPackageName());
+        return mode == AppOpsManager.MODE_ALLOWED;
+    }
+
+    private boolean isAccessibilityServiceEnabled() {
+        String service = getPackageName() + "/" + com.example.pp.features.screentime.service.ScreenTrackingService.class.getName();
+        int accessibilityEnabled = 0;
+        try {
+            accessibilityEnabled = Settings.Secure.getInt(getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED);
+        } catch (Settings.SettingNotFoundException ignored) {}
+
+        if (accessibilityEnabled == 1) {
+            String settingValue = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            if (settingValue != null) {
+                String[] services = settingValue.split(":");
+                for (String s : services) {
+                    if (s.equalsIgnoreCase(service)) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private void requestUsageStatsPermission() {
+        startActivity(new Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS));
+    }
+
+    private void requestAccessibilityPermission() {
+        startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
     }
 
     private void requestNotificationPermission() {

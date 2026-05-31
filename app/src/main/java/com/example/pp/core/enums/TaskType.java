@@ -5,4 +5,5 @@ public enum TaskType {
     WATER_REMINDER,
     TRACKING,
     CLEANUP
+    SCREEN_TIME_SYNC,
 }

@@ -19,6 +19,8 @@ import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutritionIntake;
+import com.example.pp.data.local.entity.ScreenTime;
+import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.data.local.entity.TagEntity;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
@@ -37,6 +39,9 @@ import com.example.pp.utils.TaskTypeConverters;
     HydrationIntake.class,
     NutritionIntake.class
 }, version = 8, exportSchema = false)
+    NutritionIntake.class,
+    ScreenTime.class,
+}, version = 12, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -50,6 +55,8 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract TaskDao taskDao();
     public abstract HydrationDao hydrationDao();
     public abstract NutritionDao nutritionDao();
+    public abstract ScreenTimeDao screenTimeDao();
+    public abstract SleepDao sleepDao();
 
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {

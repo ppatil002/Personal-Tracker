@@ -15,6 +15,7 @@ public class PPApplication extends Application {
     private TransactionRepository transactionRepository;
     private GenericTableRepository genericTableRepository;
     private TaskRepository taskRepository;
+    private ScreenTimeRepository screenTimeRepository;
 
     @Override
     public void onCreate() {
@@ -25,6 +26,7 @@ public class PPApplication extends Application {
         transactionRepository = new TransactionRepository(this);
         genericTableRepository = new GenericTableRepository(this);
         taskRepository = new TaskRepository(this);
+        screenTimeRepository = new ScreenTimeRepository(this);
     }
 
     public CategoryRepository getCategoryRepository() {
@@ -45,5 +47,9 @@ public class PPApplication extends Application {
 
     public TaskRepository getTaskRepository() {
         return taskRepository;
+    }
+
+    public ScreenTimeRepository getScreenTimeRepository() {
+        return screenTimeRepository;
     }
 }

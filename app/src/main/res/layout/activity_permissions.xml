@@ -84,6 +84,26 @@
                 android:backgroundTint="#1E293B"
                 android:textColor="#FFFFFF"
                 android:layout_marginBottom="12dp" />
+
+            <!-- Usage Stats Permission -->
+            <Button
+                android:id="@+id/btnUsageStats"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Grant Usage Stats Access"
+                android:backgroundTint="#1E293B"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="12dp" />
+
+            <!-- Accessibility Permission -->
+            <Button
+                android:id="@+id/btnAccessibility"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Enable Accessibility Service"
+                android:backgroundTint="#1E293B"
+                android:textColor="#FFFFFF"
+                android:layout_marginBottom="12dp" />
         </LinearLayout>
     </ScrollView>
 

@@ -10,6 +10,7 @@ import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.core.orchestrator.SystemTaskScheduler;
 import com.example.pp.core.orchestrator.backup.BackupForegroundService;
+import com.example.pp.core.orchestrator.screentime.ScreenTimeScheduler;
 import com.example.pp.core.orchestrator.water.WaterNotificationHelper;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
@@ -48,25 +49,7 @@ public class TaskRepository {
                     }
                 }
 
-                if (existing.isEmpty()) {
-                    Log.i(TAG, "DB is empty. Seeding initial tasks.");
-                    seedDefaultTasks();
-                    Log.i(TAG, "Task seeding complete.");
-                } else {
-                    Log.d(TAG, "Tasks already exist in DB. Found " + existing.size() + " tasks.");
-                    // Check if WATER_REMINDER is missing
-                    boolean waterExists = false;
-                    for (TaskDao.TaskWithState t : existing) {
-                        if (t.definition.getTaskType() == TaskType.WATER_REMINDER) {
-                            waterExists = true;
-                            break;
-                        }
-                    }
-                    if (!waterExists) {
-                        Log.i(TAG, "WATER_REMINDER task missing. Adding it.");
-                        seedWaterTask();
-                    }
-                }
+                seedDefaultTasks();
                 
                 // Schedule the periodic tasks via the new SystemTaskScheduler
                 SystemTaskScheduler.scheduleAllTasksSync(context);
@@ -80,6 +63,41 @@ public class TaskRepository {
     private void seedDefaultTasks() {
         seedBackupTask();
         seedWaterTask();
+        seedScreenTimeTask();
+        seedSleepTask();
+    }
+
+    private void seedSleepTask() {
+        TaskDefinition sleepDef = new TaskDefinition(
+                "SLEEP_TASK_001",
+                TaskType.SLEEP_REMINDER,
+                true,
+                0, // Dynamic interval handled by SleepScheduler
+                1,
+                false,
+                0,
+                false,
+                30,
+                System.currentTimeMillis(),
+                System.currentTimeMillis()
+        );
+
+        TaskState sleepState = new TaskState(
+                "SLEEP_TASK_001",
+                TaskStatus.SCHEDULED,
+                0,
+                0,
+                0,
+                0,
+                0,
+                null,
+                false,
+                false,
+                0
+        );
+
+        taskDao.insertDefinition(sleepDef);
+        taskDao.insertState(sleepState);
     }
 
     private void seedBackupTask() {
@@ -148,6 +166,39 @@ public class TaskRepository {
         taskDao.insertState(waterState);
     }
 
+    private void seedScreenTimeTask() {
+        TaskDefinition screenTimeDef = new TaskDefinition(
+                "SCREENTIME_TASK_001",
+                TaskType.SCREEN_TIME_SYNC,
+                true,
+                TimeUnit.MINUTES.toMillis(15), // 15-minute interval
+                1,
+                false,
+                0, // Minimum Battery: 0%
+                false,
+                5, // Snooze for 5 minutes
+                System.currentTimeMillis(),
+                System.currentTimeMillis()
+        );
+
+        TaskState screenTimeState = new TaskState(
+                "SCREENTIME_TASK_001",
+                TaskStatus.SCHEDULED,
+                0,
+                0,
+                0,
+                0,
+                0,
+                null,
+                false,
+                false,
+                0
+        );
+
+        taskDao.insertDefinition(screenTimeDef);
+        taskDao.insertState(screenTimeState);
+    }
+
     public List<TaskDao.TaskWithState> getEnabledTasksWithState() {
         return taskDao.getEnabledTasksWithState();
     }
@@ -197,6 +248,8 @@ public class TaskRepository {
                     context.startForegroundService(serviceIntent);
                 } else if (def.getTaskType() == TaskType.WATER_REMINDER) {
                     WaterNotificationHelper.showNotification(context, taskId);
+                } else if (def.getTaskType() == TaskType.SCREEN_TIME_SYNC) {
+                    ScreenTimeScheduler.runNow(context, taskId);
                 }
             }
         });

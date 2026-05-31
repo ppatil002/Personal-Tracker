@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -23,6 +26,9 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
 
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" 
         tools:ignore="ProtectedPermissions" />
@@ -102,6 +108,11 @@
             android:windowSoftInputMode="adjustResize"/>
 
         <activity
+            android:name=".features.screentime.analytics.ScreenTimeAnalyticsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.PP" />
+        <activity
             android:name=".features.settings.WorkerListActivity"
             android:exported="false"
             android:windowSoftInputMode="adjustResize"/>
@@ -146,6 +157,23 @@
                 <action android:name="com.example.pp.ACTION_SNOOZE_TASK" />
             </intent-filter>
         </receiver>
+
+        <service
+            android:name=".features.screentime.service.ScreenTrackingService"
+            android:exported="false"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+
+        <receiver
+            android:name=".core.orchestrator.screentime.ScreenTimeReceiver"
+            android:exported="false" />
+
 
     </application>
 

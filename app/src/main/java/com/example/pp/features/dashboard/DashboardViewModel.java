@@ -1,31 +1,41 @@
 package com.example.pp.features.dashboard;
 
 import android.app.Application;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
-import com.example.pp.data.local.model.NutritionSummary;
+import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutritionIntake;
+import com.example.pp.data.local.entity.SleepEntity;
+import com.example.pp.data.local.model.NutritionSummary;
 import com.example.pp.data.repository.HydrationRepository;
 import com.example.pp.data.repository.NutritionRepository;
+import com.example.pp.data.repository.ScreenTimeRepository;
+import com.example.pp.data.repository.SleepRepository;
+import com.example.pp.utils.DateUtils;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
-import java.time.LocalDate;
-import java.time.ZoneId;
+
+import java.util.List;
 
 public class DashboardViewModel extends AndroidViewModel {
     private final HydrationRepository hydrationRepository;
     private final NutritionRepository nutritionRepository;
+    private final ScreenTimeRepository screenTimeRepository;
+    private final SleepRepository sleepRepository;
     private final MutableLiveData<String> userName = new MutableLiveData<>("Champion");
 
     public DashboardViewModel(@NonNull Application application) {
         super(application);
         hydrationRepository = new HydrationRepository(application);
         nutritionRepository = new NutritionRepository(application);
+        screenTimeRepository = new ScreenTimeRepository(application);
+        sleepRepository = new SleepRepository(application);
         loadUserName();
     }
 
@@ -68,7 +78,11 @@ public class DashboardViewModel extends AndroidViewModel {
         nutritionRepository.addIntake(food, cal, carbs, protein, fats, timestamp);
     }
 
+    public LiveData<List<ScreenTimeDao.AppUsageSummary>> getTodayScreenTime() {
+        return screenTimeRepository.getTodayAppUsage(getStartOfDay());
+    }
+
     private long getStartOfDay() {
-        return LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+        return DateUtils.getStartOfDay(System.currentTimeMillis());
     }
 }
