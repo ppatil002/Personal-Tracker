@@ -72,4 +72,24 @@ public class SleepRepository {
     public LiveData<List<SleepEntity>> getSleepHistory(long start, long end) {
         return sleepDao.getSleepInRange(start, end);
     }
+
+    public long getTargetWakeTime(SleepEntity lastSleep, long now) {
+        long targetWakeTime;
+
+        // Determine Target Wake Time
+        if (lastSleep != null && lastSleep.endTime == 0) {
+            targetWakeTime = lastSleep.targetWakeTime;
+        } else {
+            java.util.Calendar cal = java.util.Calendar.getInstance();
+            cal.set(java.util.Calendar.HOUR_OF_DAY, 6);
+            cal.set(java.util.Calendar.MINUTE, 0);
+            cal.set(java.util.Calendar.SECOND, 0);
+            cal.set(java.util.Calendar.MILLISECOND, 0);
+            if (cal.getTimeInMillis() <= now) {
+                cal.add(java.util.Calendar.DAY_OF_YEAR, 1);
+            }
+            targetWakeTime = cal.getTimeInMillis();
+        }
+        return targetWakeTime;
+    }
 }

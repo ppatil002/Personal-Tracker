@@ -17,8 +17,20 @@ public class AppConstants {
 
     // Alarm Request Codes
     public static final int RC_SLEEP_ALARM = 9002;
+    public static final int RC_SLEEP_REMINDER_2H = 9003;
+    public static final int RC_SLEEP_REMINDER_1H = 9004;
+    public static final int RC_SLEEP_REMINDER_30M = 9005;
+    public static final int RC_SLEEP_REMINDER_10M = 9006;
+    public static final int RC_SLEEP_TARGET = 9007;
+    public static final int RC_SLEEP_WAKEUP = 9008;
+    public static final int RC_SLEEP_NAG = 9009;
+
     public static final int RC_WATER_ALARM = 8001;
 
     // Intent Actions
     public static final String ACTION_SLEEP_ALARM = "com.example.pp.ACTION_SLEEP_ALARM";
+    
+    // Target Time
+    public static final int SLEEP_TARGET_HOUR = 8;
+    
 }

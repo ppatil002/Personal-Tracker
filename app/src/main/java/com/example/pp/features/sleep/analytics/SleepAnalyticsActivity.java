@@ -13,6 +13,7 @@ import com.example.pp.R;
 import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.data.repository.SleepRepository;
+import com.example.pp.features.analytics.chart.TimeMarkerView;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
@@ -161,6 +162,11 @@ public class SleepAnalyticsActivity extends AppCompatActivity {
         BarData barData = new BarData(set);
         sleepChart.setData(barData);
         sleepChart.getXAxis().setValueFormatter(new com.github.mikephil.charting.formatter.IndexAxisValueFormatter(labels));
+        
+        TimeMarkerView marker = new TimeMarkerView(this);
+        marker.setLabels(labels.toArray(new String[0]));
+        sleepChart.setMarker(marker);
+
         sleepChart.invalidate();
     }
 }
