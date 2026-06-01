@@ -10,6 +10,7 @@ import androidx.core.app.NotificationCompat;
 
 import com.example.pp.R;
 import com.example.pp.core.constants.AppConstants;
+import com.example.pp.features.dashboard.DashboardActivity;
 
 public class WaterNotificationHelper {
     public static final String CHANNEL_ID = AppConstants.CHANNEL_WATER;
@@ -46,6 +47,10 @@ public class WaterNotificationHelper {
         intentSnooze.putExtra("TASK_ID", taskId);
         PendingIntent piSnooze = PendingIntent.getBroadcast(context, 3, intentSnooze, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
+        Intent dashIntent = new Intent(context, DashboardActivity.class);
+        dashIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent contentIntent = PendingIntent.getActivity(context, 0, dashIntent, PendingIntent.FLAG_IMMUTABLE);
+
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_glass)
                 .setContentTitle("Water Intake")
@@ -53,6 +58,7 @@ public class WaterNotificationHelper {
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setAutoCancel(true)
+                .setContentIntent(contentIntent)
                 .addAction(0, "100ml", pi100)
                 .addAction(0, "250ml", pi250)
                 .addAction(0, "Snooze", piSnooze);
