@@ -17,10 +17,14 @@ import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.data.repository.SleepRepository;
 import com.example.pp.data.repository.TaskRepository;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class SleepReceiver extends BroadcastReceiver {
     private static final String TAG = "SleepReceiver";
+    private static final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -49,7 +53,7 @@ public class SleepReceiver extends BroadcastReceiver {
 
         sleepRepo.startSleep(now, targetWakeTime);
         SleepNotificationHelper.cancelNotification(context);
-        // Recalculate will cancel nags and ensure wake up trigger is set
+        // Recalculate will cancel nudges and ensure wake up trigger is set
         SleepScheduler.reschedule(context);
     }
 
@@ -73,7 +77,7 @@ public class SleepReceiver extends BroadcastReceiver {
                     SleepNotificationHelper.showWakeUpNotification(context);
                     updateTaskState(context, 0);
                 } else {
-                    // Ignore reminders/nags if user is already sleeping
+                    // Ignore reminders/nudges if user is already sleeping
                     Log.d(TAG, "User sleeping, ignoring: " + reason);
                 }
             } else {
@@ -92,7 +96,7 @@ public class SleepReceiver extends BroadcastReceiver {
                     long nextRunTime = calculateNextRunTime(reason, bedtime, now);
                     updateTaskState(context, nextRunTime);
                 } else {
-                    // Overdue / Nag
+                    // Overdue / nudge
                     long potentialMillis = Math.max(0, targetWakeTime - now);
                     int potentialPercent = (int) (potentialMillis * 100 / TimeUnit.HOURS.toMillis(AppConstants.SLEEP_TARGET_HOUR));
                     String msg = "Time's up! Current potential: " + potentialPercent + "%";
@@ -101,28 +105,28 @@ public class SleepReceiver extends BroadcastReceiver {
                     long nextRunTime = calculateNextRunTime(reason, bedtime, now);
                     updateTaskState(context, nextRunTime);
                     
-                    // Schedule next nag in 30 mins
+                    // Schedule next nudge in 30 mins
                     TaskRepository taskRepo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
                     TaskDefinition def = taskRepo.getDefinitionByType(TaskType.SLEEP_REMINDER);
                     if (def != null) {
-                        SleepScheduler.logOperation(context, "SCHEDULE", "Bedtime nag", "Setting next nag in 30m");
-                        scheduleNag(context, now + TimeUnit.MINUTES.toMillis(30), def.getTaskId());
+                        SleepScheduler.logOperation(context, "SCHEDULE", "Bedtime nudge @ "+ timeFormat.format(new Date(now + TimeUnit.MINUTES.toMillis(30))), "Setting next nudge in 30m");
+                        scheduleNudge(context, now + TimeUnit.MINUTES.toMillis(30), def.getTaskId());
                     }
                 }
             }
         });
     }
 
-    private void scheduleNag(Context context, long time, String taskId) {
+    private void scheduleNudge(Context context, long time, String taskId) {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, SleepReceiver.class);
         intent.setAction(AppConstants.ACTION_SLEEP_ALARM);
         intent.putExtra("TASK_ID", taskId);
-        intent.putExtra("REASON", "Bedtime nag (30m)");
+        intent.putExtra("REASON", "Bedtime nudge (30m)");
         
         PendingIntent pi = PendingIntent.getBroadcast(
                 context, 
-                AppConstants.RC_SLEEP_NAG, 
+                AppConstants.RC_SLEEP_NUDGE,
                 intent, 
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
@@ -133,15 +137,15 @@ public class SleepReceiver extends BroadcastReceiver {
     }
 
     private long calculateNextRunTime(String reason, long bedtime, long now) {
-        if (reason.contains("2h")) {
+        if (reason.contains("2H")) {
             return bedtime - TimeUnit.HOURS.toMillis(1);
-        } else if (reason.contains("1h")) {
+        } else if (reason.contains("1H")) {
             return bedtime - TimeUnit.MINUTES.toMillis(30);
         } else if (reason.contains("30m")) {
             return bedtime - TimeUnit.MINUTES.toMillis(10);
         } else if (reason.contains("10m")) {
             return bedtime;
-        } else if (reason.contains("target") || reason.contains("nag")) {
+        } else if (reason.contains("target") || reason.contains("nudge")) {
             return now + TimeUnit.MINUTES.toMillis(30);
         }
         return 0;

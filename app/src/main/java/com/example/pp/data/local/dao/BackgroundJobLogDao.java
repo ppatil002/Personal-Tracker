@@ -78,4 +78,21 @@ public interface BackgroundJobLogDao {
         stats.finalCount = getCount();
         return stats;
     }
+
+    @Query(
+            "UPDATE background_job_log " +
+                    "SET last_updated_timestamp = :newTimestamp " +
+                    "WHERE worker_name = :workerName " +
+                    "AND current_step = :currentStep " +
+                    "AND log_message = :logMessage " +
+                    "AND date(last_updated_timestamp / 1000, 'unixepoch') = " +
+                    "    date(:newTimestamp / 1000, 'unixepoch')"
+    )
+    int updateExistingDailyLog(
+            String workerName,
+            String currentStep,
+            String logMessage,
+            long newTimestamp
+    );
+
 }

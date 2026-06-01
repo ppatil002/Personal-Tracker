@@ -19,11 +19,14 @@ import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.repository.SleepRepository;
 import com.example.pp.data.repository.TaskRepository;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 public class SleepScheduler {
     private static final String TAG = "SleepScheduler";
+    private static final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
 
     /**
      * Entry point for the Task Engine / SystemTaskScheduler.
@@ -61,12 +64,12 @@ public class SleepScheduler {
             // Ensure Wake Up trigger is set.
             long wakeTriggerTime = targetWakeTime - TimeUnit.HOURS.toMillis(1);
             if (wakeTriggerTime > now) {
-                setNativeAlarm(context, wakeTriggerTime, taskId, AppConstants.RC_SLEEP_WAKEUP, "Wake up trigger");
+                setNativeAlarm(context, wakeTriggerTime, taskId, AppConstants.RC_SLEEP_WAKEUP, "Wake up trigger @" + timeFormat.format(new Date(wakeTriggerTime)));
             }
             
-            // Cancel reminders/nags as they are no longer needed
+            // Cancel reminders/nudges as they are no longer needed
             cancelAlarm(context, AppConstants.RC_SLEEP_TARGET);
-            cancelAlarm(context, AppConstants.RC_SLEEP_NAG);
+            cancelAlarm(context, AppConstants.RC_SLEEP_NUDGE);
             cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_2H);
             cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_1H);
             cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_30M);
@@ -74,17 +77,17 @@ public class SleepScheduler {
         } else {
             // CASE: User is awake (startTime == 0).
             // 1. Schedule the sequence of reminders (Step 1)
-            scheduleIfFuture(context, taskId, bedtime - TimeUnit.HOURS.toMillis(2), AppConstants.RC_SLEEP_REMINDER_2H, "2h reminder");
-            scheduleIfFuture(context, taskId, bedtime - TimeUnit.HOURS.toMillis(1), AppConstants.RC_SLEEP_REMINDER_1H, "1h reminder");
-            scheduleIfFuture(context, taskId, bedtime - TimeUnit.MINUTES.toMillis(30), AppConstants.RC_SLEEP_REMINDER_30M, "30m reminder");
-            scheduleIfFuture(context, taskId, bedtime - TimeUnit.MINUTES.toMillis(10), AppConstants.RC_SLEEP_REMINDER_10M, "10m reminder");
-            scheduleIfFuture(context, taskId, bedtime, AppConstants.RC_SLEEP_TARGET, "Bedtime target");
+            scheduleIfFuture(context, taskId, bedtime - TimeUnit.HOURS.toMillis(2), AppConstants.RC_SLEEP_REMINDER_2H, "2H reminder @ "+ timeFormat.format(new Date(bedtime - TimeUnit.HOURS.toMillis(2))));
+            scheduleIfFuture(context, taskId, bedtime - TimeUnit.HOURS.toMillis(1), AppConstants.RC_SLEEP_REMINDER_1H, "1H reminder @ "+ timeFormat.format(new Date(bedtime - TimeUnit.HOURS.toMillis(1))));
+            scheduleIfFuture(context, taskId, bedtime - TimeUnit.MINUTES.toMillis(30), AppConstants.RC_SLEEP_REMINDER_30M, "30m reminder @ "+ timeFormat.format(new Date(bedtime - TimeUnit.MINUTES.toMillis(30))));
+            scheduleIfFuture(context, taskId, bedtime - TimeUnit.MINUTES.toMillis(10), AppConstants.RC_SLEEP_REMINDER_10M, "10m reminder @ "+ timeFormat.format(new Date(bedtime - TimeUnit.MINUTES.toMillis(10))));
+            scheduleIfFuture(context, taskId, bedtime, AppConstants.RC_SLEEP_TARGET, "Bedtime target @ "+ timeFormat.format(new Date(bedtime)));
             
             // Wake up trigger (waketime - 1 hour)
-            scheduleIfFuture(context, taskId, targetWakeTime - TimeUnit.HOURS.toMillis(1), AppConstants.RC_SLEEP_WAKEUP, "Wake up trigger");
+            scheduleIfFuture(context, taskId, targetWakeTime - TimeUnit.HOURS.toMillis(1), AppConstants.RC_SLEEP_WAKEUP, "Wake up trigger @ "+ timeFormat.format(new Date(targetWakeTime - TimeUnit.HOURS.toMillis(1))));
 
             if (now < bedtime) {
-                cancelAlarm(context, AppConstants.RC_SLEEP_NAG);
+                cancelAlarm(context, AppConstants.RC_SLEEP_NUDGE);
             }
         }
     }
@@ -143,7 +146,9 @@ public class SleepScheduler {
                 System.currentTimeMillis()
         );
         AppExecutors.getInstance().diskIO().execute(() -> {
-            AppDatabase.getInstance(context).backgroundJobLogDao().insert(log);
+            ((PPApplication) context.getApplicationContext())
+                .getBackgroundJobLogRepository()
+                .mergeDuplicateDailyWorkerLog(log);
         });
     }
 }
