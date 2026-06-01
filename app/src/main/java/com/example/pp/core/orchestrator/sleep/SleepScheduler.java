@@ -12,7 +12,6 @@ import com.example.pp.PPApplication;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.core.task.AppExecutors;
-import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.data.local.entity.TaskDefinition;
@@ -56,7 +55,7 @@ public class SleepScheduler {
         SleepEntity lastSleep = sleepRepo.getLastSleepSync();
         
         long now = System.currentTimeMillis();
-        long targetWakeTime = sleepRepo.getTargetWakeTime(lastSleep, now);
+        long targetWakeTime = sleepRepo.getTargetWakeTime(now);
         long bedtime = targetWakeTime - TimeUnit.HOURS.toMillis(SLEEP_TARGET_HOUR);
 
         if (lastSleep != null && lastSleep.startTime != 0 && lastSleep.endTime == 0) {

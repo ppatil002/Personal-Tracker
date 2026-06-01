@@ -1,5 +1,7 @@
 package com.example.pp.core.orchestrator.sleep;
 
+import static com.example.pp.core.constants.AppConstants.SLEEP_TARGET_HOUR;
+
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -46,10 +48,9 @@ public class SleepReceiver extends BroadcastReceiver {
 
     private void handleStartSleep(Context context) {
         SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
-        SleepEntity lastSleep = sleepRepo.getLastSleepSync();
         long now = System.currentTimeMillis();
         
-        long targetWakeTime = sleepRepo.getTargetWakeTime(lastSleep, now);
+        long targetWakeTime = sleepRepo.getTargetWakeTime(now);
 
         sleepRepo.startSleep(now, targetWakeTime);
         SleepNotificationHelper.cancelNotification(context);
@@ -75,14 +76,17 @@ public class SleepReceiver extends BroadcastReceiver {
                 // User is sleeping
                 if (reason.contains("Wake up trigger")) {
                     SleepNotificationHelper.showWakeUpNotification(context);
-                    updateTaskState(context, 0);
+                    long targetWakeTime = sleepRepo.getTargetWakeTime(now);
+                    long bedtime = targetWakeTime - TimeUnit.HOURS.toMillis(SLEEP_TARGET_HOUR);
+                    long nextRunTime = calculateNextRunTime(reason, bedtime, now);
+                    updateTaskState(context, nextRunTime);
                 } else {
                     // Ignore reminders/nudges if user is already sleeping
                     Log.d(TAG, "User sleeping, ignoring: " + reason);
                 }
             } else {
                 // User is awake (or pending)
-                long targetWakeTime = sleepRepo.getTargetWakeTime(lastSleep, now);
+                long targetWakeTime = sleepRepo.getTargetWakeTime(now);
 
                 long bedtime = targetWakeTime - TimeUnit.HOURS.toMillis(AppConstants.SLEEP_TARGET_HOUR);
                 
@@ -147,6 +151,9 @@ public class SleepReceiver extends BroadcastReceiver {
             return bedtime;
         } else if (reason.contains("target") || reason.contains("nudge")) {
             return now + TimeUnit.MINUTES.toMillis(30);
+        } else if (reason.contains("Wake up trigger")){
+            // Setting for next day's time
+            return bedtime - TimeUnit.HOURS.toMillis(2);
         }
         return 0;
     }

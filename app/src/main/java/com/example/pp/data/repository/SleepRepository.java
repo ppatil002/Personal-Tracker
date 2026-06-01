@@ -10,6 +10,7 @@ import com.example.pp.data.local.dao.SleepDao;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.utils.DateUtils;
 
+import java.util.Calendar;
 import java.util.List;
 
 public class SleepRepository {
@@ -73,20 +74,21 @@ public class SleepRepository {
         return sleepDao.getSleepInRange(start, end);
     }
 
-    public long getTargetWakeTime(SleepEntity lastSleep, long now) {
+    public long getTargetWakeTime(long now) {
+        SleepEntity lastSleep = getLastSleepSync();
         long targetWakeTime;
 
         // Determine Target Wake Time
         if (lastSleep != null && lastSleep.endTime == 0) {
             targetWakeTime = lastSleep.targetWakeTime;
         } else {
-            java.util.Calendar cal = java.util.Calendar.getInstance();
-            cal.set(java.util.Calendar.HOUR_OF_DAY, 6);
-            cal.set(java.util.Calendar.MINUTE, 0);
-            cal.set(java.util.Calendar.SECOND, 0);
-            cal.set(java.util.Calendar.MILLISECOND, 0);
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 6);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
             if (cal.getTimeInMillis() <= now) {
-                cal.add(java.util.Calendar.DAY_OF_YEAR, 1);
+                cal.add(Calendar.DAY_OF_YEAR, 1);
             }
             targetWakeTime = cal.getTimeInMillis();
         }
