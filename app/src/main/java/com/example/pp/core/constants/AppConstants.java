@@ -29,6 +29,7 @@ public class AppConstants {
 
     // Intent Actions
     public static final String ACTION_SLEEP_ALARM = "com.example.pp.ACTION_SLEEP_ALARM";
+    public static final String ACTION_WATER_ALARM = "com.example.pp.ACTION_WATER_ALARM";
     
     // Target Time
     public static final int SLEEP_TARGET_HOUR = 8;

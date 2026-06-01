@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.util.Log;
 
 import com.example.pp.PPApplication;
+import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
@@ -22,7 +23,7 @@ public class WaterIntakeReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         Log.i(TAG, "Water alarm triggered. Action: " + action + ", TaskId: " + taskId);
 
-        if (action == null) {
+        if (AppConstants.ACTION_WATER_ALARM.equals(action)) {
             // Regular alarm trigger
             WaterNotificationHelper.showNotification(context, taskId);
             updateTaskLastRun(context, taskId);

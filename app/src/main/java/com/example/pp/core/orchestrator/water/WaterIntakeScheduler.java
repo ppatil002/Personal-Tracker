@@ -58,6 +58,7 @@ public class WaterIntakeScheduler {
         
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, WaterIntakeReceiver.class);
+        intent.setAction(AppConstants.ACTION_WATER_ALARM);
         intent.putExtra("TASK_ID", def.getTaskId());
         
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
@@ -177,6 +178,7 @@ public class WaterIntakeScheduler {
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, WaterIntakeReceiver.class);
+        intent.setAction(AppConstants.ACTION_WATER_ALARM);
         intent.putExtra("TASK_ID", def.getTaskId());
         
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
