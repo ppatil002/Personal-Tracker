@@ -3,6 +3,7 @@ package com.example.pp.data.repository;
 import android.content.Context;
 import android.database.Cursor;
 
+import androidx.sqlite.db.SimpleSQLiteQuery;
 import androidx.sqlite.db.SupportSQLiteQuery;
 
 import com.example.pp.core.enums.TableColumnType;
@@ -27,7 +28,7 @@ public class GenericTableRepository {
     }
 
     public interface TableDataCallback {
-        void onDataLoaded(List<String> columnNames, List<TableRow> rows);
+        void onDataLoaded(List<String> columnNames, List<TableRow> rows, int totalRecords);
         void onError(String message);
     }
 
@@ -59,7 +60,19 @@ public class GenericTableRepository {
                     }
                     cursor.close();
 
-                    executors.mainThread().execute(() -> callback.onDataLoaded(columnNames, rows));
+                    // Get total records count
+                    SupportSQLiteQuery countQuery = new SimpleSQLiteQuery("SELECT COUNT(*) FROM " + tableName);
+                    Cursor countCursor = commonDao.getRawTableData(countQuery);
+                    int totalRecords = 0;
+                    if (countCursor != null) {
+                        if (countCursor.moveToFirst()) {
+                            totalRecords = countCursor.getInt(0);
+                        }
+                        countCursor.close();
+                    }
+
+                    final int finalTotal = totalRecords;
+                    executors.mainThread().execute(() -> callback.onDataLoaded(columnNames, rows, finalTotal));
                 } else {
                     executors.mainThread().execute(() -> callback.onError("Null cursor returned"));
                 }

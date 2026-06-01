@@ -41,6 +41,8 @@ public class TableViewActivity extends AppCompatActivity {
     private GenericTableAdapter adapter;
     private List<TableColumn> columns = new ArrayList<>();
     private final int columnWidth = 400; // Pixels
+    
+    private View btnPrev, btnNext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,14 +77,17 @@ public class TableViewActivity extends AppCompatActivity {
         adapter.setFixedCellWidth(columnWidth);
         rvData.setAdapter(adapter);
 
-        findViewById(R.id.btnPrev).setOnClickListener(v -> {
+        btnPrev = findViewById(R.id.btnPrev);
+        btnNext = findViewById(R.id.btnNext);
+
+        btnPrev.setOnClickListener(v -> {
             if (currentQuery.getOffset() > 0) {
                 currentQuery.setOffset(currentQuery.getOffset() - currentQuery.getLimit());
                 loadData();
             }
         });
 
-        findViewById(R.id.btnNext).setOnClickListener(v -> {
+        btnNext.setOnClickListener(v -> {
             currentQuery.setOffset(currentQuery.getOffset() + currentQuery.getLimit());
             loadData();
         });
@@ -98,7 +103,7 @@ public class TableViewActivity extends AppCompatActivity {
 
         repository.getRawTableData(tableName, currentQuery, new GenericTableRepository.TableDataCallback() {
             @Override
-            public void onDataLoaded(List<String> columnNames, List<TableRow> rows) {
+            public void onDataLoaded(List<String> columnNames, List<TableRow> rows, int totalRecords) {
                 if (progressBar != null) progressBar.setVisibility(View.GONE);
                 
                 // Build Column Models if not yet built
@@ -116,13 +121,16 @@ public class TableViewActivity extends AppCompatActivity {
                 adapter.setRows(rows);
                 
                 int page = (currentQuery.getOffset() / currentQuery.getLimit()) + 1;
-                tvPageInfo.setText("Page " + page);
+                int totalPages = Math.max(1, (int) Math.ceil((double) totalRecords / currentQuery.getLimit()));
+                tvPageInfo.setText(String.format(java.util.Locale.getDefault(), "Page %d/%d | Rows: %d", page, totalPages, totalRecords));
 
-                if (rows.isEmpty() && currentQuery.getOffset() > 0) {
-                    Toast.makeText(TableViewActivity.this, "No more data", Toast.LENGTH_SHORT).show();
-                    currentQuery.setOffset(currentQuery.getOffset() - currentQuery.getLimit());
-                    loadData();
-                }
+                boolean hasPrev = page > 1;
+                boolean hasNext = page < totalPages;
+
+                btnPrev.setEnabled(hasPrev);
+                btnNext.setEnabled(hasNext);
+                btnPrev.setAlpha(hasPrev ? 1.0f : 0.4f);
+                btnNext.setAlpha(hasNext ? 1.0f : 0.4f);
             }
 
             @Override
