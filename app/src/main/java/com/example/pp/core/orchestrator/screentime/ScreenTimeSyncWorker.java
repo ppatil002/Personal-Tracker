@@ -36,7 +36,7 @@ public class ScreenTimeSyncWorker extends BaseFeatureWorker {
             
             repository.syncScreenTimeSync(start, end);
 
-            updateLog("COMPLETED", "Syncing Screen Time", "Data collection finished successfully");
+            updateLog("SUCCESS", "Syncing Screen Time", "Data collection finished successfully");
             completeTask();
             Log.i(TAG, "Worker execution completed successfully.");
             return Result.success();

@@ -35,7 +35,7 @@ public class SleepReceiver extends BroadcastReceiver {
         if (reason == null) reason = "Unknown trigger";
         
         Log.i(TAG, "onReceive: " + action + " | Reason: " + reason);
-        SleepScheduler.logOperation(context, "EXECUTE", "Alarm Received", "Action: " + action + " | Reason: " + reason);
+        SleepScheduler.logOperation(context, "SUCCESS", reason, "Action: " + action + " | Reason: " + reason);
 
         if (SleepNotificationHelper.ACTION_START_SLEEP.equals(action)) {
             handleStartSleep(context);

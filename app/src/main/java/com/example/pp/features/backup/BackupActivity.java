@@ -244,6 +244,7 @@ public class BackupActivity extends AppCompatActivity {
                     if ("SUCCESS".equals(log.getStatus())) statusEmoji = "✅";
                     else if ("FAILED".equals(log.getStatus())) statusEmoji = "❌";
                     else if ("RUNNING".equals(log.getStatus())) statusEmoji = "🕒";
+                    else if ("SCHEDULE".equals(log.getStatus())) statusEmoji = "⏰";
 
                     cells.add(new TableCell("status", statusEmoji + " " + log.getStatus(), null, TableColumnType.TEXT));
                     rows.add(new TableRow(log.getJobId() + log.getLastUpdatedTimestamp(), cells, log));
