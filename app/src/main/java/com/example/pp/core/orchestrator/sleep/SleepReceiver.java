@@ -71,7 +71,7 @@ public class SleepReceiver extends BroadcastReceiver {
                 // User is sleeping
                 if (reason.contains("Wake up trigger")) {
                     SleepNotificationHelper.showWakeUpNotification(context);
-                    updateTaskLastRun(context);
+                    updateTaskState(context, 0);
                 } else {
                     // Ignore reminders/nags if user is already sleeping
                     Log.d(TAG, "User sleeping, ignoring: " + reason);
@@ -88,14 +88,18 @@ public class SleepReceiver extends BroadcastReceiver {
                     long minutes = TimeUnit.MILLISECONDS.toMinutes(diff);
                     String msg = "Only " + minutes + "m left until bedtime.";
                     SleepNotificationHelper.showBedtimeReminder(context, msg, minutes <= 30);
-                    updateTaskLastRun(context);
+                    
+                    long nextRunTime = calculateNextRunTime(reason, bedtime, now);
+                    updateTaskState(context, nextRunTime);
                 } else {
                     // Overdue / Nag
                     long potentialMillis = Math.max(0, targetWakeTime - now);
                     int potentialPercent = (int) (potentialMillis * 100 / TimeUnit.HOURS.toMillis(AppConstants.SLEEP_TARGET_HOUR));
                     String msg = "Time's up! Current potential: " + potentialPercent + "%";
                     SleepNotificationHelper.showBedtimeReminder(context, msg, true);
-                    updateTaskLastRun(context);
+                    
+                    long nextRunTime = calculateNextRunTime(reason, bedtime, now);
+                    updateTaskState(context, nextRunTime);
                     
                     // Schedule next nag in 30 mins
                     TaskRepository taskRepo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
@@ -128,13 +132,31 @@ public class SleepReceiver extends BroadcastReceiver {
         }
     }
 
-    private void updateTaskLastRun(Context context) {
+    private long calculateNextRunTime(String reason, long bedtime, long now) {
+        if (reason.contains("2h")) {
+            return bedtime - TimeUnit.HOURS.toMillis(1);
+        } else if (reason.contains("1h")) {
+            return bedtime - TimeUnit.MINUTES.toMillis(30);
+        } else if (reason.contains("30m")) {
+            return bedtime - TimeUnit.MINUTES.toMillis(10);
+        } else if (reason.contains("10m")) {
+            return bedtime;
+        } else if (reason.contains("target") || reason.contains("nag")) {
+            return now + TimeUnit.MINUTES.toMillis(30);
+        }
+        return 0;
+    }
+
+    private void updateTaskState(Context context, long nextRunTime) {
         TaskRepository repo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
         TaskDefinition def = repo.getDefinitionByType(TaskType.SLEEP_REMINDER);
         if (def != null) {
             TaskState state = repo.getStateForTask(def.getTaskId());
             if (state != null) {
                 state.setLastRunTime(System.currentTimeMillis());
+                if (nextRunTime > 0) {
+                    state.setNextRunTime(nextRunTime);
+                }
                 repo.updateState(state);
             }
         }
