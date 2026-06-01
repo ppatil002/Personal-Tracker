@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -245,6 +246,7 @@ public class DashboardActivity extends AppCompatActivity {
             // Last sleep session finished
             long duration = sleep.endTime - sleep.startTime;
             tvLastNight.setText("LAST NIGHT: " + formatMillis(duration).toUpperCase());
+            tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28); // Default size
             
             // Percentage based on 8h target
             int percent = (int) Math.min(duration * 100 / TimeUnit.HOURS.toMillis(8), 100);
@@ -254,6 +256,7 @@ public class DashboardActivity extends AppCompatActivity {
         } else if (sleep.startTime != 0 && sleep.endTime == 0) {
             // Sleeping
             tvCountdown.setText("SLEEPING...");
+            tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 24); // Reduced size
             long potentialDuration = targetWakeTime - now;
             int potentialPercent = (int) Math.max(0, Math.min(potentialDuration * 100 / TimeUnit.HOURS.toMillis(8), 100));
             sleepProgress.setProgress(potentialPercent);
@@ -262,6 +265,7 @@ public class DashboardActivity extends AppCompatActivity {
             tvLastNight.setText("LAST NIGHT: --");
         } else {
             // Pending (startTime == 0) or waiting for bedtime
+            tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28); // Default size
             tvLastNight.setText("LAST NIGHT: --");
             if (now < bedtime) {
                 tvCountdown.setText(formatMillis(bedtime - now));

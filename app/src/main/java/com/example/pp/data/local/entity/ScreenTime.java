@@ -15,6 +15,10 @@ public class ScreenTime {
     private long hourStartTimestamp;
     
     private long durationMillis;
+    
+    private int timesOpened;
+    
+    private int notificationsReceived;
 
     public ScreenTime(@NonNull String packageName, long hourStartTimestamp, long durationMillis) {
         this.packageName = packageName;
@@ -34,4 +38,10 @@ public class ScreenTime {
 
     public long getDurationMillis() { return durationMillis; }
     public void setDurationMillis(long durationMillis) { this.durationMillis = durationMillis; }
+
+    public int getTimesOpened() { return timesOpened; }
+    public void setTimesOpened(int timesOpened) { this.timesOpened = timesOpened; }
+
+    public int getNotificationsReceived() { return notificationsReceived; }
+    public void setNotificationsReceived(int notificationsReceived) { this.notificationsReceived = notificationsReceived; }
 }

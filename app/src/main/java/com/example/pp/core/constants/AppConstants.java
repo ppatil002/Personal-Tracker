@@ -18,4 +18,7 @@ public class AppConstants {
     // Alarm Request Codes
     public static final int RC_SLEEP_ALARM = 9002;
     public static final int RC_WATER_ALARM = 8001;
+
+    // Intent Actions
+    public static final String ACTION_SLEEP_ALARM = "com.example.pp.ACTION_SLEEP_ALARM";
 }

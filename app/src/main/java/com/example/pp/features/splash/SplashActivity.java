@@ -35,6 +35,7 @@ public class SplashActivity extends AppCompatActivity {
 //        ((PPApplication) getApplication()).getTagRepository().seedTagsIfEmpty();
 //        ((PPApplication) getApplication()).getTransactionRepository().seedTransactionsIfEmpty();
 //        ((PPApplication) getApplication()).getTaskRepository().seedTasksIfEmpty();
+//        seedScreenTime();
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (checkAllCriticalPermissions()) {
@@ -44,6 +45,12 @@ public class SplashActivity extends AppCompatActivity {
             }
             finish();
         }, 2000); // 2 seconds delay
+    }
+
+    private void seedScreenTime() {
+        long start = com.example.pp.utils.DateUtils.getStartOfMonth(System.currentTimeMillis());
+        long end = System.currentTimeMillis();
+        ((PPApplication) getApplication()).getScreenTimeRepository().syncScreenTime(start, end);
     }
 
     private boolean checkAllCriticalPermissions() {

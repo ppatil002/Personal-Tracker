@@ -40,23 +40,12 @@ public class ScreenTimeRepository {
         this.executors = AppExecutors.getInstance();
     }
 
-    private boolean hasPermission() {
-        AppOpsManager appOps = (AppOpsManager) context.getSystemService(Context.APP_OPS_SERVICE);
-        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS, Process.myUid(), context.getPackageName());
-        return mode == AppOpsManager.MODE_ALLOWED;
-    }
-
     /**
      * Syncs screen time data from UsageStatsManager into local database.
      * Use background thread when calling this.
      */
     public void syncScreenTimeSync(long startTime, long endTime) {
         Log.d(TAG, "syncScreenTimeSync started: [" + sdf.format(new Date(startTime)) + "] to [" + sdf.format(new Date(endTime)) + "]");
-        
-        if (!hasPermission()) {
-            Log.e(TAG, "CRITICAL: PACKAGE_USAGE_STATS permission not granted! Querying will return 0 events.");
-            return;
-        }
 
         if (usageStatsManager == null) {
             Log.e(TAG, "UsageStatsManager is NULL.");
@@ -69,16 +58,8 @@ public class ScreenTimeRepository {
             return;
         }
 
-        // DEBUG: Check if queryUsageStats returns anything
-        List<android.app.usage.UsageStats> stats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startTime, endTime);
-        if (stats != null) {
-            Log.d(TAG, "queryUsageStats returned " + stats.size() + " entries as fallback check.");
-        } else {
-            Log.w(TAG, "queryUsageStats also returned NULL/Empty.");
-        }
-
-        // Map<PackageName, Map<HourStartTimestamp, Duration>>
-        Map<String, Map<Long, Long>> bucketedUsage = new HashMap<>();
+        // Map<PackageName, Map<HourStartTimestamp, ScreenTimeEntryData>>
+        Map<String, Map<Long, ScreenTimeEntryData>> bucketedUsage = new HashMap<>();
         Map<String, Long> openTimestamps = new HashMap<>();
         
         UsageEvents.Event event = new UsageEvents.Event();
@@ -92,6 +73,14 @@ public class ScreenTimeRepository {
 
             if (eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
                 openTimestamps.put(packageName, timestamp);
+                long hourStart = DateUtils.getStartOfHour(timestamp);
+                Map<Long, ScreenTimeEntryData> pkgBuckets = bucketedUsage.computeIfAbsent(packageName, k -> new HashMap<>());
+                ScreenTimeEntryData data = pkgBuckets.get(hourStart);
+                if (data == null) {
+                    data = new ScreenTimeEntryData();
+                    pkgBuckets.put(hourStart, data);
+                }
+                data.opens++;
             } else if (eventType == UsageEvents.Event.ACTIVITY_PAUSED) {
                 Long start = openTimestamps.remove(packageName);
                 if (start != null) {
@@ -100,6 +89,15 @@ public class ScreenTimeRepository {
                         addUsageToBuckets(bucketedUsage, packageName, start, timestamp);
                     }
                 }
+            } else if (eventType == 12) { // UsageEvents.Event.NOTIFICATION_INTERRUPTION = 12
+                long hourStart = DateUtils.getStartOfHour(timestamp);
+                Map<Long, ScreenTimeEntryData> pkgBuckets = bucketedUsage.computeIfAbsent(packageName, k -> new HashMap<>());
+                ScreenTimeEntryData data = pkgBuckets.get(hourStart);
+                if (data == null) {
+                    data = new ScreenTimeEntryData();
+                    pkgBuckets.put(hourStart, data);
+                }
+                data.notifications++;
             }
         }
         
@@ -121,7 +119,7 @@ public class ScreenTimeRepository {
         }
     }
 
-    private void addUsageToBuckets(Map<String, Map<Long, Long>> bucketedUsage, String pkg, long start, long end) {
+    private void addUsageToBuckets(Map<String, Map<Long, ScreenTimeEntryData>> bucketedUsage, String pkg, long start, long end) {
         long current = start;
         while (current < end) {
             long hourStart = DateUtils.getStartOfHour(current);
@@ -130,28 +128,31 @@ public class ScreenTimeRepository {
             long durationInHour = sessionEndInHour - current;
             
             if (durationInHour > 0) {
-                Map<Long, Long> pkgBuckets = bucketedUsage.computeIfAbsent(pkg, k -> new HashMap<>());
-                pkgBuckets.put(hourStart, pkgBuckets.getOrDefault(hourStart, 0L) + durationInHour);
+                Map<Long, ScreenTimeEntryData> pkgBuckets = bucketedUsage.computeIfAbsent(pkg, k -> new HashMap<>());
+                ScreenTimeEntryData data = pkgBuckets.get(hourStart);
+                if (data == null) {
+                    data = new ScreenTimeEntryData();
+                    pkgBuckets.put(hourStart, data);
+                }
+                data.duration += durationInHour;
             }
             current = hourEnd;
         }
     }
 
-    private void saveBucketedEntries(Map<String, Map<Long, Long>> bucketedUsage) {
+    private void saveBucketedEntries(Map<String, Map<Long, ScreenTimeEntryData>> bucketedUsage) {
         List<ScreenTime> allToInsert = new ArrayList<>();
-        for (Map.Entry<String, Map<Long, Long>> pkgEntry : bucketedUsage.entrySet()) {
+        for (Map.Entry<String, Map<Long, ScreenTimeEntryData>> pkgEntry : bucketedUsage.entrySet()) {
             String pkg = pkgEntry.getKey();
-            for (Map.Entry<Long, Long> hourEntry : pkgEntry.getValue().entrySet()) {
+            for (Map.Entry<Long, ScreenTimeEntryData> hourEntry : pkgEntry.getValue().entrySet()) {
                 long hourStart = hourEntry.getKey();
-                long duration = hourEntry.getValue();
+                ScreenTimeEntryData entryData = hourEntry.getValue();
                 
-                // We update existing records by summing if we wanted to be perfectly additive,
-                // but since we are re-syncing the whole day, we delete and replace for the hour.
-                // NOTE: If we delete hour by hour, we might lose data if we only sync a partial hour.
-                // Better: query current duration from DB and take MAX(system, db) or just trust system since we query entire range.
                 screenTimeDao.deleteEntry(pkg, hourStart);
-                allToInsert.add(new ScreenTime(pkg, hourStart, duration));
-                Log.v(TAG, "Bucketed: " + pkg + " | hour: " + sdf.format(new Date(hourStart)) + " | duration: " + duration + "ms");
+                ScreenTime st = new ScreenTime(pkg, hourStart, entryData.duration);
+                st.setTimesOpened(entryData.opens);
+                st.setNotificationsReceived(entryData.notifications);
+                allToInsert.add(st);
             }
         }
         
@@ -159,6 +160,12 @@ public class ScreenTimeRepository {
             screenTimeDao.insertAll(allToInsert);
             Log.i(TAG, "Successfully inserted/updated " + allToInsert.size() + " hourly entries.");
         }
+    }
+
+    private static class ScreenTimeEntryData {
+        long duration = 0;
+        int opens = 0;
+        int notifications = 0;
     }
 
     public void syncScreenTime(long startTime, long endTime) {
@@ -169,8 +176,8 @@ public class ScreenTimeRepository {
         return screenTimeDao.getAppUsageSummary(startOfDay, System.currentTimeMillis() + 86400000L);
     }
 
-    public LiveData<List<ScreenTimeDao.HourlyUsageSummary>> getHourlyUsage(long start, long end) {
-        return screenTimeDao.getHourlyUsageSummary(start, end);
+    public LiveData<List<ScreenTimeDao.HourlyUsageSummary>> getHourlyUsage(long start, long end, String packageName) {
+        return screenTimeDao.getHourlyUsageSummary(start, end, packageName);
     }
     
     public LiveData<List<ScreenTimeDao.AppUsageSummary>> getAppUsageRange(long start, long end) {
