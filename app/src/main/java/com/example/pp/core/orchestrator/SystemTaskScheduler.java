@@ -16,11 +16,6 @@ import java.util.List;
 public class SystemTaskScheduler {
     private static final String TAG = "SystemTaskScheduler";
 
-    public static void scheduleAllTasks(Context context) {
-        Log.i(TAG, "Initializing native background scheduling registration...");
-        AppExecutors.getInstance().diskIO().execute(() -> scheduleAllTasksSync(context));
-    }
-
     public static void scheduleAllTasksSync(Context context) {
         Context appContext = context.getApplicationContext();
         TaskRepository taskRepository = ((PPApplication) appContext).getTaskRepository();

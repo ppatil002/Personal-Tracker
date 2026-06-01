@@ -176,7 +176,7 @@ public class BackupActivity extends AppCompatActivity {
         adapter = new GenericTableAdapter(config);
         
         TableColumn timeCol = new TableColumn("time", "Time", TableColumnType.TEXT);
-        timeCol.setWidthWeight(2);
+        timeCol.setWidthWeight(1.5F);
         
         TableColumn stepCol = new TableColumn("step", "Step", TableColumnType.TEXT);
         stepCol.setWidthWeight(3);

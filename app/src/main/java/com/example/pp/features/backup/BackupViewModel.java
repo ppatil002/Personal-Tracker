@@ -10,8 +10,8 @@ import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import com.example.pp.PPApplication;
-import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.entity.BackgroundJobLog;
+import com.example.pp.data.repository.BackgroundJobLogRepository;
 import com.example.pp.features.backup.worker.CloudDownloadWorker;
 import com.example.pp.features.backup.worker.CryptoDecryptWorker;
 import com.example.pp.features.backup.worker.DataImportWorker;
@@ -26,7 +26,8 @@ public class BackupViewModel extends AndroidViewModel {
 
     public BackupViewModel(@NonNull Application application) {
         super(application);
-        logs = AppDatabase.getInstance(application).backgroundJobLogDao().getAllLogs();
+        BackgroundJobLogRepository backgroundJobLogRepository = ((PPApplication) application).getBackgroundJobLogRepository();
+        logs = backgroundJobLogRepository.getAllLogs();
         workManager = WorkManager.getInstance(application);
     }
 

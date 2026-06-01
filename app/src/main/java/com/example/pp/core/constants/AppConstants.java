@@ -23,7 +23,7 @@ public class AppConstants {
     public static final int RC_SLEEP_REMINDER_10M = 9006;
     public static final int RC_SLEEP_TARGET = 9007;
     public static final int RC_SLEEP_WAKEUP = 9008;
-    public static final int RC_SLEEP_NAG = 9009;
+    public static final int RC_SLEEP_NUDGE = 9009;
 
     public static final int RC_WATER_ALARM = 8001;
 

@@ -12,20 +12,20 @@ import androidx.work.ForegroundInfo;
 import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
+import com.example.pp.PPApplication;
 import com.example.pp.R;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.data.local.AppDatabase;
-import com.example.pp.data.local.dao.BackgroundJobLogDao;
 import com.example.pp.data.local.dao.TaskDao;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
+import com.example.pp.data.repository.BackgroundJobLogRepository;
 
 public abstract class BaseFeatureWorker extends Worker {
 
-    protected final BackgroundJobLogDao logDao;
     protected final TaskDao taskDao;
     protected final String jobId;
     protected final String taskId;
@@ -36,7 +36,6 @@ public abstract class BaseFeatureWorker extends Worker {
     public BaseFeatureWorker(@NonNull Context context, @NonNull WorkerParameters params) {
         super(context, params);
         AppDatabase db = AppDatabase.getInstance(context);
-        this.logDao = db.backgroundJobLogDao();
         this.taskDao = db.taskDao();
         this.jobId = params.getInputData().getString("EXECUTION_SESSION_ID") != null ? 
                      params.getInputData().getString("EXECUTION_SESSION_ID") : getId().toString();
@@ -52,7 +51,9 @@ public abstract class BaseFeatureWorker extends Worker {
                 message,
                 System.currentTimeMillis()
         );
-        logDao.insert(log);
+        BackgroundJobLogRepository backgroundJobLogRepository = ((PPApplication) getApplicationContext())
+                .getBackgroundJobLogRepository();
+        backgroundJobLogRepository.insert(log);
     }
 
     protected void updateTaskProgress(int progress) {

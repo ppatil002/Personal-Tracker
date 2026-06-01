@@ -6,8 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.work.Data;
 import androidx.work.WorkerParameters;
 
+import com.example.pp.PPApplication;
 import com.example.pp.core.orchestrator.BaseFeatureWorker;
 import com.example.pp.data.local.AppDatabase;
+import com.example.pp.data.repository.BackgroundJobLogRepository;
 import com.example.pp.features.backup.model.BackupData;
 import com.google.gson.Gson;
 
@@ -28,6 +30,8 @@ public class DataExportWorker extends BaseFeatureWorker {
 
         try {
             AppDatabase db = AppDatabase.getInstance(getApplicationContext());
+            BackgroundJobLogRepository backgroundJobLogRepository = ((PPApplication) getApplicationContext())
+                .getBackgroundJobLogRepository();
             
             BackupData backupData = new BackupData(
                 db.categoryDao().getAllCategoriesList(),
@@ -36,7 +40,7 @@ public class DataExportWorker extends BaseFeatureWorker {
                 db.transactionDao().getAllTransactionTagCrossRefs(),
                 db.taskDao().getAllDefinitions(),
                 db.taskDao().getAllStates(),
-                db.backgroundJobLogDao().getAllLogsList(),
+                backgroundJobLogRepository.getAllLogsList(),
                 db.hydrationDao().getAllIntakes(),
                 db.nutritionDao().getAllIntakes(),
                 db.sleepDao().getAllSleepEntries(),

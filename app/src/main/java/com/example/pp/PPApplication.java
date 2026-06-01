@@ -11,6 +11,7 @@ import com.example.pp.data.repository.ScreenTimeRepository;
 import com.example.pp.data.repository.SleepRepository;
 import com.example.pp.data.repository.TagRepository;
 import com.example.pp.data.repository.TransactionRepository;
+import com.example.pp.data.repository.BackgroundJobLogRepository;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
 public class PPApplication extends Application {
@@ -23,6 +24,7 @@ public class PPApplication extends Application {
     private NutritionRepository nutritionRepository;
     private ScreenTimeRepository screenTimeRepository;
     private SleepRepository sleepRepository;
+    private BackgroundJobLogRepository backgroundJobLogRepository;
 
     @Override
     public void onCreate() {
@@ -37,6 +39,7 @@ public class PPApplication extends Application {
         sleepRepository = new SleepRepository(this);
         hydrationRepository = new HydrationRepository(this);
         nutritionRepository = new NutritionRepository(this);
+        backgroundJobLogRepository = new BackgroundJobLogRepository(this);
     }
 
     public CategoryRepository getCategoryRepository() {
@@ -73,5 +76,9 @@ public class PPApplication extends Application {
 
     public NutritionRepository getNutritionRepository() {
         return nutritionRepository;
+    }
+
+    public BackgroundJobLogRepository getBackgroundJobLogRepository() {
+        return backgroundJobLogRepository;
     }
 }
