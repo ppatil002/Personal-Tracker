@@ -13,9 +13,12 @@ import java.util.Locale;
 
 public class TimeMarkerView extends MarkerView {
 
+    public enum DisplayMode { TIME, COUNT }
+
     private final TextView tvDate;
     private final TextView tvAmount;
     private String[] labels;
+    private DisplayMode displayMode = DisplayMode.TIME;
 
     public TimeMarkerView(Context context) {
         super(context, R.layout.marker_trend);
@@ -27,6 +30,10 @@ public class TimeMarkerView extends MarkerView {
         this.labels = labels;
     }
 
+    public void setDisplayMode(DisplayMode mode) {
+        this.displayMode = mode;
+    }
+
     @Override
     public void refreshContent(Entry e, Highlight highlight) {
         int index = (int) e.getX();
@@ -36,8 +43,11 @@ public class TimeMarkerView extends MarkerView {
             tvDate.setText("");
         }
         
-        long millis = (long) e.getY();
-        tvAmount.setText(formatMillis(millis));
+        if (displayMode == DisplayMode.TIME) {
+            tvAmount.setText(formatMillis((long) e.getY()));
+        } else {
+            tvAmount.setText(String.valueOf((int) e.getY()));
+        }
         super.refreshContent(e, highlight);
     }
 

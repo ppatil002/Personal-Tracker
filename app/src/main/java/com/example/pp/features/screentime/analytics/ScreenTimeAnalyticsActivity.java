@@ -14,6 +14,12 @@ import android.widget.NumberPicker;
 import android.widget.PopupWindow;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
+
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -55,7 +61,7 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
     private RecyclerView rvApps;
     private AppAdapter adapter;
     private TextView tvPeriodLabel, tvChartLabel, tvPeriodType;
-    private TextView tvAvgValue, tvPercentChange, tvTargetStatus;
+    private TextView tvAvgValue, tvPercentChange, tvTargetStatus, tvAvgLabel;
     private View targetStatsContainer;
     private View periodDropdown, btnCalendar;
     private TabLayout tabLayoutBreakdown;
@@ -85,6 +91,7 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         tvChartLabel = findViewById(R.id.tvChartLabel);
         tvPeriodType = findViewById(R.id.tvPeriodType);
         tvAvgValue = findViewById(R.id.tvAvgValue);
+        tvAvgLabel = findViewById(R.id.tvAvgLabel);
         tvPercentChange = findViewById(R.id.tvPercentChange);
         tvTargetStatus = findViewById(R.id.tvTargetStatus);
         targetStatsContainer = findViewById(R.id.targetStatsContainer);
@@ -194,6 +201,14 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         if (s == null) return;
         
         ScreenTimeAnalyticsViewModel.BreakdownType bType = viewModel.getBreakdownType().getValue();
+        PeriodType pType = viewModel.getPeriodType().getValue();
+        
+        if (pType == PeriodType.DAY) {
+            tvAvgLabel.setText("Total");
+        } else {
+            tvAvgLabel.setText("Average");
+        }
+
         if (bType == ScreenTimeAnalyticsViewModel.BreakdownType.SCREEN_TIME) {
             tvAvgValue.setText(formatMillis((long) s.avgValue));
         } else {
@@ -204,7 +219,7 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         tvPercentChange.setText(changeStr);
         tvPercentChange.setTextColor(ContextCompat.getColor(this, s.percentChange > 0 ? R.color.error_red : R.color.emerald_green));
 
-        if (bType == ScreenTimeAnalyticsViewModel.BreakdownType.SCREEN_TIME && viewModel.getPeriodType().getValue() != PeriodType.DAY) {
+        if (bType == ScreenTimeAnalyticsViewModel.BreakdownType.SCREEN_TIME && pType != PeriodType.DAY) {
             targetStatsContainer.setVisibility(View.VISIBLE);
             tvTargetStatus.setText(s.targetMetCount + " / " + (s.targetMetCount + s.targetNotMetCount));
         } else {
@@ -287,12 +302,27 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
 
         BarDataSet set = new BarDataSet(entries, "");
         set.setColors(colors);
-        set.setDrawValues(false);
+        set.setDrawValues(type != PeriodType.MONTH);
+        set.setValueTextColor(Color.WHITE);
+        set.setValueTextSize(9f);
+        set.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                if (value < 10 * 60 * 1000) return "";
+                long hours = (long) value / (3600 * 1000);
+                long mins = ((long) value % (3600 * 1000)) / (60 * 1000);
+                if (hours > 0) return hours + "h";
+                return mins + "m";
+            }
+        });
+        
         usageChart.setData(new BarData(set));
         usageChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(labels));
+        usageChart.getAxisLeft().setSpaceTop(20f);
         
         TimeMarkerView marker = new TimeMarkerView(this);
         marker.setLabels(labels.toArray(new String[0]));
+        marker.setDisplayMode(TimeMarkerView.DisplayMode.TIME);
         usageChart.setMarker(marker);
         usageChart.invalidate();
         usageChart.animateY(1000);
@@ -351,20 +381,54 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         set.setDrawFilled(true);
         set.setFillAlpha(40);
         set.setFillColor(ContextCompat.getColor(this, R.color.accent_purple));
-        set.setDrawValues(false);
+        set.setDrawValues(type != PeriodType.MONTH);
+        set.setValueTextColor(Color.WHITE);
+        set.setValueTextSize(9f);
+        set.setValueFormatter(new ValueFormatter() {
+            @Override
+            public String getFormattedValue(float value) {
+                return value > 0 ? String.valueOf((int) value) : "";
+            }
+        });
 
         usageLineChart.setData(new LineData(set));
         usageLineChart.getXAxis().setValueFormatter(new IndexAxisValueFormatter(labels));
+        usageLineChart.getAxisLeft().setSpaceTop(20f);
+        
+        TimeMarkerView marker = new TimeMarkerView(this);
+        marker.setLabels(labels.toArray(new String[0]));
+        marker.setDisplayMode(TimeMarkerView.DisplayMode.COUNT);
+        usageLineChart.setMarker(marker);
+        
         usageLineChart.invalidate();
         usageLineChart.animateY(1000);
     }
 
     private void updateAppList(List<ScreenTimeDao.AppUsageSummary> apps) {
+        if (apps == null) apps = new ArrayList<>();
+
+        ScreenTimeAnalyticsViewModel.BreakdownType bType = viewModel.getBreakdownType().getValue();
+        if (bType == null) bType = ScreenTimeAnalyticsViewModel.BreakdownType.SCREEN_TIME;
+
+        ScreenTimeAnalyticsViewModel.BreakdownType finalBType = bType;
+        Collections.sort(apps, (a, b) -> {
+            if (finalBType == ScreenTimeAnalyticsViewModel.BreakdownType.TIMES_OPENED)
+                return Integer.compare(b.totalOpens, a.totalOpens);
+            if (finalBType == ScreenTimeAnalyticsViewModel.BreakdownType.NOTIFICATIONS)
+                return Integer.compare(b.totalNotifications, a.totalNotifications);
+            return Long.compare(b.totalDuration, a.totalDuration);
+        });
+
         long total = 0;
-        if (apps != null) {
-            for (ScreenTimeDao.AppUsageSummary app : apps) total += app.totalDuration;
+        for (ScreenTimeDao.AppUsageSummary app : apps) {
+            if (bType == ScreenTimeAnalyticsViewModel.BreakdownType.TIMES_OPENED) total += app.totalOpens;
+            else if (bType == ScreenTimeAnalyticsViewModel.BreakdownType.NOTIFICATIONS) total += app.totalNotifications;
+            else total += app.totalDuration;
         }
-        adapter.setData(apps != null ? apps : new ArrayList<>(), total);
+        
+        adapter.setData(apps, total);
+        rvApps.setAlpha(0f);
+        rvApps.animate().alpha(1f).setDuration(400).start();
     }
 
     private void setupRecyclerView() {

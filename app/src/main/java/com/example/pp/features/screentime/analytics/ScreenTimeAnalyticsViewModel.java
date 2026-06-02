@@ -50,6 +50,7 @@ public class ScreenTimeAnalyticsViewModel extends AndroidViewModel {
 
         appUsage.addSource(periodType, t -> refreshAppUsage());
         appUsage.addSource(selectedDate, t -> refreshAppUsage());
+        appUsage.addSource(breakdownType, t -> refreshAppUsage());
     }
 
     private LiveData<List<ScreenTimeDao.HourlyUsageSummary>> currentHourlySource;
@@ -198,6 +199,7 @@ public class ScreenTimeAnalyticsViewModel extends AndroidViewModel {
             
             // Days in current range
             int days = 1;
+
             if (type == PeriodType.WEEK) days = 7;
             else if (type == PeriodType.MONTH) {
                 Calendar c = Calendar.getInstance();
