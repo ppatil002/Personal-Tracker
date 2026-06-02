@@ -81,4 +81,18 @@ public class GenericTableRepository {
             }
         });
     }
+
+    public void truncateTable(String tableName, Runnable onSuccess, TableDataCallback callback) {
+        executors.diskIO().execute(() -> {
+            try {
+                // Truncate logic in SQLite: DELETE FROM table followed by VACUUM (optional) or just DELETE
+                SupportSQLiteQuery query = new SimpleSQLiteQuery("DELETE FROM " + tableName);
+                commonDao.executeRawQuery(query);
+                
+                executors.mainThread().execute(onSuccess);
+            } catch (Exception e) {
+                executors.mainThread().execute(() -> callback.onError("Failed to truncate table: " + e.getMessage()));
+            }
+        });
+    }
 }

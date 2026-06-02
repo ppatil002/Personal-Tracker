@@ -103,7 +103,7 @@ public class SleepScheduler {
                 // If we are past bedtime and not sleeping, schedule a nudge.
                 // Calculate next 30m slot from bedtime.
                 long interval = TimeUnit.MINUTES.toMillis(30);
-                long elapsedSinceBedtime = now - bedtime;
+                long elapsedSinceBedtime = Math.max(0, now - bedtime);
                 long nextNudgeOffset = ((elapsedSinceBedtime / interval) + 1) * interval;
                 long nudgeTime = bedtime + nextNudgeOffset;
 

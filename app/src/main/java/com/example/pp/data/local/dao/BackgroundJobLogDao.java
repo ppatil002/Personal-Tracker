@@ -81,16 +81,18 @@ public interface BackgroundJobLogDao {
 
     @Query(
             "UPDATE background_job_log " +
-                    "SET last_updated_timestamp = :newTimestamp " +
+                    "SET status = :status, " +
+                    "    log_message = :logMessage, " +
+                    "    last_updated_timestamp = :newTimestamp " +
                     "WHERE worker_name = :workerName " +
                     "AND current_step = :currentStep " +
-                    "AND log_message = :logMessage " +
-                    "AND date(last_updated_timestamp / 1000, 'unixepoch') = " +
-                    "    date(:newTimestamp / 1000, 'unixepoch')"
+                    "AND date(last_updated_timestamp / 1000, 'unixepoch', 'localtime') = " +
+                    "    date(:newTimestamp / 1000, 'unixepoch', 'localtime')"
     )
     int updateExistingDailyLog(
             String workerName,
             String currentStep,
+            String status,
             String logMessage,
             long newTimestamp
     );

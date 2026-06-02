@@ -137,24 +137,25 @@ public class SleepReceiver extends BroadcastReceiver {
                     TaskDefinition def = taskRepo.getDefinitionByType(TaskType.SLEEP_REMINDER);
                     if (def != null) {
                         long interval = TimeUnit.MINUTES.toMillis(30);
-                        long elapsedSinceBedtime = now - bedtime;
+                        long elapsedSinceBedtime = Math.max(0, now - bedtime);
                         long nextNudgeOffset = ((elapsedSinceBedtime / interval) + 1) * interval;
                         long nudgeTime = bedtime + nextNudgeOffset;
+                        String nudgeReason = "Bedtime nudge @ " + timeFormat.format(new Date(nudgeTime));
 
-                        SleepScheduler.logOperation(context, "SCHEDULE", "Bedtime nudge @ "+ timeFormat.format(new Date(nudgeTime)), "Setting next nudge slot");
-                        scheduleNudge(context, nudgeTime, def.getTaskId());
+                        SleepScheduler.logOperation(context, "SCHEDULE", nudgeReason, "Setting next nudge slot");
+                        scheduleNudge(context, nudgeTime, def.getTaskId(), nudgeReason);
                     }
                 }
             }
         });
     }
 
-    private void scheduleNudge(Context context, long time, String taskId) {
+    private void scheduleNudge(Context context, long time, String taskId, String reason) {
         AlarmManager am = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, SleepReceiver.class);
         intent.setAction(AppConstants.ACTION_SLEEP_ALARM);
         intent.putExtra("TASK_ID", taskId);
-        intent.putExtra("REASON", "Bedtime nudge (30m)");
+        intent.putExtra("REASON", reason);
         
         PendingIntent pi = PendingIntent.getBroadcast(
                 context, 
@@ -178,7 +179,11 @@ public class SleepReceiver extends BroadcastReceiver {
         } else if (reason.contains("10m")) {
             return bedtime;
         } else if (reason.contains("target") || reason.contains("nudge")) {
-            return now + TimeUnit.MINUTES.toMillis(30);
+            // Calculate next fixed nudge slot for Task State consistency
+            long interval = TimeUnit.MINUTES.toMillis(30);
+            long elapsedSinceBedtime = Math.max(0, now - bedtime);
+            long nextNudgeOffset = ((elapsedSinceBedtime / interval) + 1) * interval;
+            return bedtime + nextNudgeOffset;
         } else if (reason.contains("Wake up trigger") || reason.contains("GOOD_MORNING")){
             // After waking up, the next expected run is the start of the next cycle (2H reminder)
             return bedtime - TimeUnit.HOURS.toMillis(2);

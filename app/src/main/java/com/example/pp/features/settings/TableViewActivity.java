@@ -26,6 +26,7 @@ import com.example.pp.ui.components.table.model.TableColumn;
 import com.example.pp.ui.components.table.model.TableConfig;
 import com.example.pp.ui.components.table.model.TableQuery;
 import com.example.pp.ui.components.table.model.TableRow;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,7 @@ public class TableViewActivity extends AppCompatActivity {
     private List<TableColumn> columns = new ArrayList<>();
     private final int columnWidth = 400; // Pixels
     
-    private View btnPrev, btnNext;
+    private View btnPrev, btnNext, btnDeleteAll;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +66,7 @@ public class TableViewActivity extends AppCompatActivity {
         RecyclerView rvData = findViewById(R.id.rvData);
         tvPageInfo = findViewById(R.id.tvPageInfo);
         progressBar = findViewById(R.id.progressBar);
+        btnDeleteAll = findViewById(R.id.btnDeleteAll);
 
         currentQuery = new TableQuery();
         currentQuery.setLimit(20);
@@ -92,7 +94,38 @@ public class TableViewActivity extends AppCompatActivity {
             loadData();
         });
 
+        btnDeleteAll.setOnClickListener(v -> showTruncateConfirmation());
+
         loadData();
+    }
+
+    private void showTruncateConfirmation() {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("Truncate Table")
+                .setMessage("Are you sure you want to delete ALL records from " + tableName + "? This cannot be undone.")
+                .setPositiveButton("Delete All", (dialog, which) -> {
+                    truncateTable();
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void truncateTable() {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        PPApplication app = (PPApplication) getApplication();
+        app.getGenericTableRepository().truncateTable(tableName, () -> {
+            if (progressBar != null) progressBar.setVisibility(View.GONE);
+            Toast.makeText(this, "Table truncated successfully", Toast.LENGTH_SHORT).show();
+            currentQuery.setOffset(0);
+            loadData();
+        }, new GenericTableRepository.TableDataCallback() {
+            @Override public void onDataLoaded(List<String> columnNames, List<TableRow> rows, int totalRecords) {}
+            @Override
+            public void onError(String message) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                Toast.makeText(TableViewActivity.this, message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void loadData() {

@@ -26,6 +26,7 @@ public class BackgroundJobLogRepository {
             int updatedRows = dao.updateExistingDailyLog(
                     log.getWorkerName(),
                     log.getCurrentStep(),
+                    log.getStatus(),
                     log.getLogMessage(),
                     log.getLastUpdatedTimestamp()
             );

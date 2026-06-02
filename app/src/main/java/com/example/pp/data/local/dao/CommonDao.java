@@ -10,4 +10,7 @@ import androidx.sqlite.db.SupportSQLiteQuery;
 public interface CommonDao {
     @RawQuery
     Cursor getRawTableData(SupportSQLiteQuery query);
+
+    @RawQuery
+    int executeRawQuery(SupportSQLiteQuery query);
 }
