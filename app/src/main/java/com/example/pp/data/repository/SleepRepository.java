@@ -26,14 +26,15 @@ public class SleepRepository {
     public void startSleep(long startTime, long targetWakeTime) {
         executors.diskIO().execute(() -> {
             SleepEntity current = sleepDao.getLastSleepSync();
-            long date = DateUtils.getStartOfDay(startTime);
+            // The sleep date is always the night before wake up
+            long sleepDate = DateUtils.getStartOfDay(targetWakeTime - 24 * 3600 * 1000L);
             if (current != null && current.endTime == 0) {
                 current.startTime = startTime;
                 current.targetWakeTime = targetWakeTime;
-                current.date = date;
+                current.date = sleepDate;
                 sleepDao.update(current);
             } else {
-                sleepDao.insert(new SleepEntity(startTime, 0, targetWakeTime, date));
+                sleepDao.insert(new SleepEntity(startTime, 0, targetWakeTime, sleepDate));
             }
         });
     }
@@ -51,13 +52,14 @@ public class SleepRepository {
     public void updateTargetWakeTime(long targetWakeTime) {
         executors.diskIO().execute(() -> {
             SleepEntity current = sleepDao.getLastSleepSync();
-            long date = DateUtils.getStartOfDay(targetWakeTime); // Use target wake time for date reference
+            // The sleep date is always the night before wake up
+            long sleepDate = DateUtils.getStartOfDay(targetWakeTime - 24 * 3600 * 1000L);
             if (current != null && current.endTime == 0) {
                 current.targetWakeTime = targetWakeTime;
-                current.date = date;
+                current.date = sleepDate;
                 sleepDao.update(current);
             } else {
-                sleepDao.insert(new SleepEntity(0, 0, targetWakeTime, date));
+                sleepDao.insert(new SleepEntity(0, 0, targetWakeTime, sleepDate));
             }
         });
     }

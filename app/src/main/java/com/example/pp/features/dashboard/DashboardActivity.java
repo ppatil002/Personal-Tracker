@@ -381,34 +381,42 @@ public class DashboardActivity extends AppCompatActivity {
                 .setTitle("Sleep Manual Entry")
                 .setView(dialogView)
                 .setPositiveButton("Save", (d, which) -> {
-                    long date = DateUtils.getStartOfDay(calDate.getTimeInMillis());
+                    long sleepDate = DateUtils.getStartOfDay(calDate.getTimeInMillis());
                     
-                    // Construct final timestamps based on selected date
-                    Calendar finalTarget = (Calendar) calDate.clone();
+                    // Target Wake Time and End Time are always +1 day from the selected Sleep Date
+                    Calendar finalTarget = Calendar.getInstance();
+                    finalTarget.setTimeInMillis(sleepDate);
+                    finalTarget.add(Calendar.DAY_OF_YEAR, 1);
                     finalTarget.set(Calendar.HOUR_OF_DAY, calTarget.get(Calendar.HOUR_OF_DAY));
                     finalTarget.set(Calendar.MINUTE, calTarget.get(Calendar.MINUTE));
-                    
-                    long startTs = 0;
-                    if (calStart.getTimeInMillis() != 0) {
-                        Calendar finalStart = (Calendar) calDate.clone();
-                        finalStart.set(Calendar.HOUR_OF_DAY, calStart.get(Calendar.HOUR_OF_DAY));
-                        finalStart.set(Calendar.MINUTE, calStart.get(Calendar.MINUTE));
-                        // If start time is after target wake, it's likely from the previous day
-                        if (finalStart.getTimeInMillis() > finalTarget.getTimeInMillis()) {
-                            finalStart.add(Calendar.DAY_OF_YEAR, -1);
-                        }
-                        startTs = finalStart.getTimeInMillis();
-                    }
+                    finalTarget.set(Calendar.SECOND, 0);
+                    finalTarget.set(Calendar.MILLISECOND, 0);
 
                     long endTs = 0;
                     if (calEnd.getTimeInMillis() != 0) {
-                        Calendar finalEnd = (Calendar) calDate.clone();
+                        Calendar finalEnd = (Calendar) finalTarget.clone();
                         finalEnd.set(Calendar.HOUR_OF_DAY, calEnd.get(Calendar.HOUR_OF_DAY));
                         finalEnd.set(Calendar.MINUTE, calEnd.get(Calendar.MINUTE));
                         endTs = finalEnd.getTimeInMillis();
                     }
 
-                    viewModel.saveSleepEntry(startTs, endTs, finalTarget.getTimeInMillis(), date);
+                    // Start Time logic: 
+                    // If selected time >= 12 PM, it's on the Sleep Date (e.g., 11 PM on June 2)
+                    // If selected time < 12 PM, it's on the Next Day (e.g., 1 AM on June 3)
+                    long startTs = 0;
+                    if (calStart.getTimeInMillis() != 0) {
+                        Calendar finalStart = (Calendar) calDate.clone();
+                        if (calStart.get(Calendar.HOUR_OF_DAY) < 12) {
+                            finalStart.add(Calendar.DAY_OF_YEAR, 1);
+                        }
+                        finalStart.set(Calendar.HOUR_OF_DAY, calStart.get(Calendar.HOUR_OF_DAY));
+                        finalStart.set(Calendar.MINUTE, calStart.get(Calendar.MINUTE));
+                        finalStart.set(Calendar.SECOND, 0);
+                        finalStart.set(Calendar.MILLISECOND, 0);
+                        startTs = finalStart.getTimeInMillis();
+                    }
+
+                    viewModel.saveSleepEntry(startTs, endTs, finalTarget.getTimeInMillis(), sleepDate);
                     SleepScheduler.reschedule(this);
                     Toast.makeText(this, "Sleep record updated", Toast.LENGTH_SHORT).show();
                 })
