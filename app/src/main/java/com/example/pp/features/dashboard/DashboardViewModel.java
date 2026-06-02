@@ -91,6 +91,10 @@ public class DashboardViewModel extends AndroidViewModel {
         sleepRepository.updateTargetWakeTime(targetWakeTime);
     }
 
+    public void saveSleepEntry(long start, long end, long target, long date) {
+        sleepRepository.saveManualSleepEntry(start, end, target, date);
+    }
+
     private long getStartOfDay() {
         return DateUtils.getStartOfDay(System.currentTimeMillis());
     }

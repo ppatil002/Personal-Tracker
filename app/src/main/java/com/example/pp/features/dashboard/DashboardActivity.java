@@ -1,5 +1,6 @@
 package com.example.pp.features.dashboard;
 
+import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -29,6 +30,8 @@ import com.example.pp.features.screentime.analytics.ScreenTimeAnalyticsActivity;
 import com.example.pp.features.settings.MoreActivity;
 import com.example.pp.features.sleep.analytics.SleepAnalyticsActivity;
 import com.example.pp.features.tracker.edit.EditTrackerActivity;
+import com.example.pp.utils.DateUtils;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
@@ -122,7 +125,7 @@ public class DashboardActivity extends AppCompatActivity {
             startActivity(new Intent(this, SleepAnalyticsActivity.class));
         });
 
-        findViewById(R.id.cardSleep).setOnClickListener(v -> showCustomWakeTimeDialog());
+        findViewById(R.id.cardSleep).setOnClickListener(v -> showSleepEntryDialog());
         SleepScheduler.reschedule(this);
     }
 
@@ -298,27 +301,124 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-    private void showCustomWakeTimeDialog() {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.HOUR_OF_DAY, 6);
-        cal.set(Calendar.MINUTE, 0);
+    private void showSleepEntryDialog() {
+        SleepEntity lastSleep = viewModel.getLastSleep().getValue();
+        Calendar calTarget = Calendar.getInstance();
+        Calendar calStart = Calendar.getInstance();
+        Calendar calEnd = Calendar.getInstance();
+        Calendar calDate = Calendar.getInstance();
 
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-        new TimePickerDialog(this, (view, hourOfDay, minute) -> {
-            Calendar selected = Calendar.getInstance();
-            selected.set(Calendar.HOUR_OF_DAY, hourOfDay);
-            selected.set(Calendar.MINUTE, minute);
-            selected.set(Calendar.SECOND, 0);
-            selected.set(Calendar.MILLISECOND, 0);
-            
-            if (selected.getTimeInMillis() <= System.currentTimeMillis()) {
-                selected.add(Calendar.DAY_OF_YEAR, 1);
-            }
-            
-            viewModel.updateTargetWakeTime(selected.getTimeInMillis());
-            SleepScheduler.reschedule(this);
-            Toast.makeText(this, "Wake up time updated to " + sdf.format(selected.getTime()), android.widget.Toast.LENGTH_SHORT).show();
-        }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), false).show();
+        if (lastSleep != null) {
+            if (lastSleep.targetWakeTime != 0) calTarget.setTimeInMillis(lastSleep.targetWakeTime);
+            if (lastSleep.startTime != 0) calStart.setTimeInMillis(lastSleep.startTime);
+            else calStart.setTimeInMillis(0);
+            if (lastSleep.endTime != 0) calEnd.setTimeInMillis(lastSleep.endTime);
+            else calEnd.setTimeInMillis(0);
+            if (lastSleep.date != 0) calDate.setTimeInMillis(lastSleep.date);
+            else calDate.setTimeInMillis(DateUtils.getStartOfDay(System.currentTimeMillis()));
+        } else {
+            calTarget.set(Calendar.HOUR_OF_DAY, 6);
+            calTarget.set(Calendar.MINUTE, 0);
+            calTarget.set(Calendar.SECOND, 0);
+            calTarget.set(Calendar.MILLISECOND, 0);
+            calStart.setTimeInMillis(0);
+            calEnd.setTimeInMillis(0);
+            calDate.setTimeInMillis(DateUtils.getStartOfDay(System.currentTimeMillis()));
+        }
+
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_sleep_entry, null);
+        TextView tvSleepDate = dialogView.findViewById(R.id.tvSleepDate);
+        TextView tvTargetWake = dialogView.findViewById(R.id.tvTargetWakeTime);
+        TextView tvStartTime = dialogView.findViewById(R.id.tvStartTime);
+        TextView tvEndTime = dialogView.findViewById(R.id.tvEndTime);
+
+        SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        SimpleDateFormat sdfDate = new SimpleDateFormat("dd MMM, yyyy", Locale.getDefault());
+
+        tvSleepDate.setText(sdfDate.format(calDate.getTime()));
+        tvTargetWake.setText(sdfTime.format(calTarget.getTime()));
+        tvStartTime.setText(calStart.getTimeInMillis() == 0 ? "Not Set" : sdfTime.format(calStart.getTime()));
+        tvEndTime.setText(calEnd.getTimeInMillis() == 0 ? "Not Set" : sdfTime.format(calEnd.getTime()));
+
+        tvSleepDate.setOnClickListener(v -> {
+            new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+                calDate.set(year, month, dayOfMonth);
+                tvSleepDate.setText(sdfDate.format(calDate.getTime()));
+            }, calDate.get(Calendar.YEAR), calDate.get(Calendar.MONTH), calDate.get(Calendar.DAY_OF_MONTH)).show();
+        });
+
+        tvTargetWake.setOnClickListener(v -> {
+            new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+                calTarget.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                calTarget.set(Calendar.MINUTE, minute);
+                calTarget.set(Calendar.SECOND, 0);
+                calTarget.set(Calendar.MILLISECOND, 0);
+                tvTargetWake.setText(sdfTime.format(calTarget.getTime()));
+            }, calTarget.get(Calendar.HOUR_OF_DAY), calTarget.get(Calendar.MINUTE), false).show();
+        });
+
+        tvStartTime.setOnClickListener(v -> {
+            new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+                calStart.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                calStart.set(Calendar.MINUTE, minute);
+                calStart.set(Calendar.SECOND, 0);
+                calStart.set(Calendar.MILLISECOND, 0);
+                tvStartTime.setText(sdfTime.format(calStart.getTime()));
+            }, calStart.get(Calendar.HOUR_OF_DAY) == 0 ? 22 : calStart.get(Calendar.HOUR_OF_DAY), calStart.get(Calendar.MINUTE), false).show();
+        });
+
+        tvEndTime.setOnClickListener(v -> {
+            new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+                calEnd.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                calEnd.set(Calendar.MINUTE, minute);
+                calEnd.set(Calendar.SECOND, 0);
+                calEnd.set(Calendar.MILLISECOND, 0);
+                tvEndTime.setText(sdfTime.format(calEnd.getTime()));
+            }, calEnd.get(Calendar.HOUR_OF_DAY) == 0 ? 6 : calEnd.get(Calendar.HOUR_OF_DAY), calEnd.get(Calendar.MINUTE), false).show();
+        });
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle("Sleep Manual Entry")
+                .setView(dialogView)
+                .setPositiveButton("Save", (d, which) -> {
+                    long date = DateUtils.getStartOfDay(calDate.getTimeInMillis());
+                    
+                    // Construct final timestamps based on selected date
+                    Calendar finalTarget = (Calendar) calDate.clone();
+                    finalTarget.set(Calendar.HOUR_OF_DAY, calTarget.get(Calendar.HOUR_OF_DAY));
+                    finalTarget.set(Calendar.MINUTE, calTarget.get(Calendar.MINUTE));
+                    
+                    long startTs = 0;
+                    if (calStart.getTimeInMillis() != 0) {
+                        Calendar finalStart = (Calendar) calDate.clone();
+                        finalStart.set(Calendar.HOUR_OF_DAY, calStart.get(Calendar.HOUR_OF_DAY));
+                        finalStart.set(Calendar.MINUTE, calStart.get(Calendar.MINUTE));
+                        // If start time is after target wake, it's likely from the previous day
+                        if (finalStart.getTimeInMillis() > finalTarget.getTimeInMillis()) {
+                            finalStart.add(Calendar.DAY_OF_YEAR, -1);
+                        }
+                        startTs = finalStart.getTimeInMillis();
+                    }
+
+                    long endTs = 0;
+                    if (calEnd.getTimeInMillis() != 0) {
+                        Calendar finalEnd = (Calendar) calDate.clone();
+                        finalEnd.set(Calendar.HOUR_OF_DAY, calEnd.get(Calendar.HOUR_OF_DAY));
+                        finalEnd.set(Calendar.MINUTE, calEnd.get(Calendar.MINUTE));
+                        endTs = finalEnd.getTimeInMillis();
+                    }
+
+                    viewModel.saveSleepEntry(startTs, endTs, finalTarget.getTimeInMillis(), date);
+                    SleepScheduler.reschedule(this);
+                    Toast.makeText(this, "Sleep record updated", Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton("Cancel", null)
+                .create();
+
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.color.card_background);
+        }
     }
 
     private void addAppUsageView(ScreenTimeDao.AppUsageSummary app) {

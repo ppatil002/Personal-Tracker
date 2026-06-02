@@ -40,6 +40,7 @@ public class SleepScheduler {
      */
     public static void reschedule(Context context) {
         AppExecutors.getInstance().diskIO().execute(() -> {
+            cancelAllAlarms(context);
             TaskRepository taskRepo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
             TaskDefinition def = taskRepo.getDefinitionByType(TaskType.SLEEP_REMINDER);
             if (def != null) {
@@ -48,6 +49,17 @@ public class SleepScheduler {
                 Log.e(TAG, "Cannot reschedule: Sleep Monitor task definition not found.");
             }
         });
+    }
+
+    public static void cancelAllAlarms(Context context) {
+        cancelAlarm(context, AppConstants.RC_SLEEP_TARGET);
+        cancelAlarm(context, AppConstants.RC_SLEEP_NUDGE);
+        cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_2H);
+        cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_1H);
+        cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_30M);
+        cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_10M);
+        cancelAlarm(context, AppConstants.RC_SLEEP_WAKEUP);
+        logOperation(context, "CANCEL", "All Sleep Reminders", "Previous sleep alarms cancelled for rescheduling.");
     }
 
     private static void calculateAndSetNextAlarm(Context context, String taskId) {
@@ -87,6 +99,15 @@ public class SleepScheduler {
 
             if (now < bedtime) {
                 cancelAlarm(context, AppConstants.RC_SLEEP_NUDGE);
+            } else {
+                // If we are past bedtime and not sleeping, schedule a nudge.
+                // Calculate next 30m slot from bedtime.
+                long interval = TimeUnit.MINUTES.toMillis(30);
+                long elapsedSinceBedtime = now - bedtime;
+                long nextNudgeOffset = ((elapsedSinceBedtime / interval) + 1) * interval;
+                long nudgeTime = bedtime + nextNudgeOffset;
+
+                setNativeAlarm(context, nudgeTime, taskId, AppConstants.RC_SLEEP_NUDGE, "Bedtime nudge @ " + timeFormat.format(new Date(nudgeTime)));
             }
         }
     }

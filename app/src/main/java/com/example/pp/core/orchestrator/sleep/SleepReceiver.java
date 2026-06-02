@@ -47,23 +47,40 @@ public class SleepReceiver extends BroadcastReceiver {
     }
 
     private void handleStartSleep(Context context) {
-        SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
-        long now = System.currentTimeMillis();
-        
-        long targetWakeTime = sleepRepo.getTargetWakeTime(now);
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
+            long now = System.currentTimeMillis();
+            long targetWakeTime = sleepRepo.getTargetWakeTime(now);
 
-        sleepRepo.startSleep(now, targetWakeTime);
-        SleepNotificationHelper.cancelNotification(context);
-        // Recalculate will cancel nudges and ensure wake up trigger is set
-        SleepScheduler.reschedule(context);
+            sleepRepo.startSleep(now, targetWakeTime);
+            SleepNotificationHelper.cancelNotification(context);
+
+            // Update Task State for the Wake up trigger
+            long bedtime = targetWakeTime - TimeUnit.HOURS.toMillis(SLEEP_TARGET_HOUR);
+            long nextRunTime = calculateNextRunTime("GOOD_NIGHT", bedtime, now);
+            updateTaskState(context, nextRunTime);
+
+            // Recalculate will cancel nudges and ensure wake up trigger is set
+            SleepScheduler.reschedule(context);
+        });
     }
 
     private void handleStopSleep(Context context) {
-        SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
-        sleepRepo.stopSleep(System.currentTimeMillis());
-        SleepNotificationHelper.cancelNotification(context);
-        // Step 3: User accepted Good Morning / Stopped sleep. Reschedule Step 1 alarms for next cycle.
-        SleepScheduler.reschedule(context);
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
+            long now = System.currentTimeMillis();
+            sleepRepo.stopSleep(now);
+            SleepNotificationHelper.cancelNotification(context);
+
+            // Calculate next day's bedtime for Task State
+            long targetWakeTime = sleepRepo.getTargetWakeTime(now);
+            long bedtime = targetWakeTime - TimeUnit.HOURS.toMillis(SLEEP_TARGET_HOUR);
+            long nextRunTime = calculateNextRunTime("GOOD_MORNING", bedtime, now);
+            updateTaskState(context, nextRunTime);
+
+            // Step 3: User accepted Good Morning / Stopped sleep. Reschedule Step 1 alarms for next cycle.
+            SleepScheduler.reschedule(context);
+        });
     }
 
     private void handleAlarmTrigger(Context context, String reason) {
@@ -103,18 +120,29 @@ public class SleepReceiver extends BroadcastReceiver {
                     // Overdue / nudge
                     long potentialMillis = Math.max(0, targetWakeTime - now);
                     int potentialPercent = (int) (potentialMillis * 100 / TimeUnit.HOURS.toMillis(AppConstants.SLEEP_TARGET_HOUR));
-                    String msg = "Time's up! Current potential: " + potentialPercent + "%";
+                    
+                    String msg;
+                    if (reason.contains("target")) {
+                        msg = "It's Bedtime! Your current potential is " + potentialPercent + "%.";
+                    } else {
+                        msg = "Still awake? Time's slipping! Current potential: " + potentialPercent + "%";
+                    }
                     SleepNotificationHelper.showBedtimeReminder(context, msg, true);
                     
                     long nextRunTime = calculateNextRunTime(reason, bedtime, now);
                     updateTaskState(context, nextRunTime);
                     
-                    // Schedule next nudge in 30 mins
+                    // Schedule next nudge in a fixed 30m slot from bedtime
                     TaskRepository taskRepo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
                     TaskDefinition def = taskRepo.getDefinitionByType(TaskType.SLEEP_REMINDER);
                     if (def != null) {
-                        SleepScheduler.logOperation(context, "SCHEDULE", "Bedtime nudge @ "+ timeFormat.format(new Date(now + TimeUnit.MINUTES.toMillis(30))), "Setting next nudge in 30m");
-                        scheduleNudge(context, now + TimeUnit.MINUTES.toMillis(30), def.getTaskId());
+                        long interval = TimeUnit.MINUTES.toMillis(30);
+                        long elapsedSinceBedtime = now - bedtime;
+                        long nextNudgeOffset = ((elapsedSinceBedtime / interval) + 1) * interval;
+                        long nudgeTime = bedtime + nextNudgeOffset;
+
+                        SleepScheduler.logOperation(context, "SCHEDULE", "Bedtime nudge @ "+ timeFormat.format(new Date(nudgeTime)), "Setting next nudge slot");
+                        scheduleNudge(context, nudgeTime, def.getTaskId());
                     }
                 }
             }
@@ -151,9 +179,13 @@ public class SleepReceiver extends BroadcastReceiver {
             return bedtime;
         } else if (reason.contains("target") || reason.contains("nudge")) {
             return now + TimeUnit.MINUTES.toMillis(30);
-        } else if (reason.contains("Wake up trigger")){
-            // Setting for next day's time
+        } else if (reason.contains("Wake up trigger") || reason.contains("GOOD_MORNING")){
+            // After waking up, the next expected run is the start of the next cycle (2H reminder)
             return bedtime - TimeUnit.HOURS.toMillis(2);
+        } else if (reason.contains("GOOD_NIGHT")) {
+            // After starting sleep, the next expected run is the wake up trigger (TargetWake - 1H)
+            // Note: targetWake = bedtime + SLEEP_TARGET_HOUR
+            return bedtime + TimeUnit.HOURS.toMillis(SLEEP_TARGET_HOUR - 1);
         }
         return 0;
     }

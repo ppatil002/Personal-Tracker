@@ -62,6 +62,21 @@ public class SleepRepository {
         });
     }
 
+    public void saveManualSleepEntry(long start, long end, long target, long date) {
+        executors.diskIO().execute(() -> {
+            SleepEntity current = sleepDao.getLastSleepSync();
+            if (current != null && current.date == date) {
+                current.startTime = start;
+                current.endTime = end;
+                current.targetWakeTime = target;
+                current.updatedAt = System.currentTimeMillis();
+                sleepDao.update(current);
+            } else {
+                sleepDao.insert(new SleepEntity(start, end, target, date));
+            }
+        });
+    }
+
     public LiveData<SleepEntity> getLastSleep() {
         return sleepDao.getLastSleep();
     }
@@ -74,11 +89,12 @@ public class SleepRepository {
         return sleepDao.getSleepInRange(start, end);
     }
 
+    // Determine Target Wake Time
     public long getTargetWakeTime(long now) {
         SleepEntity lastSleep = getLastSleepSync();
         long targetWakeTime;
 
-        // Determine Target Wake Time
+        // User is sleeping but not wakeup
         if (lastSleep != null && lastSleep.endTime == 0) {
             targetWakeTime = lastSleep.targetWakeTime;
         } else {
