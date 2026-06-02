@@ -58,13 +58,25 @@
                         android:layout_height="wrap_content"
                         android:orientation="vertical"
                         android:padding="16dp">
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="@string/selected_date"
-                            android:textColor="@color/accent_purple"
-                            android:textSize="12sp"
-                            android:fontFamily="sans-serif-medium" />
+                        <RelativeLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/selected_date"
+                                android:textColor="@color/accent_purple"
+                                android:textSize="12sp"
+                                android:fontFamily="sans-serif-medium" />
+                            <ImageView
+                                android:id="@+id/btnInfoTransactions"
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:layout_alignParentEnd="true"
+                                android:src="@drawable/ic_history"
+                                app:tint="@color/accent_purple"
+                                android:contentDescription="Show Transactions" />
+                        </RelativeLayout>
                         <TextView
                             android:id="@+id/tvSelectedDate"
                             android:layout_width="wrap_content"
@@ -103,6 +115,32 @@
                         app:mcv_headerTextAppearance="@style/CalendarHeaderText"
                         app:mcv_weekDayTextAppearance="@style/CalendarWeekDayText" />
                 </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Collapsible Transaction List -->
+            <LinearLayout
+                android:id="@+id/containerDayTransactions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp"
+                android:padding="12dp"
+                android:background="@drawable/bg_input_field">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Today's Transactions"
+                    android:textColor="@color/accent_purple"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:layout_marginBottom="8dp"/>
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvDayTransactions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:maxHeight="150dp"
+                    tools:listitem="@layout/item_transaction_small" />
             </LinearLayout>
 
             <!-- Done for the day button -->

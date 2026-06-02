@@ -5,20 +5,27 @@ import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
 import android.util.TypedValue;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.PPApplication;
 import com.example.pp.R;
 import com.example.pp.core.enums.AppEvent;
 import com.example.pp.core.event.EventBus;
+import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.domain.model.CategoryTreeNode;
 import com.example.pp.features.analytics.AnalyticsActivity;
@@ -27,6 +34,7 @@ import com.example.pp.features.category.TagBottomSheetFragment;
 import com.example.pp.features.category.model.Tag;
 import com.example.pp.features.dashboard.DashboardActivity;
 import com.example.pp.features.settings.MoreActivity;
+import com.example.pp.utils.DateUtils;
 import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -61,6 +69,10 @@ public class EditTrackerActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private TextView tvTypeExpense;
     private TextView tvTypeRefund;
+    private View btnInfoTransactions;
+    private View containerDayTransactions;
+    private RecyclerView rvDayTransactions;
+    private SmallTransactionAdapter dayTransactionsAdapter;
 
     private CategoryTreeNode selectedCategory;
     private List<Tag> allTags = new ArrayList<>();
@@ -116,6 +128,20 @@ public class EditTrackerActivity extends AppCompatActivity {
         btnAddTags = findViewById(R.id.btnAddTags);
         tvNoTagsSelected = findViewById(R.id.tvNoTagsSelected);
         chipGroupSelectedTags = findViewById(R.id.chipGroupSelectedTags);
+
+        btnInfoTransactions = findViewById(R.id.btnInfoTransactions);
+        containerDayTransactions = findViewById(R.id.containerDayTransactions);
+        rvDayTransactions = findViewById(R.id.rvDayTransactions);
+
+        if (rvDayTransactions != null) {
+            rvDayTransactions.setLayoutManager(new LinearLayoutManager(this));
+            dayTransactionsAdapter = new SmallTransactionAdapter();
+            rvDayTransactions.setAdapter(dayTransactionsAdapter);
+        }
+
+        if (btnInfoTransactions != null) {
+            btnInfoTransactions.setOnClickListener(v -> toggleDayTransactions());
+        }
 
         ImageView btnClearParticular = findViewById(R.id.btnClearParticular);
         if (btnClearParticular != null && etParticular != null) {
@@ -270,6 +296,80 @@ public class EditTrackerActivity extends AppCompatActivity {
         
         // Refresh selected tags UI if date changes, as some tags might become invalid
         updateSelectedTagsUI(selectedTags);
+
+        // Refresh day transactions if the container is visible
+        if (containerDayTransactions != null && containerDayTransactions.getVisibility() == View.VISIBLE) {
+            loadDayTransactions();
+        }
+    }
+
+    private void toggleDayTransactions() {
+        if (containerDayTransactions == null) return;
+        if (containerDayTransactions.getVisibility() == View.VISIBLE) {
+            containerDayTransactions.setVisibility(View.GONE);
+        } else {
+            containerDayTransactions.setVisibility(View.VISIBLE);
+            loadDayTransactions();
+        }
+    }
+
+    private void loadDayTransactions() {
+        long startOfDay = DateUtils.getStartOfDay(getSelectedDateTimestamp());
+        long endOfDay = startOfDay + (24 * 60 * 60 * 1000) - 1;
+
+        PPApplication app = (PPApplication) getApplication();
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            List<TransactionEntity> transactions = app.getTransactionRepository().getTransactionsBetween(startOfDay, endOfDay);
+            AppExecutors.getInstance().mainThread().execute(() -> {
+                if (dayTransactionsAdapter != null) {
+                    dayTransactionsAdapter.setTransactions(transactions);
+                }
+            });
+        });
+    }
+
+    private static class SmallTransactionAdapter extends RecyclerView.Adapter<SmallTransactionAdapter.ViewHolder> {
+        private List<TransactionEntity> transactions = new ArrayList<>();
+
+        public void setTransactions(List<TransactionEntity> transactions) {
+            this.transactions = transactions;
+            notifyDataSetChanged();
+        }
+
+        @NonNull
+        @Override
+        public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+            View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_transaction_small, parent, false);
+            return new ViewHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+            TransactionEntity transaction = transactions.get(position);
+            holder.tvParticular.setText(transaction.getItem());
+            holder.tvAmount.setText(String.format(Locale.getDefault(), "₹%.2f", transaction.getAmount()));
+            
+            if ("Refund".equalsIgnoreCase(transaction.getTransactionType())) {
+                holder.tvAmount.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.emerald_green));
+            } else {
+                holder.tvAmount.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.accent_pink));
+            }
+        }
+
+        @Override
+        public int getItemCount() {
+            return transactions.size();
+        }
+
+        static class ViewHolder extends RecyclerView.ViewHolder {
+            TextView tvParticular, tvAmount;
+
+            ViewHolder(View itemView) {
+                super(itemView);
+                tvParticular = itemView.findViewById(R.id.tvSmallParticular);
+                tvAmount = itemView.findViewById(R.id.tvSmallAmount);
+            }
+        }
     }
 
     private void setupDropdowns() {
@@ -425,6 +525,10 @@ public class EditTrackerActivity extends AppCompatActivity {
         for (Tag t : allTags) t.setSelected(false);
         updateSelectedTagsUI(new ArrayList<>());
         setTransactionType("Expense");
+
+        if (containerDayTransactions != null && containerDayTransactions.getVisibility() == View.VISIBLE) {
+            loadDayTransactions();
+        }
 
         // Reset payment method
         selectedPayment = "UPI";

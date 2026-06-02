@@ -78,7 +78,7 @@ public interface TransactionDao {
     @Query("SELECT * FROM transactions")
     List<TransactionEntity> getAllTransactionsList();
 
-    @Query("SELECT * FROM transactions WHERE transaction_date >= :start AND transaction_date < :end ORDER BY transaction_date ASC")
+    @Query("SELECT * FROM transactions WHERE transaction_date >= :start AND transaction_date < :end ORDER BY transaction_date ASC, last_updated_timestamp ASC")
     List<TransactionEntity> getTransactionsBetween(long start, long end);
 
     @Query("SELECT CAST(strftime('%m', transaction_date / 1000, 'unixepoch', 'localtime') AS INTEGER) as month, " +
