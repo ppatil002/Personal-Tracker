@@ -91,25 +91,68 @@ public class SleepRepository {
         return sleepDao.getSleepInRange(start, end);
     }
 
-    // Determine Target Wake Time
-    public long getTargetWakeTime(long now) {
-        SleepEntity lastSleep = getLastSleepSync();
-        long targetWakeTime;
+    public List<SleepEntity> getSleepHistorySync(long start, long end) {
+        return sleepDao.getSleepInRangeSync(start, end);
+    }
 
-        // User is sleeping but not wakeup
-        if (lastSleep != null && lastSleep.endTime == 0) {
-            targetWakeTime = lastSleep.targetWakeTime;
-        } else {
+    public void updateDelayReason(long now, String reason) {
+        executors.diskIO().execute(() -> {
             Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(now);
+            int hour = cal.get(Calendar.HOUR_OF_DAY);
+            
+            long sleepDate;
+            if (hour < 12) {
+                // It's early morning, the delay reason is for the previous night's sleep entry
+                sleepDate = DateUtils.getStartOfDay(now - 24 * 3600 * 1000L);
+            } else {
+                // It's evening, the delay reason is for tonight's sleep entry
+                sleepDate = DateUtils.getStartOfDay(now);
+            }
+            
+            SleepEntity entity = sleepDao.getSleepByDateSync(sleepDate);
+            if (entity != null) {
+                sleepDao.updateDelayReason(sleepDate, reason);
+            } else {
+                // Create a placeholder entry if it doesn't exist yet
+                SleepEntity placeholder = new SleepEntity(0, 0, 0, sleepDate);
+                placeholder.setDelayReason(reason);
+                sleepDao.insert(placeholder);
+            }
+        });
+    }
+
+    public void updateDelayReasonByDate(long date, String reason) {
+        executors.diskIO().execute(() -> {
+            sleepDao.updateDelayReason(date, reason);
+        });
+    }
+
+    public void seedSleep() {
+        executors.diskIO().execute(() -> {
+            long now = System.currentTimeMillis();
+            long todayDate = DateUtils.getStartOfDay(now);
+
+            // Check if entry already exists for todayDate to avoid duplicates
+            if (sleepDao.getSleepByDateSync(todayDate) != null) {
+                return;
+            }
+
+            Calendar cal = Calendar.getInstance();
+            cal.add(Calendar.DAY_OF_YEAR, 1);
             cal.set(Calendar.HOUR_OF_DAY, 6);
             cal.set(Calendar.MINUTE, 0);
             cal.set(Calendar.SECOND, 0);
             cal.set(Calendar.MILLISECOND, 0);
-            if (cal.getTimeInMillis() <= now) {
-                cal.add(Calendar.DAY_OF_YEAR, 1);
-            }
-            targetWakeTime = cal.getTimeInMillis();
-        }
-        return targetWakeTime;
+            long targetWakeTime = cal.getTimeInMillis();
+
+            sleepDao.insert(new SleepEntity(0, 0, targetWakeTime, todayDate));
+        });
+    }
+
+    // Determine Target Wake Time
+    public long getLatestTargetWakeTime() {
+        SleepEntity lastSleep = getLastSleepSync();
+        return lastSleep.getTargetWakeTime();
     }
 }

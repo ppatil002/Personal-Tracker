@@ -36,6 +36,7 @@ public class SplashActivity extends AppCompatActivity {
 //        ((PPApplication) getApplication()).getTransactionRepository().seedTransactionsIfEmpty();
 //        ((PPApplication) getApplication()).getTaskRepository().seedTasksIfEmpty();
 //        seedScreenTime();
+        ((PPApplication) getApplication()).getSleepRepository().seedSleep();
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (checkAllCriticalPermissions()) {

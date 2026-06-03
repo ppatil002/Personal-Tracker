@@ -2,14 +2,20 @@ package com.example.pp.data.local.entity;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "sleep")
+@Entity(
+        tableName = "sleep",
+        indices = {
+                @Index("date")
+        }
+)
 public class SleepEntity {
-    @PrimaryKey(autoGenerate = true)
-    @ColumnInfo(name = "id")
-    public int id;
 
+    @PrimaryKey()
+    @ColumnInfo(name = "date")
+    public long date; // Start of day for tracking
     @ColumnInfo(name = "start_time")
     public long startTime;
 
@@ -19,14 +25,14 @@ public class SleepEntity {
     @ColumnInfo(name = "target_wake_time")
     public long targetWakeTime;
 
-    @ColumnInfo(name = "date")
-    public long date; // Start of day for tracking
-
     @ColumnInfo(name = "created_at")
     public long createdAt;
 
     @ColumnInfo(name = "updated_at")
     public long updatedAt;
+
+    @ColumnInfo(name = "delay_reason")
+    public String delayReason;
 
     public SleepEntity() {
         this.createdAt = System.currentTimeMillis();
@@ -40,9 +46,6 @@ public class SleepEntity {
         this.targetWakeTime = targetWakeTime;
         this.date = date;
     }
-
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
 
     public long getStartTime() { return startTime; }
     public void setStartTime(long startTime) { 
@@ -70,4 +73,10 @@ public class SleepEntity {
 
     public long getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(long updatedAt) { this.updatedAt = updatedAt; }
+
+    public String getDelayReason() { return delayReason; }
+    public void setDelayReason(String delayReason) { 
+        this.delayReason = delayReason; 
+        this.updatedAt = System.currentTimeMillis();
+    }
 }
