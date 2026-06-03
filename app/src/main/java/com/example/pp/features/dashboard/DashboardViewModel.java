@@ -9,6 +9,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.PPApplication;
 import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
+import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutritionIntake;
@@ -85,6 +86,24 @@ public class DashboardViewModel extends AndroidViewModel {
 
     public LiveData<SleepEntity> getLastSleep() {
         return sleepRepository.getLastSleep();
+    }
+
+    public void getLastSleepSync(OnSleepLoadedCallback callback) {
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            SleepEntity sleep = sleepRepository.getLastSleepSync();
+            AppExecutors.getInstance().mainThread().execute(() -> callback.onLoaded(sleep));
+        });
+    }
+
+    public void getSleepByDateSync(long date, OnSleepLoadedCallback callback) {
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            SleepEntity sleep = sleepRepository.getSleepByDateSync(date);
+            AppExecutors.getInstance().mainThread().execute(() -> callback.onLoaded(sleep));
+        });
+    }
+
+    public interface OnSleepLoadedCallback {
+        void onLoaded(SleepEntity sleep);
     }
 
     public void updateTargetWakeTime(long targetWakeTime) {

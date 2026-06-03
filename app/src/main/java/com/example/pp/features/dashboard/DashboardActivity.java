@@ -125,7 +125,9 @@ public class DashboardActivity extends AppCompatActivity {
             startActivity(new Intent(this, SleepAnalyticsActivity.class));
         });
 
-        findViewById(R.id.cardSleep).setOnClickListener(v -> showSleepEntryDialog());
+        findViewById(R.id.cardSleep).setOnClickListener(v -> {
+            viewModel.getLastSleepSync(this::showSleepEntryDialog);
+        });
         SleepScheduler.reschedule(this);
     }
 
@@ -301,30 +303,11 @@ public class DashboardActivity extends AppCompatActivity {
         }
     }
 
-    private void showSleepEntryDialog() {
-        SleepEntity lastSleep = viewModel.getLastSleep().getValue();
+    private void showSleepEntryDialog(SleepEntity initialSleep) {
         Calendar calTarget = Calendar.getInstance();
         Calendar calStart = Calendar.getInstance();
         Calendar calEnd = Calendar.getInstance();
         Calendar calDate = Calendar.getInstance();
-
-        if (lastSleep != null) {
-            if (lastSleep.targetWakeTime != 0) calTarget.setTimeInMillis(lastSleep.targetWakeTime);
-            if (lastSleep.startTime != 0) calStart.setTimeInMillis(lastSleep.startTime);
-            else calStart.setTimeInMillis(0);
-            if (lastSleep.endTime != 0) calEnd.setTimeInMillis(lastSleep.endTime);
-            else calEnd.setTimeInMillis(0);
-            if (lastSleep.date != 0) calDate.setTimeInMillis(lastSleep.date);
-            else calDate.setTimeInMillis(DateUtils.getStartOfDay(System.currentTimeMillis()));
-        } else {
-            calTarget.set(Calendar.HOUR_OF_DAY, 6);
-            calTarget.set(Calendar.MINUTE, 0);
-            calTarget.set(Calendar.SECOND, 0);
-            calTarget.set(Calendar.MILLISECOND, 0);
-            calStart.setTimeInMillis(0);
-            calEnd.setTimeInMillis(0);
-            calDate.setTimeInMillis(DateUtils.getStartOfDay(System.currentTimeMillis()));
-        }
 
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_sleep_entry, null);
         TextView tvSleepDate = dialogView.findViewById(R.id.tvSleepDate);
@@ -335,15 +318,64 @@ public class DashboardActivity extends AppCompatActivity {
         SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.getDefault());
         SimpleDateFormat sdfDate = new SimpleDateFormat("dd MMM, yyyy", Locale.getDefault());
 
-        tvSleepDate.setText(sdfDate.format(calDate.getTime()));
-        tvTargetWake.setText(sdfTime.format(calTarget.getTime()));
-        tvStartTime.setText(calStart.getTimeInMillis() == 0 ? "Not Set" : sdfTime.format(calStart.getTime()));
-        tvEndTime.setText(calEnd.getTimeInMillis() == 0 ? "Not Set" : sdfTime.format(calEnd.getTime()));
+        DashboardViewModel.OnSleepLoadedCallback populateUI = sleep -> {
+            if (sleep != null) {
+                if (sleep.targetWakeTime != 0) {
+                    calTarget.setTimeInMillis(sleep.targetWakeTime);
+                    tvTargetWake.setText(sdfTime.format(calTarget.getTime()));
+                } else {
+                    calTarget.set(Calendar.HOUR_OF_DAY, 6);
+                    calTarget.set(Calendar.MINUTE, 0);
+                    tvTargetWake.setText("Not Set");
+                }
+
+                if (sleep.startTime != 0) {
+                    calStart.setTimeInMillis(sleep.startTime);
+                    tvStartTime.setText(sdfTime.format(calStart.getTime()));
+                } else {
+                    calStart.setTimeInMillis(0);
+                    tvStartTime.setText("Not Set");
+                }
+
+                if (sleep.endTime != 0) {
+                    calEnd.setTimeInMillis(sleep.endTime);
+                    tvEndTime.setText(sdfTime.format(calEnd.getTime()));
+                } else {
+                    calEnd.setTimeInMillis(0);
+                    tvEndTime.setText("Not Set");
+                }
+
+                if (sleep.date != 0) {
+                    calDate.setTimeInMillis(sleep.date);
+                    tvSleepDate.setText(sdfDate.format(calDate.getTime()));
+                }
+            } else {
+                tvTargetWake.setText("Not Set");
+                tvStartTime.setText("Not Set");
+                tvEndTime.setText("Not Set");
+                calStart.setTimeInMillis(0);
+                calEnd.setTimeInMillis(0);
+                // We keep the calDate as selected by the user, but reset times
+                tvSleepDate.setText(sdfDate.format(calDate.getTime()));
+            }
+        };
+
+        // First time population
+        if (initialSleep != null && initialSleep.date != 0) {
+            calDate.setTimeInMillis(initialSleep.date);
+        } else {
+            calDate.setTimeInMillis(DateUtils.getStartOfDay(System.currentTimeMillis()));
+        }
+        populateUI.onLoaded(initialSleep);
 
         tvSleepDate.setOnClickListener(v -> {
             new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
                 calDate.set(year, month, dayOfMonth);
+                long selectedDate = DateUtils.getStartOfDay(calDate.getTimeInMillis());
                 tvSleepDate.setText(sdfDate.format(calDate.getTime()));
+                
+                // Fetch details based on new date
+                viewModel.getSleepByDateSync(selectedDate, populateUI);
             }, calDate.get(Calendar.YEAR), calDate.get(Calendar.MONTH), calDate.get(Calendar.DAY_OF_MONTH)).show();
         });
 
@@ -381,6 +413,9 @@ public class DashboardActivity extends AppCompatActivity {
                 .setTitle("Sleep Manual Entry")
                 .setView(dialogView)
                 .setPositiveButton("Save", (d, which) -> {
+                    
+                    
+                    
                     long sleepDate = DateUtils.getStartOfDay(calDate.getTimeInMillis());
                     
                     // Target Wake Time and End Time are always +1 day from the selected Sleep Date

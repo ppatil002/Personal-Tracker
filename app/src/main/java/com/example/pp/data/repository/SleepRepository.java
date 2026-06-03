@@ -66,13 +66,13 @@ public class SleepRepository {
 
     public void saveManualSleepEntry(long start, long end, long target, long date) {
         executors.diskIO().execute(() -> {
-            SleepEntity current = sleepDao.getLastSleepSync();
-            if (current != null && current.date == date) {
-                current.startTime = start;
-                current.endTime = end;
-                current.targetWakeTime = target;
-                current.updatedAt = System.currentTimeMillis();
-                sleepDao.update(current);
+            SleepEntity sleepForThatDate = sleepDao.getSleepByDateSync(date);
+            if (sleepForThatDate != null) {
+                sleepForThatDate.startTime = start;
+                sleepForThatDate.endTime = end;
+                sleepForThatDate.targetWakeTime = target;
+                sleepForThatDate.updatedAt = System.currentTimeMillis();
+                sleepDao.update(sleepForThatDate);
             } else {
                 sleepDao.insert(new SleepEntity(start, end, target, date));
             }
@@ -85,6 +85,10 @@ public class SleepRepository {
 
     public SleepEntity getLastSleepSync() {
         return sleepDao.getLastSleepSync();
+    }
+
+    public SleepEntity getSleepByDateSync(long date) {
+        return sleepDao.getSleepByDateSync(date);
     }
 
     public LiveData<List<SleepEntity>> getSleepHistory(long start, long end) {
