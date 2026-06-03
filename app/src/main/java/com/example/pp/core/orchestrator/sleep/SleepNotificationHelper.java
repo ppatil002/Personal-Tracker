@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.Intent;
 
 import androidx.core.app.NotificationCompat;
+import androidx.core.app.RemoteInput;
 
 import com.example.pp.R;
 import com.example.pp.core.constants.AppConstants;
@@ -18,6 +19,8 @@ public class SleepNotificationHelper {
 
     public static final String ACTION_START_SLEEP = "com.example.pp.ACTION_START_SLEEP";
     public static final String ACTION_STOP_SLEEP = "com.example.pp.ACTION_STOP_SLEEP";
+    public static final String ACTION_DELAY_REASON = "com.example.pp.ACTION_DELAY_REASON";
+    public static final String KEY_TEXT_REPLY = "key_text_reply";
 
     public static void showBedtimeReminder(Context context, String message, boolean showBedButton) {
         createChannel(context);
@@ -40,6 +43,22 @@ public class SleepNotificationHelper {
             PendingIntent bedPI = PendingIntent.getBroadcast(context, 1, bedIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
             builder.addAction(R.drawable.ic_sleep, "Good Night", bedPI);
         }
+
+        // Add Delay Reason action
+        RemoteInput remoteInput = new RemoteInput.Builder(KEY_TEXT_REPLY)
+                .setLabel("Why the delay?")
+                .build();
+
+        Intent replyIntent = new Intent(context, SleepReceiver.class);
+        replyIntent.setAction(ACTION_DELAY_REASON);
+        PendingIntent replyPI = PendingIntent.getBroadcast(context, 3, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+
+        NotificationCompat.Action action = new NotificationCompat.Action.Builder(
+                R.drawable.ic_note, "Delay Reason", replyPI)
+                .addRemoteInput(remoteInput)
+                .build();
+
+        builder.addAction(action);
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {

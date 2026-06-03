@@ -67,7 +67,7 @@ public class SleepScheduler {
         SleepEntity lastSleep = sleepRepo.getLastSleepSync();
         
         long now = System.currentTimeMillis();
-        long targetWakeTime = sleepRepo.getTargetWakeTime(now);
+        long targetWakeTime = sleepRepo.getLatestTargetWakeTime();
         long bedtime = targetWakeTime - TimeUnit.HOURS.toMillis(SLEEP_TARGET_HOUR);
 
         if (lastSleep != null && lastSleep.startTime != 0 && lastSleep.endTime == 0) {

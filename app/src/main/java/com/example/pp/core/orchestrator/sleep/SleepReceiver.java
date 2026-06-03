@@ -7,7 +7,10 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.util.Log;
+
+import androidx.core.app.RemoteInput;
 
 import com.example.pp.PPApplication;
 import com.example.pp.core.constants.AppConstants;
@@ -41,6 +44,8 @@ public class SleepReceiver extends BroadcastReceiver {
             handleStartSleep(context);
         } else if (SleepNotificationHelper.ACTION_STOP_SLEEP.equals(action)) {
             handleStopSleep(context);
+        } else if (SleepNotificationHelper.ACTION_DELAY_REASON.equals(action)) {
+            handleDelayReason(context, intent);
         } else if (AppConstants.ACTION_SLEEP_ALARM.equals(action)) {
             handleAlarmTrigger(context, reason);
         }
@@ -50,7 +55,7 @@ public class SleepReceiver extends BroadcastReceiver {
         AppExecutors.getInstance().diskIO().execute(() -> {
             SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
             long now = System.currentTimeMillis();
-            long targetWakeTime = sleepRepo.getTargetWakeTime(now);
+            long targetWakeTime = sleepRepo.getLatestTargetWakeTime();
 
             sleepRepo.startSleep(now, targetWakeTime);
             SleepNotificationHelper.cancelNotification(context);
@@ -73,7 +78,7 @@ public class SleepReceiver extends BroadcastReceiver {
             SleepNotificationHelper.cancelNotification(context);
 
             // Calculate next day's bedtime for Task State
-            long targetWakeTime = sleepRepo.getTargetWakeTime(now);
+            long targetWakeTime = sleepRepo.getLatestTargetWakeTime();
             long bedtime = targetWakeTime - TimeUnit.HOURS.toMillis(SLEEP_TARGET_HOUR);
             long nextRunTime = calculateNextRunTime("GOOD_MORNING", bedtime, now);
             updateTaskState(context, nextRunTime);
@@ -93,7 +98,7 @@ public class SleepReceiver extends BroadcastReceiver {
                 // User is sleeping
                 if (reason.contains("Wake up trigger")) {
                     SleepNotificationHelper.showWakeUpNotification(context);
-                    long targetWakeTime = sleepRepo.getTargetWakeTime(now);
+                    long targetWakeTime = sleepRepo.getLatestTargetWakeTime();
                     long bedtime = targetWakeTime - TimeUnit.HOURS.toMillis(SLEEP_TARGET_HOUR);
                     long nextRunTime = calculateNextRunTime(reason, bedtime, now);
                     updateTaskState(context, nextRunTime);
@@ -103,7 +108,7 @@ public class SleepReceiver extends BroadcastReceiver {
                 }
             } else {
                 // User is awake (or pending)
-                long targetWakeTime = sleepRepo.getTargetWakeTime(now);
+                long targetWakeTime = sleepRepo.getLatestTargetWakeTime();
 
                 long bedtime = targetWakeTime - TimeUnit.HOURS.toMillis(AppConstants.SLEEP_TARGET_HOUR);
                 
@@ -148,6 +153,21 @@ public class SleepReceiver extends BroadcastReceiver {
                 }
             }
         });
+    }
+
+    private void handleDelayReason(Context context, Intent intent) {
+        Bundle remoteInput = RemoteInput.getResultsFromIntent(intent);
+        if (remoteInput != null) {
+            CharSequence reason = remoteInput.getCharSequence(SleepNotificationHelper.KEY_TEXT_REPLY);
+            if (reason != null) {
+                String reasonStr = reason.toString();
+                SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
+                sleepRepo.updateDelayReason(System.currentTimeMillis(), reasonStr);
+                
+                // Update notification to show success
+                SleepNotificationHelper.showBedtimeReminder(context, "Reason saved: " + reasonStr, false);
+            }
+        }
     }
 
     private void scheduleNudge(Context context, long time, String taskId, String reason) {
