@@ -3,6 +3,7 @@ package com.example.pp.features.dashboard;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
@@ -514,7 +515,7 @@ public class DashboardActivity extends AppCompatActivity {
         PackageManager pm = getPackageManager();
         String name = app.packageName;
         try {
-            android.content.pm.ApplicationInfo ai = pm.getApplicationInfo(app.packageName, 0);
+            ApplicationInfo ai = pm.getApplicationInfo(app.packageName, 0);
             name = pm.getApplicationLabel(ai).toString();
             ivAppIcon.setImageDrawable(ai.loadIcon(pm));
         } catch (PackageManager.NameNotFoundException e) {

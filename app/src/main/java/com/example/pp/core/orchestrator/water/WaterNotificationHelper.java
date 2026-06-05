@@ -5,6 +5,8 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.media.AudioAttributes;
+import android.net.Uri;
 
 import androidx.core.app.NotificationCompat;
 
@@ -23,6 +25,14 @@ public class WaterNotificationHelper {
     public static void createNotificationChannel(Context context) {
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID, "Water Intake Reminders", NotificationManager.IMPORTANCE_HIGH);
+        
+        Uri soundUri = Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.water_notofication_drop);
+        AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build();
+        channel.setSound(soundUri, audioAttributes);
+
         NotificationManager manager = context.getSystemService(NotificationManager.class);
         if (manager != null) {
             manager.createNotificationChannel(channel);
@@ -57,6 +67,7 @@ public class WaterNotificationHelper {
                 .setContentText("Its Water Break")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
+                .setSound(Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.water_notofication_drop))
                 .setAutoCancel(true)
                 .setContentIntent(contentIntent)
                 .addAction(0, "100ml", pi100)

@@ -118,7 +118,7 @@
         android:layout_marginTop="4dp"
         android:background="@drawable/bg_neon_dropdown"
         android:padding="12dp"
-        android:hint="e.g. Late night movie"
+        android:hint="e.g. Late night game"
         android:textColorHint="@color/text_muted"
         android:textColor="@color/text_primary"
         android:textSize="15sp"
