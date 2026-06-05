@@ -152,7 +152,7 @@ public class SleepRepository {
     public void seedSleep() {
         executors.diskIO().execute(() -> {
             int dataCount = sleepDao.getCount();
-            if (dataCount<=0){
+            if (dataCount > 0){
                 return;
             }
             long now = System.currentTimeMillis();
