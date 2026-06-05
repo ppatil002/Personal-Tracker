@@ -10,6 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.PPApplication;
 import com.example.pp.core.enums.PeriodType;
+import com.example.pp.core.enums.TableAlignment;
 import com.example.pp.core.enums.TableColumnType;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.entity.CategoryEntity;
@@ -260,10 +261,10 @@ public class AnalyticsViewModel extends AndroidViewModel {
                 for (CategoryTreeNode node : finalTree) roots.add(node.getCategory());
                 rootCategories.setValue(roots);
                 
-                // Use currently selected category if available, otherwise default to first
+                // Use currently selected category if available, otherwise default to "all"
                 String currentId = selectedTableCategoryId.getValue();
-                if (currentId == null && !roots.isEmpty()) {
-                    currentId = roots.get(0).getCategoryId();
+                if (currentId == null) {
+                    currentId = "all";
                     selectedTableCategoryId.setValue(currentId);
                 }
                 
@@ -299,9 +300,14 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
             // Columns: Month + Categories
             List<TableColumn> cols = new ArrayList<>();
-            cols.add(new TableColumn("month", "Month", TableColumnType.TEXT));
+            TableColumn monthCol = new TableColumn("month", "Month", TableColumnType.TEXT);
+            monthCol.setAlignment(TableAlignment.CENTER);
+            cols.add(monthCol);
+            
             for (CategoryEntity root : roots) {
-                cols.add(new TableColumn(root.getCategoryId(), root.getName(), TableColumnType.AMOUNT));
+                TableColumn col = new TableColumn(root.getCategoryId(), root.getName(), TableColumnType.AMOUNT);
+                col.setAlignment(TableAlignment.CENTER);
+                cols.add(col);
             }
 
             // Data: Month Index (0-11) -> Root Category Id -> Amount
@@ -421,9 +427,14 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
             // Map subcategories to column keys
             List<TableColumn> cols = new ArrayList<>();
-            cols.add(new TableColumn("date", type == PeriodType.YEAR ? "Month" : "Date", TableColumnType.TEXT));
+            TableColumn dateCol = new TableColumn("date", type == PeriodType.YEAR ? "Month" : "Date", TableColumnType.TEXT);
+            dateCol.setAlignment(TableAlignment.CENTER);
+            cols.add(dateCol);
+            
             for (CategoryEntity sc : subCats) {
-                cols.add(new TableColumn(sc.getCategoryId(), sc.getName(), TableColumnType.AMOUNT));
+                TableColumn col = new TableColumn(sc.getCategoryId(), sc.getName(), TableColumnType.AMOUNT);
+                col.setAlignment(TableAlignment.CENTER);
+                cols.add(col);
             }
 
             // Group by date -> subcategory -> total
