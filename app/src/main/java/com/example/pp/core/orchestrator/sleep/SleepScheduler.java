@@ -28,26 +28,21 @@ public class SleepScheduler {
     private static final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
 
     /**
-     * Entry point for the Task Engine / SystemTaskScheduler.
+     * Entry point from the Task Engine / SystemTaskScheduler to the sleep.
      */
     public static void schedule(Context context, TaskDefinition def) {
-        Log.i(TAG, "Scheduling Sleep Monitor task.");
-        calculateAndSetNextAlarm(context, def.getTaskId());
-    }
-
-    /**
-     * Force a recalculation and rescheduling of the next sleep-related alarm.
-     */
-    public static void reschedule(Context context) {
         AppExecutors.getInstance().diskIO().execute(() -> {
-            cancelAllAlarms(context);
-            TaskRepository taskRepo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
-            TaskDefinition def = taskRepo.getDefinitionByType(TaskType.SLEEP_REMINDER);
-            if (def != null) {
-                calculateAndSetNextAlarm(context, def.getTaskId());
-            } else {
-                Log.e(TAG, "Cannot reschedule: Sleep Monitor task definition not found.");
+            Log.i(TAG, "Scheduling Sleep Monitor task.");
+            
+            TaskDefinition taskDef = def;
+            if (taskDef == null) {
+                TaskRepository taskRepo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
+                taskDef = taskRepo.getDefinitionByType(TaskType.SLEEP_REMINDER);
             }
+
+            // Always start with a clean slate
+            cancelAllAlarms(context);
+            calculateAndSetNextAlarm(context, taskDef.getTaskId());
         });
     }
 
@@ -77,14 +72,6 @@ public class SleepScheduler {
             if (wakeTriggerTime > now) {
                 setNativeAlarm(context, wakeTriggerTime, taskId, AppConstants.RC_SLEEP_WAKEUP, "Wake up trigger @" + timeFormat.format(new Date(wakeTriggerTime)));
             }
-            
-            // Cancel reminders/nudges as they are no longer needed
-            cancelAlarm(context, AppConstants.RC_SLEEP_TARGET);
-            cancelAlarm(context, AppConstants.RC_SLEEP_NUDGE);
-            cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_2H);
-            cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_1H);
-            cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_30M);
-            cancelAlarm(context, AppConstants.RC_SLEEP_REMINDER_10M);
         } else {
             // CASE: User is awake (startTime == 0).
             // 1. Schedule the sequence of reminders (Step 1)
@@ -97,9 +84,7 @@ public class SleepScheduler {
             // Wake up trigger (waketime - 1 hour)
             scheduleIfFuture(context, taskId, targetWakeTime - TimeUnit.HOURS.toMillis(1), AppConstants.RC_SLEEP_WAKEUP, "Wake up trigger @ "+ timeFormat.format(new Date(targetWakeTime - TimeUnit.HOURS.toMillis(1))));
 
-            if (now < bedtime) {
-                cancelAlarm(context, AppConstants.RC_SLEEP_NUDGE);
-            } else {
+            if (now >= bedtime) {
                 // If we are past bedtime and not sleeping, schedule a nudge.
                 // Calculate next 30m slot from bedtime.
                 long interval = TimeUnit.MINUTES.toMillis(30);

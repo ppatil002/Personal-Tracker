@@ -66,7 +66,7 @@ public class SleepReceiver extends BroadcastReceiver {
             updateTaskState(context, nextRunTime);
 
             // Recalculate will cancel nudges and ensure wake up trigger is set
-            SleepScheduler.reschedule(context);
+            SleepScheduler.schedule(context, null);
         });
     }
 
@@ -84,7 +84,7 @@ public class SleepReceiver extends BroadcastReceiver {
             updateTaskState(context, nextRunTime);
 
             // Step 3: User accepted Good Morning / Stopped sleep. Reschedule Step 1 alarms for next cycle.
-            SleepScheduler.reschedule(context);
+            SleepScheduler.schedule(context, null);
         });
     }
 
