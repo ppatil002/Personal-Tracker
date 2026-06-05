@@ -15,6 +15,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.pp.PPApplication;
 import com.example.pp.R;
+import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.remote.GoogleDriveClient;
 import com.example.pp.features.dashboard.DashboardActivity;
 
@@ -34,18 +35,21 @@ public class SplashActivity extends AppCompatActivity {
 //        ((PPApplication) getApplication()).getCategoryRepository().seedDatabaseIfEmpty();
 //        ((PPApplication) getApplication()).getTagRepository().seedTagsIfEmpty();
 //        ((PPApplication) getApplication()).getTransactionRepository().seedTransactionsIfEmpty();
-//        ((PPApplication) getApplication()).getTaskRepository().seedTasksIfEmpty();
-//        seedScreenTime();
         ((PPApplication) getApplication()).getSleepRepository().seedSleep();
+        seedScreenTime();
+        ((PPApplication) getApplication()).getTaskRepository().seedTasksIfEmpty();
 
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (checkAllCriticalPermissions()) {
-                startActivity(new Intent(SplashActivity.this, DashboardActivity.class));
-            } else {
-                startActivity(new Intent(SplashActivity.this, PermissionActivity.class));
-            }
-            finish();
-        }, 2000); // 2 seconds delay
+        // Ensure all seeding tasks (which run on diskIO) are completed before proceeding
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                if (checkAllCriticalPermissions()) {
+                    startActivity(new Intent(SplashActivity.this, DashboardActivity.class));
+                } else {
+                    startActivity(new Intent(SplashActivity.this, PermissionActivity.class));
+                }
+                finish();
+            }, 2000); // 2 seconds delay
+        });
     }
 
     private void seedScreenTime() {
