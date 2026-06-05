@@ -21,15 +21,31 @@ public class HydrationRepository {
         this.hydrationDao = db.hydrationDao();
     }
 
+    private long adjustTimestamp(long timestamp) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(timestamp);
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        if (hour < 3) {
+            // Register as previous day 11:59 PM
+            cal.add(Calendar.DAY_OF_YEAR, -1);
+            cal.set(Calendar.HOUR_OF_DAY, 23);
+            cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            return cal.getTimeInMillis();
+        }
+        return timestamp;
+    }
+
     public void addIntakeSync(int amountMl, long timestamp) {
-        executor.execute(() -> {
-            hydrationDao.insert(new HydrationIntake(amountMl, timestamp));
-        });
+        long adjusted = adjustTimestamp(timestamp);
+        hydrationDao.insert(new HydrationIntake(amountMl, adjusted));
     }
 
     public void addIntake(int amountMl, long timestamp) {
+        long adjusted = adjustTimestamp(timestamp);
         executor.execute(() -> {
-            hydrationDao.insert(new HydrationIntake(amountMl, timestamp));
+            hydrationDao.insert(new HydrationIntake(amountMl, adjusted));
         });
     }
 
