@@ -8,6 +8,7 @@ import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.HydrationDao;
 import com.example.pp.data.local.entity.HydrationIntake;
 
+import java.util.Calendar;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -32,19 +33,19 @@ public class HydrationRepository {
         });
     }
 
-    public HydrationIntake getLastIntakeSync(long startOfDay) {
-        return hydrationDao.getLastIntakeSync(startOfDay);
+    public HydrationIntake findLatestIntake() {
+        return hydrationDao.findLatestIntake();
     }
 
-    public LiveData<Integer> getTodayTotal(long startOfDay) {
-        return hydrationDao.getTodayTotalMl(startOfDay);
+    public LiveData<Integer> getTodayTotalML(long startOfDay) {
+        return hydrationDao.getTotalMLSince(startOfDay);
     }
 
-    public LiveData<Integer> getTodayCount(long startOfDay) {
-        return hydrationDao.getTodayCount(startOfDay);
+    public LiveData<Integer> getIntakeCountSince(long startOfDay) {
+        return hydrationDao.getIntakeCountSince(startOfDay);
     }
 
-    public LiveData<HydrationIntake> getLastIntake(long startOfDay) {
-        return hydrationDao.getLastIntake(startOfDay);
+    public LiveData<HydrationIntake> getLastIntakeForDate(long startOfDay) {
+        return hydrationDao.getLatestIntakeForDate(startOfDay);
     }
 }

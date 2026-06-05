@@ -70,7 +70,7 @@ public class AnalyticsActivity extends AppCompatActivity {
     private AnalyticsViewModel viewModel;
     private CategoryExpenseAdapter categoryAdapter;
     private GenericTableAdapter tableAdapter, heatmapAdapter;
-    private String currentRootCategoryId = "all";
+    private String currentRootCategoryId;
 
     private TextView tvPeriodType, tvPeriodLabel, tvTotalExpenses, tvTransactionCount, tvAvgPerDay, tvHighestAmount, tvHighestCategoryName;
     private TextView tvSelectedTableCategory, tvExpandTable;

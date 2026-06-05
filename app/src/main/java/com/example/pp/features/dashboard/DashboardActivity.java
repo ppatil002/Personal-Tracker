@@ -23,6 +23,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.pp.R;
 import com.example.pp.core.orchestrator.sleep.SleepScheduler;
+import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.features.analytics.AnalyticsActivity;
@@ -128,7 +129,9 @@ public class DashboardActivity extends AppCompatActivity {
         findViewById(R.id.cardSleep).setOnClickListener(v -> {
             viewModel.getLastSleepSync(this::showSleepEntryDialog);
         });
-        SleepScheduler.reschedule(this);
+        // TODO Do I need to manually schedule the activity again and again.
+        SleepScheduler.schedule(this, null);
+        WaterIntakeScheduler.schedule(this, null);
     }
 
     private void setupBottomNav() {
@@ -154,7 +157,7 @@ public class DashboardActivity extends AppCompatActivity {
             tvWaterCount.setText(current + " INTAKES TODAY");
         });
 
-        viewModel.getLastWaterIntake().observe(this, intake -> {
+        viewModel.getLastWaterIntakeForCurrentDate().observe(this, intake -> {
             lastWaterTimestamp = (intake != null) ? intake.timestamp : null;
             updateLastIntakeStrings();
         });
@@ -452,7 +455,7 @@ public class DashboardActivity extends AppCompatActivity {
                     }
 
                     viewModel.saveSleepEntry(startTs, endTs, finalTarget.getTimeInMillis(), sleepDate);
-                    SleepScheduler.reschedule(this);
+                    SleepScheduler.schedule(this, null);
                     Toast.makeText(this, "Sleep record updated", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton("Cancel", null)

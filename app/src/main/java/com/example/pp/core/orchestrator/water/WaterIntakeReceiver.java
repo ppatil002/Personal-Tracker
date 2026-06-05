@@ -8,11 +8,15 @@ import android.util.Log;
 import com.example.pp.PPApplication;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.TaskType;
+import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.data.repository.HydrationRepository;
 import com.example.pp.data.repository.TaskRepository;
 import com.example.pp.core.task.AppExecutors;
+
+import java.util.Calendar;
+import java.util.concurrent.TimeUnit;
 
 public class WaterIntakeReceiver extends BroadcastReceiver {
     private static final String TAG = "WaterIntakeReceiver";
@@ -24,24 +28,47 @@ public class WaterIntakeReceiver extends BroadcastReceiver {
         Log.i(TAG, "Water alarm triggered. Action: " + action + ", TaskId: " + taskId);
 
         if (AppConstants.ACTION_WATER_ALARM.equals(action)) {
-            // Regular alarm trigger
-            WaterNotificationHelper.showNotification(context, taskId);
-            updateTaskLastRun(context, taskId);
+            processAlarm(context, taskId);
         } else {
             handleAction(context, action, taskId);
         }
     }
 
+    private void processAlarm(Context context, String taskId) {
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            HydrationRepository repo = new HydrationRepository(context);
+            HydrationIntake lastIntake = repo.findLatestIntake();
+            long now = System.currentTimeMillis();
+
+            // Handle race condition: if user just logged water, skip the notification
+            if (lastIntake != null && (now - lastIntake.getTimestamp()) < TimeUnit.HOURS.toMillis(2) - 10000) {
+                Log.i(TAG, "Recent intake found. Skipping notification and rescheduling.");
+                WaterIntakeScheduler.schedule(context, null);
+                return;
+            }
+
+            // Window check: 11 AM to 11 PM
+            Calendar cal = Calendar.getInstance();
+            int hour = cal.get(Calendar.HOUR_OF_DAY);
+            if (hour < 11 || hour >= 23) {
+                Log.i(TAG, "Alarm triggered outside window (11-23). Rescheduling.");
+                WaterIntakeScheduler.schedule(context, null);
+                return;
+            }
+
+            WaterNotificationHelper.showNotification(context, taskId);
+            updateTaskLastRun(context, taskId);
+        });
+    }
+
     private void updateTaskLastRun(Context context, String taskId) {
         if (taskId == null) return;
-        AppExecutors.getInstance().diskIO().execute(() -> {
-            TaskRepository repo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
-            TaskState state = repo.getStateForTask(taskId);
-            if (state != null) {
-                state.setLastRunTime(System.currentTimeMillis());
-                repo.updateState(state);
-            }
-        });
+        TaskRepository repo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
+        TaskState state = repo.getStateForTask(taskId);
+        if (state != null) {
+            state.setLastRunTime(System.currentTimeMillis());
+            repo.updateState(state);
+        }
     }
 
     private void handleAction(Context context, String action, String taskId) {

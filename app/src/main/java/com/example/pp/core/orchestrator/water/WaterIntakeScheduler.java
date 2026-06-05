@@ -11,6 +11,7 @@ import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.core.task.AppExecutors;
+import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.TaskState;
@@ -28,12 +29,46 @@ public class WaterIntakeScheduler {
     /**
      * Reschedules the water intake alarm based on the latest database state.
      */
-    public static void reschedule(Context context) {
-        TaskRepository taskRepository = ((PPApplication) context.getApplicationContext()).getTaskRepository();
-        TaskDefinition def = taskRepository.getDefinitionByType(TaskType.WATER_REMINDER);
-        if (def != null) {
-            schedule(context, def);
-        }
+    public static void schedule(Context context, TaskDefinition def) {
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            Log.i(TAG, "Scheduling water intake alarm.");
+            
+            TaskDefinition taskDef = def;
+            if (taskDef == null) {
+                TaskRepository taskRepository = ((PPApplication) context.getApplicationContext()).getTaskRepository();
+                taskDef = taskRepository.getDefinitionByType(TaskType.WATER_REMINDER);
+            }
+
+            long nextAlarmTime = calculateNextAlarmTime(context);
+            
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(context, WaterIntakeReceiver.class);
+            intent.setAction(AppConstants.ACTION_WATER_ALARM);
+            intent.putExtra("TASK_ID", taskDef.getTaskId());
+            
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    context, 
+                    ALARM_REQUEST_CODE, 
+                    intent, 
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            if (alarmManager != null) {
+                // Cancel any existing alarm before scheduling a new one
+                alarmManager.cancel(pendingIntent);
+                
+                alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        nextAlarmTime,
+                        pendingIntent
+                );
+                Log.i(TAG, "Water alarm set for: " + new Date(nextAlarmTime));
+                logOperation(context, "SCHEDULE", "Water Alarm", "Alarm set for " + new Date(nextAlarmTime));
+
+                // Update TaskState
+                updateTaskState(context, taskDef.getTaskId(), nextAlarmTime);
+            }
+        });
     }
 
     /**
@@ -46,55 +81,20 @@ public class WaterIntakeScheduler {
             hydrationRepo.addIntakeSync(amountMl, timestamp);
             Log.d(TAG, "Logged intake: " + amountMl + "ml at " + timestamp);
             
-            // 2. Reschedule (Now it will definitely see the intake we just added)
-            reschedule(context);
+            // 2. Reschedule
+            schedule(context, null);
         });
-    }
-
-    public static void schedule(Context context, TaskDefinition def) {
-        Log.i(TAG, "Scheduling water intake alarm.");
-
-        long nextAlarmTime = calculateNextAlarmTime(context);
-        
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(context, WaterIntakeReceiver.class);
-        intent.setAction(AppConstants.ACTION_WATER_ALARM);
-        intent.putExtra("TASK_ID", def.getTaskId());
-        
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context, 
-                ALARM_REQUEST_CODE, 
-                intent, 
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        if (alarmManager != null) {
-            // Cancel any existing alarm before scheduling a new one
-            alarmManager.cancel(pendingIntent);
-            
-            alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    nextAlarmTime,
-                    pendingIntent
-            );
-            Log.i(TAG, "Water alarm set for: " + new Date(nextAlarmTime));
-
-            // Update TaskState
-            updateTaskState(context, def.getTaskId(), nextAlarmTime);
-        }
     }
 
     private static void updateTaskState(Context context, String taskId, long nextRunTime) {
-        AppExecutors.getInstance().diskIO().execute(() -> {
-            TaskRepository repo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
-            TaskState state = repo.getStateForTask(taskId);
-            if (state != null) {
-                state.setNextRunTime(nextRunTime);
-                state.setLastRunTime(System.currentTimeMillis());
-                state.setCurrentState(TaskStatus.SCHEDULED);
-                repo.updateState(state);
-            }
-        });
+        TaskRepository repo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
+        TaskState state = repo.getStateForTask(taskId);
+        if (state != null) {
+            state.setNextRunTime(nextRunTime);
+            state.setLastRunTime(System.currentTimeMillis());
+            state.setCurrentState(TaskStatus.SCHEDULED);
+            repo.updateState(state);
+        }
     }
 
     private static long calculateNextAlarmTime(Context context) {
@@ -118,12 +118,14 @@ public class WaterIntakeScheduler {
         Calendar elevenPM = (Calendar) startOfDay.clone();
         elevenPM.set(Calendar.HOUR_OF_DAY, 23);
         
-        HydrationIntake lastIntake = repo.getLastIntakeSync(startOfDay.getTimeInMillis());
+        // Get absolute last intake instead of just today
+        HydrationIntake lastIntake = repo.findLatestIntake();
         
         long baseTime;
         if (lastIntake == null) {
             baseTime = elevenAM.getTimeInMillis();
         } else {
+            // Next run is at least 2 hours after the last drink, but not before 11 AM
             baseTime = Math.max(lastIntake.getTimestamp() + TimeUnit.HOURS.toMillis(2), elevenAM.getTimeInMillis());
         }
         
@@ -137,7 +139,7 @@ public class WaterIntakeScheduler {
             return getNextDayStart();
         }
         
-        // If baseTime is in the past, and it's currently between 11 AM and 11 PM
+        // If calculated baseTime is in the past, and it's currently between 11 AM and 11 PM
         if (baseTime <= currentMillis) {
             if (currentMillis < elevenAM.getTimeInMillis()) {
                 return elevenAM.getTimeInMillis();
@@ -160,44 +162,63 @@ public class WaterIntakeScheduler {
     }
     
     public static void snooze(Context context, TaskDefinition def) {
-        Log.i(TAG, "Snoozing water intake alarm for 20 minutes.");
-        
-        long snoozeTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(20);
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            Log.i(TAG, "Snoozing water intake alarm for 20 minutes.");
+            
+            long snoozeTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(20);
 
-        // Respect 11 PM limit
-        Calendar elevenPM = Calendar.getInstance();
-        elevenPM.set(Calendar.HOUR_OF_DAY, 23);
-        elevenPM.set(Calendar.MINUTE, 0);
-        elevenPM.set(Calendar.SECOND, 0);
-        elevenPM.set(Calendar.MILLISECOND, 0);
+            // Respect 11 PM limit
+            Calendar elevenPM = Calendar.getInstance();
+            elevenPM.set(Calendar.HOUR_OF_DAY, 23);
+            elevenPM.set(Calendar.MINUTE, 0);
+            elevenPM.set(Calendar.SECOND, 0);
+            elevenPM.set(Calendar.MILLISECOND, 0);
 
-        if (snoozeTime > elevenPM.getTimeInMillis()) {
-            Log.i(TAG, "Snooze time past 11 PM. Scheduling for tomorrow 11 AM.");
-            snoozeTime = getNextDayStart();
-        }
+            if (snoozeTime > elevenPM.getTimeInMillis()) {
+                Log.i(TAG, "Snooze time past 11 PM. Scheduling for tomorrow 11 AM.");
+                snoozeTime = getNextDayStart();
+            }
 
-        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-        Intent intent = new Intent(context, WaterIntakeReceiver.class);
-        intent.setAction(AppConstants.ACTION_WATER_ALARM);
-        intent.putExtra("TASK_ID", def.getTaskId());
-        
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                context, 
-                ALARM_REQUEST_CODE, 
-                intent, 
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        if (alarmManager != null) {
-            alarmManager.setExactAndAllowWhileIdle(
-                    AlarmManager.RTC_WAKEUP,
-                    snoozeTime,
-                    pendingIntent
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(context, WaterIntakeReceiver.class);
+            intent.setAction(AppConstants.ACTION_WATER_ALARM);
+            intent.putExtra("TASK_ID", def.getTaskId());
+            
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    context, 
+                    ALARM_REQUEST_CODE, 
+                    intent, 
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
-            Log.i(TAG, "Water alarm (SNOOZE) set for: " + new Date(snoozeTime));
 
-            // Update TaskState
-            updateTaskState(context, def.getTaskId(), snoozeTime);
-        }
+            if (alarmManager != null) {
+                alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        snoozeTime,
+                        pendingIntent
+                );
+                Log.i(TAG, "Water alarm (SNOOZE) set for: " + new Date(snoozeTime));
+                logOperation(context, "SNOOZE", "Water Alarm", "Snoozed until " + new Date(snoozeTime));
+
+                // Update TaskState
+                updateTaskState(context, def.getTaskId(), snoozeTime);
+            }
+        });
+    }
+
+    public static void logOperation(Context context, String status, String step, String message) {
+        BackgroundJobLog log = new BackgroundJobLog(
+                "WATER_" + System.currentTimeMillis(),
+                TAG,
+                status,
+                step,
+                message,
+                System.currentTimeMillis()
+        );
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            ((PPApplication) context.getApplicationContext())
+                .getBackgroundJobLogRepository()
+                .mergeDuplicateDailyWorkerLog(log);
+        });
     }
 }

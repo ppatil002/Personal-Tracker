@@ -53,15 +53,15 @@ public class DashboardViewModel extends AndroidViewModel {
     }
 
     public LiveData<Integer> getTodayWaterTotal() {
-        return hydrationRepository.getTodayTotal(getStartOfDay());
+        return hydrationRepository.getTodayTotalML(getStartOfDay());
     }
 
     public LiveData<Integer> getTodayWaterCount() {
-        return hydrationRepository.getTodayCount(getStartOfDay());
+        return hydrationRepository.getIntakeCountSince(getStartOfDay());
     }
 
-    public LiveData<HydrationIntake> getLastWaterIntake() {
-        return hydrationRepository.getLastIntake(getStartOfDay());
+    public LiveData<HydrationIntake> getLastWaterIntakeForCurrentDate() {
+        return hydrationRepository.getLastIntakeForDate(getStartOfDay());
     }
 
     public LiveData<NutritionSummary> getTodayNutritionSummary() {

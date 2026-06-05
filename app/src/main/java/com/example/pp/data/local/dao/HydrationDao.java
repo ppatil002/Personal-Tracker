@@ -35,20 +35,17 @@ public interface HydrationDao {
         return stats;
     }
 
-    @Query("SELECT * FROM hydration_intakes WHERE timestamp >= :startOfDay ORDER BY timestamp DESC LIMIT 1")
-    HydrationIntake getLastIntakeSync(long startOfDay);
+    @Query("SELECT * FROM hydration_intakes ORDER BY timestamp DESC LIMIT 1")
+    HydrationIntake findLatestIntake();
 
-    @Query("SELECT SUM(amount_ml) FROM hydration_intakes WHERE timestamp >= :startOfDay")
-    LiveData<Integer> getTodayTotalMl(long startOfDay);
+    @Query("SELECT SUM(amount_ml) FROM hydration_intakes WHERE timestamp >= :timestamp")
+    LiveData<Integer> getTotalMLSince(long timestamp);
 
-    @Query("SELECT COUNT(*) FROM hydration_intakes WHERE timestamp >= :startOfDay")
-    LiveData<Integer> getTodayCount(long startOfDay);
+    @Query("SELECT COUNT(*) FROM hydration_intakes WHERE timestamp >= :timestamp")
+    LiveData<Integer> getIntakeCountSince(long timestamp);
 
-    @Query("SELECT * FROM hydration_intakes WHERE timestamp >= :startOfDay ORDER BY timestamp DESC LIMIT 1")
-    LiveData<HydrationIntake> getLastIntake(long startOfDay);
-
-    @Query("SELECT * FROM hydration_intakes WHERE timestamp >= :startOfDay ORDER BY timestamp DESC")
-    LiveData<List<HydrationIntake>> getTodayIntakes(long startOfDay);
+    @Query("SELECT * FROM hydration_intakes WHERE timestamp >= :timestamp ORDER BY timestamp DESC LIMIT 1")
+    LiveData<HydrationIntake> getLatestIntakeForDate(long timestamp);
 
     @Query("SELECT * FROM hydration_intakes")
     List<HydrationIntake> getAllIntakes();
