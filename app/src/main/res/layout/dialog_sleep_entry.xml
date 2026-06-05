@@ -103,4 +103,25 @@
         </LinearLayout>
     </LinearLayout>
 
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Delay Reason (Optional)"
+        android:textColor="@color/text_muted"
+        android:textSize="12sp" />
+
+    <EditText
+        android:id="@+id/etDelayReason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/bg_neon_dropdown"
+        android:padding="12dp"
+        android:hint="e.g. Late night movie"
+        android:textColorHint="@color/text_muted"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp"
+        android:inputType="textCapSentences" />
+
 </LinearLayout>

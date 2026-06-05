@@ -258,12 +258,17 @@ public class SleepAnalyticsActivity extends AppCompatActivity {
             entries.add(new BarEntry(i, duration));
             labels.add(sdf.format(dStart));
             
-            if (duration < DANGER_6H_MS) {
-                colors.add(ContextCompat.getColor(this, R.color.error_red));
+            if (duration == 0) {
+                colors.add(Color.TRANSPARENT);
+            } else if (duration < DANGER_6H_MS) {
+                // Poor sleep
+                colors.add(Color.parseColor("#4C1D95"));
             } else if (duration < TARGET_8H_MS) {
-                colors.add(ContextCompat.getColor(this, R.color.warning_orange));
+                // Fair sleep
+                colors.add(ContextCompat.getColor(this, R.color.accent_purple));
             } else {
-                colors.add(ContextCompat.getColor(this, R.color.emerald_green));
+                // Excellent sleep
+                colors.add(ContextCompat.getColor(this, R.color.glow_border_purple));
             }
             
             c.add(Calendar.DAY_OF_YEAR, 1);

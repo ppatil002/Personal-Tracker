@@ -39,12 +39,13 @@ public class SleepEntity {
         this.updatedAt = System.currentTimeMillis();
     }
 
-    public SleepEntity(long startTime, long endTime, long targetWakeTime, long date) {
+    public SleepEntity(long startTime, long endTime, long targetWakeTime, long date, String delayReason) {
         this();
         this.startTime = startTime;
         this.endTime = endTime;
         this.targetWakeTime = targetWakeTime;
         this.date = date;
+        this.delayReason = delayReason;
     }
 
     public long getStartTime() { return startTime; }

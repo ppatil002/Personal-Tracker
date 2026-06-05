@@ -230,7 +230,20 @@ public class DashboardActivity extends AppCompatActivity {
             }
         });
 
-        viewModel.getLastSleep().observe(this, this::updateSleepUI);
+        viewModel.getLastSleep().observe(this, sleep -> {
+            updateSleepUI(sleep);
+            
+            // Last day sleep duration.
+            if (sleep != null) {
+                long yesterday = DateUtils.getStartOfDay(sleep.date - 24 * 3600 * 1000L);
+                viewModel.getSleepByDateSync(yesterday, prevSleep -> {
+                    if (prevSleep != null && prevSleep.startTime != 0 && prevSleep.endTime != 0) {
+                        String duration = formatMillis(prevSleep.endTime - prevSleep.startTime).toUpperCase();
+                        tvLastNight.setText("LAST NIGHT: " + duration);
+                    }
+                });
+            }
+        });
     }
 
     private void updateSleepUI(SleepEntity sleep) {
@@ -317,6 +330,7 @@ public class DashboardActivity extends AppCompatActivity {
         TextView tvTargetWake = dialogView.findViewById(R.id.tvTargetWakeTime);
         TextView tvStartTime = dialogView.findViewById(R.id.tvStartTime);
         TextView tvEndTime = dialogView.findViewById(R.id.tvEndTime);
+        android.widget.EditText etDelayReason = dialogView.findViewById(R.id.etDelayReason);
 
         SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.getDefault());
         SimpleDateFormat sdfDate = new SimpleDateFormat("dd MMM, yyyy", Locale.getDefault());
@@ -352,12 +366,15 @@ public class DashboardActivity extends AppCompatActivity {
                     calDate.setTimeInMillis(sleep.date);
                     tvSleepDate.setText(sdfDate.format(calDate.getTime()));
                 }
+                
+                etDelayReason.setText(sleep.getDelayReason() != null ? sleep.getDelayReason() : "");
             } else {
                 tvTargetWake.setText("Not Set");
                 tvStartTime.setText("Not Set");
                 tvEndTime.setText("Not Set");
                 calStart.setTimeInMillis(0);
                 calEnd.setTimeInMillis(0);
+                etDelayReason.setText("");
                 // We keep the calDate as selected by the user, but reset times
                 tvSleepDate.setText(sdfDate.format(calDate.getTime()));
             }
@@ -454,7 +471,28 @@ public class DashboardActivity extends AppCompatActivity {
                         startTs = finalStart.getTimeInMillis();
                     }
 
-                    viewModel.saveSleepEntry(startTs, endTs, finalTarget.getTimeInMillis(), sleepDate);
+                    long finalEndTs = endTs;
+                    String reason = etDelayReason.getText().toString().trim();
+                    viewModel.saveSleepEntry(startTs, endTs, finalTarget.getTimeInMillis(), sleepDate, reason);
+
+                    // Requirement: Create next day entry if end time was just added
+                    if (finalEndTs != 0) {
+                        long nextSleepDate = DateUtils.getStartOfDay(finalEndTs);
+                        // Using callback to ensure we check DB for existing
+                        viewModel.getSleepByDateSync(nextSleepDate, nextSleep -> {
+                            if (nextSleep == null) {
+                                Calendar nextCal = Calendar.getInstance();
+                                nextCal.setTimeInMillis(finalEndTs);
+                                nextCal.add(Calendar.DAY_OF_YEAR, 1);
+                                nextCal.set(Calendar.HOUR_OF_DAY, 6);
+                                nextCal.set(Calendar.MINUTE, 0);
+                                nextCal.set(Calendar.SECOND, 0);
+                                nextCal.set(Calendar.MILLISECOND, 0);
+                                viewModel.saveSleepEntry(0, 0, nextCal.getTimeInMillis(), nextSleepDate, "");
+                            }
+                        });
+                    }
+
                     SleepScheduler.schedule(this, null);
                     Toast.makeText(this, "Sleep record updated", Toast.LENGTH_SHORT).show();
                 })
@@ -486,15 +524,6 @@ public class DashboardActivity extends AppCompatActivity {
         tvAppName.setText(name);
         tvAppUsage.setText(formatMillis(app.totalDuration));
         topAppsContainer.addView(view);
-    }
-
-    private String getAppName(String packageName) {
-        try {
-            PackageManager pm = getPackageManager();
-            return pm.getApplicationLabel(pm.getApplicationInfo(packageName, 0)).toString();
-        } catch (PackageManager.NameNotFoundException e) {
-            return packageName;
-        }
     }
 
     private String formatMillis(long millis) {

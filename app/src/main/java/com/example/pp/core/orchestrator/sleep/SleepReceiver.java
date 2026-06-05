@@ -160,7 +160,7 @@ public class SleepReceiver extends BroadcastReceiver {
         if (remoteInput != null) {
             CharSequence reason = remoteInput.getCharSequence(SleepNotificationHelper.KEY_TEXT_REPLY);
             if (reason != null) {
-                String reasonStr = reason.toString();
+                String reasonStr = reason.toString().trim();
                 SleepRepository sleepRepo = ((PPApplication) context.getApplicationContext()).getSleepRepository();
                 sleepRepo.updateDelayReason(System.currentTimeMillis(), reasonStr);
                 

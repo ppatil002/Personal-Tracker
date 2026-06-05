@@ -34,7 +34,7 @@ public class SleepRepository {
                 current.date = sleepDate;
                 sleepDao.update(current);
             } else {
-                sleepDao.insert(new SleepEntity(startTime, 0, targetWakeTime, sleepDate));
+                sleepDao.insert(new SleepEntity(startTime, 0, targetWakeTime, sleepDate,null));
             }
         });
     }
@@ -45,6 +45,22 @@ public class SleepRepository {
             if (current != null && current.endTime == 0) {
                 current.endTime = endTime;
                 sleepDao.update(current);
+
+                // Create the entry for the next day only when sleep end time is added.
+                // The next day's 'sleep date' is technically the day the user wakes up (today).
+                long nextSleepDate = DateUtils.getStartOfDay(endTime);
+                if (sleepDao.getSleepByDateSync(nextSleepDate) == null) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.setTimeInMillis(endTime);
+                    cal.add(Calendar.DAY_OF_YEAR, 1);
+                    cal.set(Calendar.HOUR_OF_DAY, 6);
+                    cal.set(Calendar.MINUTE, 0);
+                    cal.set(Calendar.SECOND, 0);
+                    cal.set(Calendar.MILLISECOND, 0);
+                    long nextTargetWakeTime = cal.getTimeInMillis();
+                    
+                    sleepDao.insert(new SleepEntity(0, 0, nextTargetWakeTime, nextSleepDate, null));
+                }
             }
         });
     }
@@ -59,22 +75,24 @@ public class SleepRepository {
                 current.date = sleepDate;
                 sleepDao.update(current);
             } else {
-                sleepDao.insert(new SleepEntity(0, 0, targetWakeTime, sleepDate));
+                sleepDao.insert(new SleepEntity(0, 0, targetWakeTime, sleepDate,null));
             }
         });
     }
 
-    public void saveManualSleepEntry(long start, long end, long target, long date) {
+    public void saveManualSleepEntry(long start, long end, long target, long date, String reason) {
         executors.diskIO().execute(() -> {
             SleepEntity sleepForThatDate = sleepDao.getSleepByDateSync(date);
             if (sleepForThatDate != null) {
                 sleepForThatDate.startTime = start;
                 sleepForThatDate.endTime = end;
                 sleepForThatDate.targetWakeTime = target;
+                sleepForThatDate.setDelayReason(reason);
                 sleepForThatDate.updatedAt = System.currentTimeMillis();
                 sleepDao.update(sleepForThatDate);
             } else {
-                sleepDao.insert(new SleepEntity(start, end, target, date));
+                SleepEntity newSleep = new SleepEntity(start, end, target, date, reason);
+                sleepDao.insert(newSleep);
             }
         });
     }
@@ -119,8 +137,7 @@ public class SleepRepository {
                 sleepDao.updateDelayReason(sleepDate, reason);
             } else {
                 // Create a placeholder entry if it doesn't exist yet
-                SleepEntity placeholder = new SleepEntity(0, 0, 0, sleepDate);
-                placeholder.setDelayReason(reason);
+                SleepEntity placeholder = new SleepEntity(0, 0, 0, sleepDate, reason);
                 sleepDao.insert(placeholder);
             }
         });
@@ -134,13 +151,12 @@ public class SleepRepository {
 
     public void seedSleep() {
         executors.diskIO().execute(() -> {
-            long now = System.currentTimeMillis();
-            long todayDate = DateUtils.getStartOfDay(now);
-
-            // Check if entry already exists for todayDate to avoid duplicates
-            if (sleepDao.getSleepByDateSync(todayDate) != null) {
+            int dataCount = sleepDao.getCount();
+            if (dataCount<=0){
                 return;
             }
+            long now = System.currentTimeMillis();
+            long todayDate = DateUtils.getStartOfDay(now);
 
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DAY_OF_YEAR, 1);
@@ -150,7 +166,7 @@ public class SleepRepository {
             cal.set(Calendar.MILLISECOND, 0);
             long targetWakeTime = cal.getTimeInMillis();
 
-            sleepDao.insert(new SleepEntity(0, 0, targetWakeTime, todayDate));
+            sleepDao.insert(new SleepEntity(0, 0, targetWakeTime, todayDate, null));
         });
     }
 
