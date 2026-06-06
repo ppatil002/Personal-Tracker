@@ -111,7 +111,10 @@ public class PermissionActivity extends AppCompatActivity {
         boolean usageStats = hasUsageStatsPermission();
         boolean accessibility = isAccessibilityServiceEnabled();
 
-        return notifications && alarms && googleDrive && usageStats && accessibility;
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        boolean batteryIgnored = pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
+
+        return notifications && alarms && googleDrive && usageStats && accessibility && batteryIgnored;
     }
 
     private boolean hasUsageStatsPermission() {

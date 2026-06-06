@@ -1,11 +1,13 @@
 package com.example.pp.features.screentime.analytics;
 
 import android.app.Application;
+
 import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
-import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.MediatorLiveData;
+import androidx.lifecycle.MutableLiveData;
+
 import com.example.pp.PPApplication;
 import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.AppDatabase;
@@ -34,7 +36,7 @@ public class ScreenTimeAnalyticsViewModel extends AndroidViewModel {
     private final MutableLiveData<String> selectedPackageName = new MutableLiveData<>(null);
 
     private final MutableLiveData<String> periodLabel = new MutableLiveData<>("");
-    private final MutableLiveData<ScreenTimeStats> stats = new MutableLiveData<>();
+    private final MediatorLiveData<ScreenTimeStats> stats = new MediatorLiveData<>();
     
     private final MediatorLiveData<List<ScreenTimeDao.HourlyUsageSummary>> hourlyUsage = new MediatorLiveData<>();
     private final MediatorLiveData<List<ScreenTimeDao.AppUsageSummary>> appUsage = new MediatorLiveData<>();
@@ -43,6 +45,9 @@ public class ScreenTimeAnalyticsViewModel extends AndroidViewModel {
         super(application);
         this.repository = ((PPApplication) application).getScreenTimeRepository();
         updatePeriodLabel();
+        
+        // Ensure today's data is fresh when opening analytics
+        triggerTodaySync();
 
         hourlyUsage.addSource(periodType, t -> refreshHourlyUsage());
         hourlyUsage.addSource(selectedDate, t -> refreshHourlyUsage());
@@ -51,6 +56,15 @@ public class ScreenTimeAnalyticsViewModel extends AndroidViewModel {
         appUsage.addSource(periodType, t -> refreshAppUsage());
         appUsage.addSource(selectedDate, t -> refreshAppUsage());
         appUsage.addSource(breakdownType, t -> refreshAppUsage());
+        
+        // Stats should refresh whenever parameters or data changes
+        stats.addSource(periodType, t -> refreshStats());
+        stats.addSource(selectedDate, t -> refreshStats());
+        stats.addSource(breakdownType, t -> refreshStats());
+        stats.addSource(appUsage, t -> refreshStats());
+
+        refreshHourlyUsage();
+        refreshAppUsage();
     }
 
     private LiveData<List<ScreenTimeDao.HourlyUsageSummary>> currentHourlySource;
@@ -95,6 +109,12 @@ public class ScreenTimeAnalyticsViewModel extends AndroidViewModel {
 
     public void setSelectedPackageName(String packageName) {
         selectedPackageName.setValue(packageName);
+    }
+
+    private void triggerTodaySync() {
+        long now = System.currentTimeMillis();
+        long start = DateUtils.getStartOfDay(now);
+        repository.syncScreenTime(start, now);
     }
 
     public void navigatePeriod(int delta) {

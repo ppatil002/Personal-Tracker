@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.example.pp.core.constants.AppConstants;
+import com.example.pp.core.preferences.PreferenceManager;
 import com.example.pp.core.task.AppExecutors;
 
 public class BootReceiver extends BroadcastReceiver {
@@ -21,6 +23,9 @@ public class BootReceiver extends BroadcastReceiver {
             
             Log.i(TAG, "Re-registering native tasks after system start...");
             
+            // Reset screen time session on reboot as per user requirement
+            PreferenceManager.getInstance(context).putLong(AppConstants.KEY_SCREEN_SESSION_START, 0);
+
             final PendingResult pendingResult = goAsync();
             AppExecutors.getInstance().diskIO().execute(() -> {
                 try {

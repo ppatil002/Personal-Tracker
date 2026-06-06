@@ -42,7 +42,7 @@ import com.example.pp.utils.TaskTypeConverters;
     NutritionIntake.class,
     ScreenTime.class,
     SleepEntity.class
-}, version = 15, exportSchema = false)
+}, version = 16, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 

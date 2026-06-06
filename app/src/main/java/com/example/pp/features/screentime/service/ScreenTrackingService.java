@@ -8,26 +8,52 @@ import android.content.Intent;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 
-import com.example.pp.PPApplication;
+import com.example.pp.core.constants.AppConstants;
+import com.example.pp.core.orchestrator.screentime.ScreenTimeNotificationHelper;
 import com.example.pp.core.orchestrator.screentime.ScreenTimeReceiver;
-import com.example.pp.data.repository.ScreenTimeRepository;
+import com.example.pp.core.orchestrator.screentime.ScreenTimeScheduler;
+import com.example.pp.core.preferences.PreferenceManager;
+import com.example.pp.utils.ScreenUtils;
+
+import java.util.HashSet;
+import java.util.Set;
 
 public class ScreenTrackingService extends AccessibilityService {
     private static final String TAG = "ScreenTrackingService PP";
     private static final long BREAK_LIMIT_MS = 30 * 60 * 1000; // 30 minutes
 
-    private long sessionStartTime = 0;
-    private long lastAppStartTime = 0;
-    private String lastPackageName = "";
     private AlarmManager alarmManager;
-    private PendingIntent breakPendingIntent;
-    private ScreenTimeRepository repository;
+    private PreferenceManager prefManager;
+    private final Set<String> excludedPackages = new HashSet<>();
 
     @Override
     public void onCreate() {
         super.onCreate();
         alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-        repository = ((PPApplication) getApplication()).getScreenTimeRepository();
+        prefManager = PreferenceManager.getInstance(this);
+        refreshExcludedPackages();
+    }
+
+    private void refreshExcludedPackages() {
+        excludedPackages.clear();
+        excludedPackages.addAll(ScreenUtils.getLauncherPackages(this));
+        Log.d(TAG, "Identified " + excludedPackages.size() + " excluded/launcher packages.");
+    }
+
+    @Override
+    protected void onServiceConnected() {
+        super.onServiceConnected();
+        Log.i(TAG, "Accessibility Service Connected. Starting Foreground.");
+        startForeground(AppConstants.NOTIFY_ID_SCREEN_TIME, 
+                ScreenTimeNotificationHelper.getServiceNotification(this));
+        
+        // Reliability Fix: Ensure the sync worker is scheduled whenever the service starts/reconnects
+        ScreenTimeScheduler.schedule(this, null);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
     }
 
     @Override
@@ -43,46 +69,45 @@ public class ScreenTrackingService extends AccessibilityService {
 
     private void handleAppSwitch(String newPackage) {
         Log.v(TAG, "Window Changed: " + newPackage);
-        
         long now = System.currentTimeMillis();
 
-        // 1. Record usage for the PREVIOUS app
-        if (!lastPackageName.isEmpty() && lastAppStartTime > 0) {
-            if (!isExcludedPackage(lastPackageName)) {
-                repository.insertSession(lastPackageName, lastAppStartTime, now);
-            }
-        }
-
-        // 2. Handle Continuous Session for Break Reminders
-        if (isExcludedPackage(newPackage)) {
-            Log.d(TAG, "Excluded package detected (Lock/Home). Ending continuous session.");
+        if (isLockScreen(newPackage)) {
+            Log.d(TAG, "Lock Screen detected. Resetting session.");
             cancelBreakAlarm();
-            sessionStartTime = 0;
+            prefManager.putLong(AppConstants.KEY_SCREEN_SESSION_START, 0);
+            
+            // RELIABILITY: Since we know the user just finished a session (locked phone),
+            // trigger an immediate sync to capture the usage accurately before the device potentially dozes.
+            ScreenTimeScheduler.runNow(this, "LOCK_TRIGGER");
         } else {
+            long sessionStartTime = prefManager.getLong(AppConstants.KEY_SCREEN_SESSION_START, 0);
             if (sessionStartTime == 0) {
-                sessionStartTime = now;
-                scheduleBreakAlarm(BREAK_LIMIT_MS);
-                Log.d(TAG, "New Wellness Session started.");
+                // Session not running. Check if we should START one.
+                if (!isExcludedPackage(newPackage)) {
+                    prefManager.putLong(AppConstants.KEY_SCREEN_SESSION_START, now);
+                    scheduleBreakAlarm(BREAK_LIMIT_MS);
+                    Log.d(TAG, "New Wellness Session started with app: " + newPackage);
+                }
             } else {
-                Log.d(TAG, "Continuing existing session across apps.");
+                // Session already running. 
+                // We DON'T reset if the user goes to home screen (launcher), 
+                // so we just log that we are continuing.
+                Log.d(TAG, "Continuing existing session across apps. Current: " + newPackage);
             }
         }
+    }
 
-        // 3. Update state for the NEW app
-        lastPackageName = newPackage;
-        lastAppStartTime = now;
+    private boolean isLockScreen(String packageName) {
+        return packageName.equals("com.android.systemui") || packageName.contains("keyguard");
     }
 
     private boolean isExcludedPackage(String packageName) {
-        return packageName.equals(getPackageName()) || 
-               packageName.contains("android.launcher") || 
-               packageName.equals("com.android.systemui") ||
-               packageName.contains("keyguard");
+        return excludedPackages.contains(packageName) || packageName.contains("launcher");
     }
 
     private void scheduleBreakAlarm(long delayMs) {
         Intent intent = new Intent(this, ScreenTimeReceiver.class);
-        breakPendingIntent = PendingIntent.getBroadcast(
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 this, 
                 0, 
                 intent, 
@@ -91,15 +116,23 @@ public class ScreenTrackingService extends AccessibilityService {
 
         long triggerAtMillis = System.currentTimeMillis() + delayMs;
         if (alarmManager != null) {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, breakPendingIntent);
-            Log.d(TAG, "Break alarm scheduled in " + (delayMs / 60000) + "m");
+            // Using setAlarmClock is the absolute most reliable way to wake up from Doze
+            AlarmManager.AlarmClockInfo info = new AlarmManager.AlarmClockInfo(triggerAtMillis, pendingIntent);
+            alarmManager.setAlarmClock(info, pendingIntent);
+            Log.d(TAG, "Break alarm (AlarmClock) scheduled in " + (delayMs / 60000) + "m");
         }
     }
 
     private void cancelBreakAlarm() {
-        if (breakPendingIntent != null && alarmManager != null) {
-            alarmManager.cancel(breakPendingIntent);
-            breakPendingIntent = null;
+        Intent intent = new Intent(this, ScreenTimeReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                this, 
+                0, 
+                intent, 
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        if (alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
             Log.d(TAG, "Break alarm canceled.");
         }
     }

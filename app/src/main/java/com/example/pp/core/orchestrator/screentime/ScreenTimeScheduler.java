@@ -3,8 +3,10 @@ package com.example.pp.core.orchestrator.screentime;
 import android.content.Context;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
@@ -17,37 +19,47 @@ import java.util.concurrent.TimeUnit;
 public class ScreenTimeScheduler {
     private static final String TAG = "ScreenTimeScheduler PP";
 
-    public static void schedule(Context context, TaskDefinition def) {
-        Log.d(TAG, "Scheduling Screen Time Sync: " + def.getTaskId());
+    public static void schedule(Context context, @Nullable TaskDefinition def) {
+        Log.d(TAG, "Scheduling Screen Time Sync Fallback");
 
         Constraints constraints = new Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
                 .setRequiresBatteryNotLow(false)
                 .build();
 
+        long interval = (def != null && def.getRepeatInterval() > 0) ? def.getRepeatInterval() : 15;
+        String taskId = (def != null) ? def.getTaskId() : "SCREENTIME_TASK_001";
+
         PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
                 ScreenTimeSyncWorker.class,
-                def.getRepeatInterval() > 0 ? def.getRepeatInterval() : 15, // Default 15 mins if not set
+                interval,
                 TimeUnit.MINUTES
         )
                 .setConstraints(constraints)
                 .addTag(TaskType.SCREEN_TIME_SYNC.name())
-                .addTag(def.getTaskId())
+                .addTag(taskId)
                 .build();
 
+        // Unique Periodic Work ensures only one fallback loop exists
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                "SCREEN_TIME_SYNC_JOB",
-                ExistingPeriodicWorkPolicy.REPLACE,
+                "SCREEN_TIME_SYNC_PERIODIC",
+                ExistingPeriodicWorkPolicy.KEEP,
                 request
         );
     }
 
     public static void runNow(Context context, String taskId) {
-        Log.d(TAG, "Forcing immediate Screen Time Sync for task: " + taskId);
+        Log.d(TAG, "Triggering Immediate Screen Time Sync for task: " + taskId);
         androidx.work.OneTimeWorkRequest request = new androidx.work.OneTimeWorkRequest.Builder(ScreenTimeSyncWorker.class)
                 .addTag(TaskType.SCREEN_TIME_SYNC.name())
                 .addTag(taskId)
                 .build();
-        WorkManager.getInstance(context).enqueue(request);
+
+        // Unique Work ensures that rapid lock/unlock events don't spawn multiple workers
+        WorkManager.getInstance(context).enqueueUniqueWork(
+                "SCREEN_TIME_SYNC_NOW",
+                ExistingWorkPolicy.REPLACE,
+                request
+        );
     }
 }

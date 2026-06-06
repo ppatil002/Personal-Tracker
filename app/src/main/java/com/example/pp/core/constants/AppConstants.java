@@ -33,5 +33,8 @@ public class AppConstants {
     
     // Target Time
     public static final int SLEEP_TARGET_HOUR = 8;
-    
+
+    // Shared Preferences
+    public static final String PREF_NAME_COMMON = "PP_COMMON_PREFS";
+    public static final String KEY_SCREEN_SESSION_START = "screen_session_start_time";
 }

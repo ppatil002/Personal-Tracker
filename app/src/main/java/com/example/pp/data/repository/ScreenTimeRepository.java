@@ -1,11 +1,9 @@
 package com.example.pp.data.repository;
 
-import android.app.AppOpsManager;
 import android.app.Application;
 import android.app.usage.UsageEvents;
 import android.app.usage.UsageStatsManager;
 import android.content.Context;
-import android.os.Process;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
@@ -15,14 +13,17 @@ import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.entity.ScreenTime;
 import com.example.pp.utils.DateUtils;
+import com.example.pp.utils.ScreenUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class ScreenTimeRepository {
     private static final String TAG = "ScreenTimeRepository PP";
@@ -31,6 +32,7 @@ public class ScreenTimeRepository {
     private final AppExecutors executors;
     private final Context context;
     private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+    private final Set<String> launcherPackages = new HashSet<>();
 
     public ScreenTimeRepository(Application application) {
         this.context = application.getApplicationContext();
@@ -38,14 +40,26 @@ public class ScreenTimeRepository {
         this.screenTimeDao = db.screenTimeDao();
         this.usageStatsManager = (UsageStatsManager) application.getSystemService(Context.USAGE_STATS_SERVICE);
         this.executors = AppExecutors.getInstance();
+        refreshLauncherPackages();
+    }
+
+    private void refreshLauncherPackages() {
+        launcherPackages.clear();
+        launcherPackages.addAll(ScreenUtils.getLauncherPackages(context));
+        Log.d(TAG, "Identified " + launcherPackages.size() + " launcher/system packages to exclude.");
+    }
+
+    private boolean isExcluded(String pkg) {
+        return pkg == null || launcherPackages.contains(pkg);
     }
 
     /**
      * Syncs screen time data from UsageStatsManager into local database.
-     * Use background thread when calling this.
+     * Uses a raw event stream consumption pattern for high accuracy.
      */
     public void syncScreenTimeSync(long startTime, long endTime) {
         Log.d(TAG, "syncScreenTimeSync started: [" + sdf.format(new Date(startTime)) + "] to [" + sdf.format(new Date(endTime)) + "]");
+        refreshLauncherPackages();
 
         if (usageStatsManager == null) {
             Log.e(TAG, "UsageStatsManager is NULL.");
@@ -58,85 +72,109 @@ public class ScreenTimeRepository {
             return;
         }
 
-        // Map<PackageName, Map<HourStartTimestamp, ScreenTimeEntryData>>
         Map<String, Map<Long, ScreenTimeEntryData>> bucketedUsage = new HashMap<>();
-        Map<String, Long> openTimestamps = new HashMap<>();
-        
+        String currentPkg = null;
+        long currentStartTime = 0L;
+
         UsageEvents.Event event = new UsageEvents.Event();
         int eventCount = 0;
+        
         while (events.hasNextEvent()) {
             events.getNextEvent(event);
             eventCount++;
-            String packageName = event.getPackageName();
-            int eventType = event.getEventType();
+            String pkg = event.getPackageName();
+            int type = event.getEventType();
             long timestamp = event.getTimeStamp();
 
-            if (eventType == UsageEvents.Event.ACTIVITY_RESUMED) {
-                openTimestamps.put(packageName, timestamp);
-                long hourStart = DateUtils.getStartOfHour(timestamp);
-                Map<Long, ScreenTimeEntryData> pkgBuckets = bucketedUsage.computeIfAbsent(packageName, k -> new HashMap<>());
-                ScreenTimeEntryData data = pkgBuckets.get(hourStart);
-                if (data == null) {
-                    data = new ScreenTimeEntryData();
-                    pkgBuckets.put(hourStart, data);
-                }
-                data.opens++;
-            } else if (eventType == UsageEvents.Event.ACTIVITY_PAUSED) {
-                Long start = openTimestamps.remove(packageName);
-                if (start != null) {
-                    long duration = timestamp - start;
-                    if (duration > 0) {
-                        addUsageToBuckets(bucketedUsage, packageName, start, timestamp);
+            switch (type) {
+                case UsageEvents.Event.ACTIVITY_RESUMED:
+                    // If an app was already "running", close its segment before starting new app
+                    if (currentPkg != null) {
+                        if (!isExcluded(currentPkg)) {
+                            addUsageToBuckets(bucketedUsage, currentPkg, currentStartTime, timestamp);
+                        }
                     }
-                }
-            } else if (eventType == 12) { // UsageEvents.Event.NOTIFICATION_INTERRUPTION = 12
-                long hourStart = DateUtils.getStartOfHour(timestamp);
-                Map<Long, ScreenTimeEntryData> pkgBuckets = bucketedUsage.computeIfAbsent(packageName, k -> new HashMap<>());
-                ScreenTimeEntryData data = pkgBuckets.get(hourStart);
-                if (data == null) {
-                    data = new ScreenTimeEntryData();
-                    pkgBuckets.put(hourStart, data);
-                }
-                data.notifications++;
-            }
-        }
-        
-        Log.d(TAG, "Processed " + eventCount + " UsageEvents.");
-        
-        // Handle apps still open at the end
-        for (Map.Entry<String, Long> entry : openTimestamps.entrySet()) {
-            long start = entry.getValue();
-            if (endTime > start) {
-                addUsageToBuckets(bucketedUsage, entry.getKey(), start, endTime);
+                    currentPkg = pkg;
+                    currentStartTime = timestamp;
+                    if (!isExcluded(pkg)) {
+                        incrementOpenCount(bucketedUsage, pkg, timestamp);
+                    }
+                    break;
+
+                case UsageEvents.Event.ACTIVITY_PAUSED:
+                    if (currentPkg != null && currentPkg.equals(pkg)) {
+                        if (!isExcluded(currentPkg)) {
+                            addUsageToBuckets(bucketedUsage, currentPkg, currentStartTime, timestamp);
+                        }
+                        currentPkg = null;
+                        currentStartTime = 0L;
+                    }
+                    break;
+
+                case UsageEvents.Event.KEYGUARD_SHOWN:
+                case UsageEvents.Event.SCREEN_NON_INTERACTIVE:
+                    // Stop tracking any active app when screen turns off or locks
+                    if (currentPkg != null) {
+                        if (!isExcluded(currentPkg)) {
+                            addUsageToBuckets(bucketedUsage, currentPkg, currentStartTime, timestamp);
+                        }
+                        currentPkg = null;
+                        currentStartTime = 0L;
+                    }
+                    break;
+
+                case 12: // UsageEvents.Event.NOTIFICATION_INTERRUPTION
+                    if (!isExcluded(pkg)) {
+                        incrementNotificationCount(bucketedUsage, pkg, timestamp);
+                    }
+                    break;
             }
         }
 
-        if (bucketedUsage.isEmpty()) {
-            Log.w(TAG, "No app usage bucketed in the given range.");
-        } else {
-            Log.d(TAG, "Found usage for " + bucketedUsage.size() + " apps. Saving to DB...");
+        // Handle app still open at the end of the query range
+        if (currentPkg != null && currentStartTime > 0 && endTime > currentStartTime) {
+            if (!isExcluded(currentPkg)) {
+                addUsageToBuckets(bucketedUsage, currentPkg, currentStartTime, endTime);
+            }
+        }
+
+        Log.d(TAG, "Processed " + eventCount + " UsageEvents.");
+        if (!bucketedUsage.isEmpty()) {
             saveBucketedEntries(bucketedUsage);
         }
     }
 
+    private void incrementOpenCount(Map<String, Map<Long, ScreenTimeEntryData>> bucketedUsage, String pkg, long timestamp) {
+        long hourStart = DateUtils.getStartOfHour(timestamp);
+        ScreenTimeEntryData data = getOrCreateBucket(bucketedUsage, pkg, hourStart);
+        data.opens++;
+    }
+
+    private void incrementNotificationCount(Map<String, Map<Long, ScreenTimeEntryData>> bucketedUsage, String pkg, long timestamp) {
+        long hourStart = DateUtils.getStartOfHour(timestamp);
+        ScreenTimeEntryData data = getOrCreateBucket(bucketedUsage, pkg, hourStart);
+        data.notifications++;
+    }
+
+    private ScreenTimeEntryData getOrCreateBucket(Map<String, Map<Long, ScreenTimeEntryData>> bucketedUsage, String pkg, long hourStart) {
+        Map<Long, ScreenTimeEntryData> pkgBuckets = bucketedUsage.computeIfAbsent(pkg, k -> new HashMap<>());
+        return pkgBuckets.computeIfAbsent(hourStart, k -> new ScreenTimeEntryData());
+    }
+
     private void addUsageToBuckets(Map<String, Map<Long, ScreenTimeEntryData>> bucketedUsage, String pkg, long start, long end) {
+        if (end <= start) return;
         long current = start;
         while (current < end) {
             long hourStart = DateUtils.getStartOfHour(current);
             long hourEnd = hourStart + 3600000L;
-            long sessionEndInHour = Math.min(end, hourEnd);
-            long durationInHour = sessionEndInHour - current;
-            
-            if (durationInHour > 0) {
-                Map<Long, ScreenTimeEntryData> pkgBuckets = bucketedUsage.computeIfAbsent(pkg, k -> new HashMap<>());
-                ScreenTimeEntryData data = pkgBuckets.get(hourStart);
-                if (data == null) {
-                    data = new ScreenTimeEntryData();
-                    pkgBuckets.put(hourStart, data);
-                }
-                data.duration += durationInHour;
+            long segmentEnd = Math.min(end, hourEnd);
+            long segmentLength = segmentEnd - current;
+
+            if (segmentLength > 0) {
+                ScreenTimeEntryData data = getOrCreateBucket(bucketedUsage, pkg, hourStart);
+                data.duration += segmentLength;
             }
-            current = hourEnd;
+            current = segmentEnd;
         }
     }
 
@@ -145,20 +183,15 @@ public class ScreenTimeRepository {
         for (Map.Entry<String, Map<Long, ScreenTimeEntryData>> pkgEntry : bucketedUsage.entrySet()) {
             String pkg = pkgEntry.getKey();
             for (Map.Entry<Long, ScreenTimeEntryData> hourEntry : pkgEntry.getValue().entrySet()) {
-                long hourStart = hourEntry.getKey();
-                ScreenTimeEntryData entryData = hourEntry.getValue();
-                
-                screenTimeDao.deleteEntry(pkg, hourStart);
-                ScreenTime st = new ScreenTime(pkg, hourStart, entryData.duration);
-                st.setTimesOpened(entryData.opens);
-                st.setNotificationsReceived(entryData.notifications);
+                ScreenTime st = new ScreenTime(pkg, hourEntry.getKey(), hourEntry.getValue().duration);
+                st.setTimesOpened(hourEntry.getValue().opens);
+                st.setNotificationsReceived(hourEntry.getValue().notifications);
                 allToInsert.add(st);
             }
         }
-        
         if (!allToInsert.isEmpty()) {
             screenTimeDao.insertAll(allToInsert);
-            Log.i(TAG, "Successfully inserted/updated " + allToInsert.size() + " hourly entries.");
+            Log.i(TAG, "Sync complete: Updated " + allToInsert.size() + " hourly entries.");
         }
     }
 
@@ -182,17 +215,5 @@ public class ScreenTimeRepository {
     
     public LiveData<List<ScreenTimeDao.AppUsageSummary>> getAppUsageRange(long start, long end) {
         return screenTimeDao.getAppUsageSummary(start, end);
-    }
-
-    public void insertSession(String packageName, long startTime, long endTime) {
-        executors.diskIO().execute(() -> {
-            long duration = endTime - startTime;
-            if (duration <= 0) return;
-            
-            long hourStart = DateUtils.getStartOfHour(startTime);
-            Log.d(TAG, "Manually inserting session: " + packageName + " | " + duration + "ms");
-            ScreenTime entry = new ScreenTime(packageName, hourStart, duration);
-            screenTimeDao.insert(entry); 
-        });
     }
 }

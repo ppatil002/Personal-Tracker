@@ -2,12 +2,10 @@ package com.example.pp.data.local.entity;
 
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
-import androidx.room.PrimaryKey;
 
-@Entity(tableName = "screen_time")
+@Entity(tableName = "screen_time",
+        primaryKeys = {"packageName", "hourStartTimestamp"})
 public class ScreenTime {
-    @PrimaryKey(autoGenerate = true)
-    private long id;
     
     @NonNull
     private String packageName;
@@ -25,9 +23,6 @@ public class ScreenTime {
         this.hourStartTimestamp = hourStartTimestamp;
         this.durationMillis = durationMillis;
     }
-
-    public long getId() { return id; }
-    public void setId(long id) { this.id = id; }
 
     @NonNull
     public String getPackageName() { return packageName; }
