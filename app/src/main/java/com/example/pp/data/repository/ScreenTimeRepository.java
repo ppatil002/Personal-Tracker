@@ -189,8 +189,7 @@ public class ScreenTimeRepository {
             }
         }
         if (!allToInsert.isEmpty()) {
-            screenTimeDao.insertAll(allToInsert);
-//            Log.i(TAG, "Sync complete: Updated " + allToInsert.size() + " hourly entries.");
+            screenTimeDao.insertAllSafe(allToInsert);
         }
     }
 

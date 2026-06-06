@@ -28,12 +28,31 @@ public interface ScreenTimeDao {
         SyncStats stats = new SyncStats("ScreenTime");
         stats.previousCount = getCount();
         if (items != null && !items.isEmpty()) {
-            insertAll(items);
+            insertAllSafe(items);
             stats.inserted = items.size();
         }
         stats.finalCount = getCount();
         return stats;
     }
+
+    @Transaction
+    default void insertAllSafe(List<ScreenTime> entries) {
+        if (entries == null) return;
+        for (ScreenTime entry : entries) {
+            upsertSafe(entry.getPackageName(), entry.getHourStartTimestamp(),
+                    entry.getDurationMillis(), entry.getTimesOpened(),
+                    entry.getNotificationsReceived());
+        }
+    }
+
+    @Query("INSERT INTO screen_time (packageName, hourStartTimestamp, durationMillis, timesOpened, notificationsReceived) " +
+            "VALUES (:pkg, :hourStart, :duration, :opens, :notifs) " +
+            "ON CONFLICT(packageName, hourStartTimestamp) DO UPDATE SET " +
+            "durationMillis = MAX(durationMillis, EXCLUDED.durationMillis), " +
+            "timesOpened = MAX(timesOpened, EXCLUDED.timesOpened), " +
+            "notificationsReceived = MAX(notificationsReceived, EXCLUDED.notificationsReceived)")
+    void upsertSafe(String pkg, long hourStart, long duration, int opens, int notifs);
+
 
     @Query("SELECT * FROM screen_time WHERE hourStartTimestamp >= :start AND hourStartTimestamp < :end")
     List<ScreenTime> getEntriesInRangeSync(long start, long end);
@@ -57,9 +76,6 @@ public interface ScreenTimeDao {
            "AND (:packageName IS NULL OR packageName = :packageName) " +
            "GROUP BY hourStartTimestamp ORDER BY hourStartTimestamp ASC")
     List<HourlyUsageSummary> getHourlyUsageSummarySync(long start, long end, String packageName);
-
-    @Query("DELETE FROM screen_time WHERE packageName = :packageName AND hourStartTimestamp = :hourStart")
-    void deleteEntry(String packageName, long hourStart);
 
     @Query("SELECT * FROM screen_time")
     List<ScreenTime> getAllEntriesSync();
