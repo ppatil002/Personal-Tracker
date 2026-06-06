@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer Glow Layer -->
+    <item>
+        <shape>
+            <corners android:radius="20dp" />
+            <solid android:color="#4D9333EA" /> <!-- Translucent version of selected_date_bg -->
+        </shape>
+    </item>
+
+    <!-- Main Background Layer -->
+    <item
+        android:bottom="2dp"
+        android:left="2dp"
+        android:right="2dp"
+        android:top="2dp">
+        <shape>
+            <corners android:radius="18dp" />
+            <solid android:color="@color/selected_date_bg" />
+        </shape>
+    </item>
+</layer-list>
