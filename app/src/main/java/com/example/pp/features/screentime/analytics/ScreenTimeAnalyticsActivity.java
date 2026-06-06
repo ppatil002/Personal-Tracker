@@ -187,6 +187,12 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         viewModel.getStats().observe(this, this::bindStats);
         viewModel.getHourlyUsage().observe(this, this::renderChart);
         viewModel.getAppUsage().observe(this, this::updateAppList);
+        viewModel.getSelectedPackageName().observe(this, pkg -> {
+            adapter.setSelectedPackage(pkg);
+            // Re-render chart if needed (though ViewModel usually triggers refresh)
+            List<ScreenTimeDao.HourlyUsageSummary> current = viewModel.getHourlyUsage().getValue();
+            if (current != null) renderChart(current);
+        });
     }
 
     private void updateChartLabel() {
@@ -436,10 +442,12 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         adapter = new AppAdapter();
         rvApps.setAdapter(adapter);
         adapter.setOnItemClickListener(app -> {
-            viewModel.setSelectedPackageName(app.packageName);
-            // Re-render chart
-            List<ScreenTimeDao.HourlyUsageSummary> current = viewModel.getHourlyUsage().getValue();
-            if (current != null) renderChart(current);
+            String currentSelected = viewModel.getSelectedPackageName().getValue();
+            if (app.packageName.equals(currentSelected)) {
+                viewModel.setSelectedPackageName(null);
+            } else {
+                viewModel.setSelectedPackageName(app.packageName);
+            }
         });
     }
 
@@ -550,6 +558,7 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
     private class AppAdapter extends RecyclerView.Adapter<AppAdapter.ViewHolder> {
         private List<ScreenTimeDao.AppUsageSummary> items = new ArrayList<>();
         private long totalDuration = 0;
+        private String selectedPackage = null;
         private OnAppItemClickListener listener;
 
         public void setOnItemClickListener(OnAppItemClickListener l) { this.listener = l; }
@@ -557,6 +566,11 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         public void setData(List<ScreenTimeDao.AppUsageSummary> items, long total) {
             this.items = items;
             this.totalDuration = total;
+            notifyDataSetChanged();
+        }
+
+        public void setSelectedPackage(String pkg) {
+            this.selectedPackage = pkg;
             notifyDataSetChanged();
         }
 
@@ -570,6 +584,38 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             ScreenTimeDao.AppUsageSummary item = items.get(position);
             holder.tvPackageName.setText(item.packageName);
+            
+            // Selection feedback
+            if (selectedPackage != null) {
+                if (item.packageName.equals(selectedPackage)) {
+                    holder.itemView.setAlpha(1.0f);
+                    holder.itemView.setBackgroundResource(R.drawable.bg_app_selected);
+                    
+                    // Contrast adjustment for selected state
+                    holder.tvAppName.setTextColor(Color.WHITE);
+                    holder.tvPackageName.setTextColor(ContextCompat.getColor(ScreenTimeAnalyticsActivity.this, R.color.text_secondary));
+                    holder.tvDuration.setTextColor(Color.WHITE);
+                    holder.tvPercent.setTextColor(ContextCompat.getColor(ScreenTimeAnalyticsActivity.this, R.color.text_secondary));
+                } else {
+                    holder.itemView.setAlpha(0.4f);
+                    holder.itemView.setBackground(null);
+                    
+                    // Standard colors for unselected (faded) state
+                    holder.tvAppName.setTextColor(ContextCompat.getColor(ScreenTimeAnalyticsActivity.this, R.color.text_primary));
+                    holder.tvPackageName.setTextColor(ContextCompat.getColor(ScreenTimeAnalyticsActivity.this, R.color.text_muted));
+                    holder.tvDuration.setTextColor(Color.WHITE);
+                    holder.tvPercent.setTextColor(ContextCompat.getColor(ScreenTimeAnalyticsActivity.this, R.color.electric_blue));
+                }
+            } else {
+                holder.itemView.setAlpha(1.0f);
+                holder.itemView.setBackground(null);
+                
+                // Standard colors for neutral state
+                holder.tvAppName.setTextColor(ContextCompat.getColor(ScreenTimeAnalyticsActivity.this, R.color.text_primary));
+                holder.tvPackageName.setTextColor(ContextCompat.getColor(ScreenTimeAnalyticsActivity.this, R.color.text_muted));
+                holder.tvDuration.setTextColor(Color.WHITE);
+                holder.tvPercent.setTextColor(ContextCompat.getColor(ScreenTimeAnalyticsActivity.this, R.color.electric_blue));
+            }
             
             ScreenTimeAnalyticsViewModel.BreakdownType bType = viewModel.getBreakdownType().getValue();
             if (bType == ScreenTimeAnalyticsViewModel.BreakdownType.SCREEN_TIME) {
