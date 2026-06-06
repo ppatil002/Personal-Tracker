@@ -73,6 +73,7 @@ public class ScreenTimeRepository {
 
         Map<String, Map<Long, ScreenTimeEntryData>> bucketedUsage = new HashMap<>();
         String currentPkg = null;
+        String lastOpenPkg = null;
         long currentStartTime = 0L;
 
         UsageEvents.Event event = new UsageEvents.Event();
@@ -88,15 +89,24 @@ public class ScreenTimeRepository {
             switch (type) {
                 case UsageEvents.Event.ACTIVITY_RESUMED:
                     // If an app was already "running", close its segment before starting new app
+                    // Sticky Package Detection: Only count as a new "open" if the package has actually changed.
+                    // This persists across PAUSE/RESUME cycles of the same app.
+                    boolean isNewAppLaunch = !pkg.equals(lastOpenPkg);
+
                     if (currentPkg != null) {
                         if (!isExcluded(currentPkg)) {
                             addUsageToBuckets(bucketedUsage, currentPkg, currentStartTime, timestamp);
                         }
                     }
+                    
                     currentPkg = pkg;
                     currentStartTime = timestamp;
-                    if (!isExcluded(pkg)) {
-                        incrementOpenCount(bucketedUsage, pkg, timestamp);
+                    
+                    if (isNewAppLaunch) {
+                        if (!isExcluded(pkg)) {
+                            incrementOpenCount(bucketedUsage, pkg, timestamp);
+                        }
+                        lastOpenPkg = pkg;
                     }
                     break;
 
@@ -120,6 +130,7 @@ public class ScreenTimeRepository {
                         currentPkg = null;
                         currentStartTime = 0L;
                     }
+                    lastOpenPkg = null; // Reset on lock so next app launch counts as an open
                     break;
 
                 case 12: // UsageEvents.Event.NOTIFICATION_INTERRUPTION
