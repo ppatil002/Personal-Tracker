@@ -2,6 +2,7 @@ package com.example.pp.features.splash;
 
 import android.Manifest;
 import android.app.AlarmManager;
+import android.app.AppOpsManager;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.provider.Settings;
 import android.util.Log;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -81,6 +83,35 @@ public class SplashActivity extends AppCompatActivity {
         PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
         boolean batteryIgnored = pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
 
-        return notifications && alarms && googleDrive && batteryIgnored;
+        boolean usageStats = hasUsageStatsPermission();
+        boolean accessibility = isAccessibilityServiceEnabled();
+
+        return notifications && alarms && googleDrive && batteryIgnored && usageStats && accessibility;
+    }
+
+    private boolean hasUsageStatsPermission() {
+        AppOpsManager appOps = (AppOpsManager) getSystemService(Context.APP_OPS_SERVICE);
+        int mode = appOps.checkOpNoThrow(AppOpsManager.OPSTR_GET_USAGE_STATS,
+                android.os.Process.myUid(), getPackageName());
+        return mode == AppOpsManager.MODE_ALLOWED;
+    }
+
+    private boolean isAccessibilityServiceEnabled() {
+        String service = getPackageName() + "/" + com.example.pp.features.screentime.service.ScreenTrackingService.class.getName();
+        int accessibilityEnabled = 0;
+        try {
+            accessibilityEnabled = Settings.Secure.getInt(getContentResolver(), Settings.Secure.ACCESSIBILITY_ENABLED);
+        } catch (Settings.SettingNotFoundException ignored) {}
+
+        if (accessibilityEnabled == 1) {
+            String settingValue = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+            if (settingValue != null) {
+                String[] services = settingValue.split(":");
+                for (String s : services) {
+                    if (s.equalsIgnoreCase(service)) return true;
+                }
+            }
+        }
+        return false;
     }
 }
