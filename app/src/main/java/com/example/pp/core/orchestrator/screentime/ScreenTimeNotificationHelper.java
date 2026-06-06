@@ -12,12 +12,13 @@ import androidx.core.app.NotificationCompat;
 import com.example.pp.R;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.features.dashboard.DashboardActivity;
+import com.example.pp.utils.DateUtils;
 
 public class ScreenTimeNotificationHelper {
     private static final String CHANNEL_ID = AppConstants.CHANNEL_SCREEN_TIME;
     private static final int NOTIFICATION_ID = AppConstants.NOTIFY_ID_SCREEN_TIME;
 
-    public static void showBreakNotification(Context context) {
+    public static void showBreakNotification(Context context, long elapsedMillis) {
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager == null) return;
 
@@ -31,10 +32,11 @@ public class ScreenTimeNotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
         );
 
+        String timeStr = DateUtils.convertTimestampIntoHoursAndMinutes(elapsedMillis);
         Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_smartphone)
                 .setContentTitle("Take a break!")
-                .setContentText("You've been using phone for over 30 minutes. Time to rest your eyes.")
+                .setContentText("You've been on your phone for " + timeStr + " continuously.")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setAutoCancel(true)
                 .setContentIntent(contentIntent)

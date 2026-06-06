@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ScreenTimeRepository {
-    private static final String TAG = "ScreenTimeRepository PP";
+    private static final String TAG = "ScreenTimeRepository";
     private final ScreenTimeDao screenTimeDao;
     private final UsageStatsManager usageStatsManager;
     private final AppExecutors executors;
@@ -46,7 +46,6 @@ public class ScreenTimeRepository {
     private void refreshLauncherPackages() {
         launcherPackages.clear();
         launcherPackages.addAll(ScreenUtils.getLauncherPackages(context));
-        Log.d(TAG, "Identified " + launcherPackages.size() + " launcher/system packages to exclude.");
     }
 
     private boolean isExcluded(String pkg) {
@@ -138,7 +137,7 @@ public class ScreenTimeRepository {
             }
         }
 
-        Log.d(TAG, "Processed " + eventCount + " UsageEvents.");
+//        Log.d(TAG, "Processed " + eventCount + " UsageEvents.");
         if (!bucketedUsage.isEmpty()) {
             saveBucketedEntries(bucketedUsage);
         }
@@ -191,7 +190,7 @@ public class ScreenTimeRepository {
         }
         if (!allToInsert.isEmpty()) {
             screenTimeDao.insertAll(allToInsert);
-            Log.i(TAG, "Sync complete: Updated " + allToInsert.size() + " hourly entries.");
+//            Log.i(TAG, "Sync complete: Updated " + allToInsert.size() + " hourly entries.");
         }
     }
 

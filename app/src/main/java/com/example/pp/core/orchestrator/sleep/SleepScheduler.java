@@ -1,6 +1,7 @@
 package com.example.pp.core.orchestrator.sleep;
 
 import static com.example.pp.core.constants.AppConstants.SLEEP_TARGET_HOUR;
+import static com.example.pp.core.constants.AppConstants.SLEEP_WORKER;
 
 import android.app.AlarmManager;
 import android.app.PendingIntent;
@@ -17,6 +18,7 @@ import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.repository.SleepRepository;
 import com.example.pp.data.repository.TaskRepository;
+import com.example.pp.utils.DateUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -143,8 +145,8 @@ public class SleepScheduler {
 
     public static void logOperation(Context context, String status, String step, String message) {
         BackgroundJobLog log = new BackgroundJobLog(
-                "SLEEP_" + System.currentTimeMillis(),
-                TAG,
+                TAG + "_" + DateUtils.convertTimestampintoHH_MM_SS_String(System.currentTimeMillis()),
+                SLEEP_WORKER,
                 status,
                 step,
                 message,

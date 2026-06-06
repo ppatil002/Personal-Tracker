@@ -8,6 +8,7 @@ import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.ExistingWorkPolicy;
 import androidx.work.NetworkType;
+import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
@@ -17,7 +18,7 @@ import com.example.pp.data.local.entity.TaskDefinition;
 import java.util.concurrent.TimeUnit;
 
 public class ScreenTimeScheduler {
-    private static final String TAG = "ScreenTimeScheduler PP";
+    private static final String TAG = "ScreenTimeScheduler";
 
     public static void schedule(Context context, @Nullable TaskDefinition def) {
         Log.d(TAG, "Scheduling Screen Time Sync Fallback");
@@ -50,7 +51,7 @@ public class ScreenTimeScheduler {
 
     public static void runNow(Context context, String taskId) {
         Log.d(TAG, "Triggering Immediate Screen Time Sync for task: " + taskId);
-        androidx.work.OneTimeWorkRequest request = new androidx.work.OneTimeWorkRequest.Builder(ScreenTimeSyncWorker.class)
+        OneTimeWorkRequest request = new OneTimeWorkRequest.Builder(ScreenTimeSyncWorker.class)
                 .addTag(TaskType.SCREEN_TIME_SYNC.name())
                 .addTag(taskId)
                 .build();

@@ -1,7 +1,10 @@
 package com.example.pp.utils;
 
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 public class DateUtils {
 
@@ -54,5 +57,17 @@ public class DateUtils {
         cal.set(Calendar.SECOND, 59);
         cal.set(Calendar.MILLISECOND, 999);
         return cal.getTimeInMillis();
+    }
+
+    public static String convertTimestampIntoHoursAndMinutes(long millis) {
+        long minutes = (millis / (1000 * 60)) % 60;
+        long hours = (millis / (1000 * 60 * 60));
+        if (hours > 0) return hours + "h " + minutes + "m";
+        return minutes + "m";
+    }
+
+    public static String convertTimestampintoHH_MM_SS_String(long timestamp) {
+        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+        return formatter.format(new Date(timestamp));
     }
 }

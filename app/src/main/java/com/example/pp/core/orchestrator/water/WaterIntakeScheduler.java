@@ -1,5 +1,7 @@
 package com.example.pp.core.orchestrator.water;
 
+import static com.example.pp.core.constants.AppConstants.WATER_WORKER;
+
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -17,6 +19,7 @@ import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.data.repository.HydrationRepository;
 import com.example.pp.data.repository.TaskRepository;
+import com.example.pp.utils.DateUtils;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -208,8 +211,8 @@ public class WaterIntakeScheduler {
 
     public static void logOperation(Context context, String status, String step, String message) {
         BackgroundJobLog log = new BackgroundJobLog(
-                "WATER_" + System.currentTimeMillis(),
-                TAG,
+                "WATER_" + DateUtils.convertTimestampintoHH_MM_SS_String(System.currentTimeMillis()),
+                WATER_WORKER,
                 status,
                 step,
                 message,

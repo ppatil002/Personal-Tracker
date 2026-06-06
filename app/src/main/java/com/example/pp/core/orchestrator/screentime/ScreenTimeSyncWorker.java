@@ -12,7 +12,7 @@ import com.example.pp.data.repository.ScreenTimeRepository;
 import com.example.pp.utils.DateUtils;
 
 public class ScreenTimeSyncWorker extends BaseFeatureWorker {
-    private static final String TAG = "ScreenTimeSyncWorker PP";
+    private static final String TAG = "ScreenTimeSyncWorker";
     private final ScreenTimeRepository repository;
 
     public ScreenTimeSyncWorker(@NonNull Context context, @NonNull WorkerParameters params) {
@@ -32,16 +32,15 @@ public class ScreenTimeSyncWorker extends BaseFeatureWorker {
             // We query once to ensure sessions crossing hour boundaries are handled correctly in the repository.
             long start = DateUtils.getStartOfDay(end);
             
-            Log.d(TAG, "Syncing entire day: [" + start + "] to [" + end + "]");
+//            Log.d(TAG, "Syncing entire day: [" + start + "] to [" + end + "]");
             
             repository.syncScreenTimeSync(start, end);
 
             updateLog("SUCCESS", "Syncing Screen Time", "Data collection finished successfully");
             completeTask();
-            Log.i(TAG, "Worker execution completed successfully.");
+//            Log.i(TAG, "Worker execution completed successfully.");
             return Result.success();
         } catch (Exception e) {
-            Log.e(TAG, "Screen time sync failed", e);
             updateLog("FAILED", "Syncing Screen Time", "Error: " + e.getMessage());
             failTask(e.getMessage());
             return Result.failure();

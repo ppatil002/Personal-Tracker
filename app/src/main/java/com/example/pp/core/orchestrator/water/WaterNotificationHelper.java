@@ -22,7 +22,7 @@ public class WaterNotificationHelper {
     public static final String ACTION_250ML = "com.example.pp.ACTION_250ML";
     public static final String ACTION_SNOOZE = "com.example.pp.ACTION_SNOOZE";
 
-    public static void createNotificationChannel(Context context) {
+    private static void createNotificationChannel(Context context) {
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID, "Water Intake Reminders", NotificationManager.IMPORTANCE_HIGH);
         
