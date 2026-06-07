@@ -11,6 +11,7 @@ import com.example.pp.data.local.dao.BackgroundJobLogDao;
 import com.example.pp.data.local.dao.CategoryDao;
 import com.example.pp.data.local.dao.CommonDao;
 import com.example.pp.data.local.dao.HydrationDao;
+import com.example.pp.data.local.dao.NutrientDao;
 import com.example.pp.data.local.dao.NutritionDao;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.dao.SleepDao;
@@ -20,6 +21,7 @@ import com.example.pp.data.local.dao.TransactionDao;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.data.local.entity.HydrationIntake;
+import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.local.entity.ScreenTime;
 import com.example.pp.data.local.entity.SleepEntity;
@@ -40,9 +42,10 @@ import com.example.pp.utils.TaskTypeConverters;
     TaskState.class,
     HydrationIntake.class,
     NutritionIntake.class,
+    NutrientEntity.class,
     ScreenTime.class,
     SleepEntity.class
-}, version = 16, exportSchema = false)
+}, version = 19, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -56,6 +59,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract TaskDao taskDao();
     public abstract HydrationDao hydrationDao();
     public abstract NutritionDao nutritionDao();
+    public abstract NutrientDao nutrientDao();
     public abstract ScreenTimeDao screenTimeDao();
     public abstract SleepDao sleepDao();
 

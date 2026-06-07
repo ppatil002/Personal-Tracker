@@ -3,6 +3,7 @@ package com.example.pp.features.backup.model;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.CategoryEntity;
 import com.example.pp.data.local.entity.HydrationIntake;
+import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.local.entity.ScreenTime;
 import com.example.pp.data.local.entity.SleepEntity;
@@ -23,6 +24,7 @@ public class BackupData {
     public List<TaskState> taskStates;
     public List<BackgroundJobLog> backgroundJobLogs;
     public List<HydrationIntake> hydrationIntakes;
+    public List<NutrientEntity> nutrientData;
     public List<NutritionIntake> nutritionIntakes;
     public List<SleepEntity> sleep;
     public List<ScreenTime> screenTime;
@@ -32,6 +34,7 @@ public class BackupData {
                       List<TaskDefinition> taskDefinitions, List<TaskState> taskStates,
                       List<BackgroundJobLog> backgroundJobLogs,
                       List<HydrationIntake> hydrationIntakes,
+                      List<NutrientEntity> nutrientData,
                       List<NutritionIntake> nutritionIntakes,
                       List<SleepEntity> sleep,
                       List<ScreenTime> screenTime) {
@@ -43,6 +46,7 @@ public class BackupData {
         this.taskStates = taskStates;
         this.backgroundJobLogs = backgroundJobLogs;
         this.hydrationIntakes = hydrationIntakes;
+        this.nutrientData = nutrientData;
         this.nutritionIntakes = nutritionIntakes;
         this.sleep = sleep;
         this.screenTime = screenTime;

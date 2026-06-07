@@ -10,6 +10,7 @@ import com.example.pp.R;
 import com.example.pp.features.category.CategoryActivity;
 import com.example.pp.features.category.TagActivity;
 import com.example.pp.features.backup.BackupActivity;
+import com.example.pp.features.nutrition.NutrientDirectoryActivity;
 
 public class MoreActivity extends AppCompatActivity {
 
@@ -32,6 +33,10 @@ public class MoreActivity extends AppCompatActivity {
 
         findViewById(R.id.btnBackup).setOnClickListener(v -> {
             startActivity(new Intent(this, BackupActivity.class));
+        });
+
+        findViewById(R.id.btnNutrientDirectory).setOnClickListener(v -> {
+            startActivity(new Intent(this, NutrientDirectoryActivity.class));
         });
 
         findViewById(R.id.btnWorkers).setOnClickListener(v -> {

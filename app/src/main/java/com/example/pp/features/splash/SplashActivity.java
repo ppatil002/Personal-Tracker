@@ -44,6 +44,7 @@ public class SplashActivity extends AppCompatActivity {
 //        ((PPApplication) getApplication()).getTransactionRepository().seedTransactionsIfEmpty();
         ((PPApplication) getApplication()).getSleepRepository().seedSleep();
         ((PPApplication) getApplication()).getTaskRepository().seedTasksIfEmpty();
+        ((PPApplication) getApplication()).getNutrientRepository().seedNutrientData();
 
         // Ensure all seeding tasks (which run on diskIO) are completed before proceeding
         AppExecutors.getInstance().diskIO().execute(() -> {

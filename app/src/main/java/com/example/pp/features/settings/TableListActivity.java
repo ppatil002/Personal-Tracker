@@ -32,17 +32,18 @@ public class TableListActivity extends AppCompatActivity {
         rvTables.setLayoutManager(new LinearLayoutManager(this));
 
         List<TableInfo> tables = new ArrayList<>();
-        tables.add(new TableInfo("categories", "Categories Table", "Hierarchy and icons"));
-        tables.add(new TableInfo("tags", "Tags Table", "Labels and identifiers"));
-        tables.add(new TableInfo("transactions", "Transactions Table", "Core transaction data"));
-        tables.add(new TableInfo("transaction_tag_cross_ref", "Transaction Tags Table", "Many-to-many relationship"));
-        tables.add(new TableInfo("background_job_log", "Background Job Logs Table", "Backup Logs"));
-        tables.add(new TableInfo("task_definitions", "Task Definition Table", "Background Task"));
-        tables.add(new TableInfo("task_states", "Task Status Table", "Task Current Status"));
-        tables.add(new TableInfo("hydration_intakes", "Hydration Table", "Daily Water Intake"));
-        tables.add(new TableInfo("nutrition_intake", "Nutrients Intake Table", "Daily Calorie Intake"));
-        tables.add(new TableInfo("screen_time", "Screen Time Table", "Daily Screen Time Monitoring"));
-        tables.add(new TableInfo("sleep", "Sleep Table", "Daily Sleep Monitoring"));
+        tables.add(new TableInfo("categories", "Categories", "Hierarchy and icons"));
+        tables.add(new TableInfo("tags", "Tags", "Labels and identifiers"));
+        tables.add(new TableInfo("transactions", "Transactions", "Core transaction data"));
+        tables.add(new TableInfo("transaction_tag_cross_ref", "Transaction Tags", "Many-to-many relationship"));
+        tables.add(new TableInfo("background_job_log", "Background Job Logs", "Backup Logs"));
+        tables.add(new TableInfo("task_definitions", "Task Definition", "Background Task"));
+        tables.add(new TableInfo("task_states", "Task Status", "Task Current Status"));
+        tables.add(new TableInfo("hydration_intakes", "Hydration", "Daily Water Intake"));
+        tables.add(new TableInfo("nutrient_data", "Nutrient Data", "Food Item Nutritional Info"));
+        tables.add(new TableInfo("nutrition_intake", "Nutrients Intake", "Daily Calorie Intake"));
+        tables.add(new TableInfo("screen_time", "Screen Time", "Daily Screen Time Monitoring"));
+        tables.add(new TableInfo("sleep", "Sleep", "Daily Sleep Monitoring"));
 
         rvTables.setAdapter(new TableAdapter(tables));
     }
