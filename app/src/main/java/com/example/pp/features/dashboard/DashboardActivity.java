@@ -54,7 +54,7 @@ public class DashboardActivity extends AppCompatActivity {
     private TextView tvWelcomeName, tvWaterPercent, tvWaterTarget, tvLastIntake, tvWaterCount;
     private CircularProgressIndicator calorieProgress;
     private LinearProgressIndicator carbsProgress, proteinProgress, fatsProgress, sleepProgress;
-    private TextView tvRemainingCals, tvCarbsStats, tvProteinStats, tvFatsStats, tvLastNutritionIntake;
+    private TextView tvRemainingCals, tvCalorieStats, tvCarbsStats, tvProteinStats, tvFatsStats, tvLastNutritionIntake;
     private TextView tvRemainingTime, tvUsedToday, tvCountdown, tvUntil, tvPotential, tvLastNight;
     private LinearLayout topAppsContainer;
 
@@ -102,6 +102,7 @@ public class DashboardActivity extends AppCompatActivity {
 
         calorieProgress = findViewById(R.id.calorieProgress);
         tvRemainingCals = findViewById(R.id.tvRemainingCals);
+        tvCalorieStats = findViewById(R.id.tvCalorieStats);
         carbsProgress = findViewById(R.id.carbsProgress);
         proteinProgress = findViewById(R.id.proteinProgress);
         fatsProgress = findViewById(R.id.fatsProgress);
@@ -174,7 +175,7 @@ public class DashboardActivity extends AppCompatActivity {
         });
 
         viewModel.getLastNutritionIntake().observe(this, intake -> {
-            lastNutritionTimestamp = (intake != null) ? intake.timestamp : null;
+            lastNutritionTimestamp = (intake != null) ? intake.intakeTimestamp : null;
             updateLastIntakeStrings();
         });
 
@@ -189,17 +190,21 @@ public class DashboardActivity extends AppCompatActivity {
             double targetProtein = 150.0;
             double targetFats = 65.0;
 
-            tvRemainingCals.setText(String.format(Locale.getDefault(), "%.1f kcal", Math.max(0, targetCals - cals)));
+            tvRemainingCals.setText(String.format(Locale.getDefault(), "%.0f kcal", Math.max(0, targetCals - cals)));
+            tvCalorieStats.setText(String.format(Locale.getDefault(), "%.0f / %.0f", cals, targetCals));
             calorieProgress.setProgress((int) Math.min(cals * 100 / targetCals, 100));
 
-            tvCarbsStats.setText(String.format(Locale.getDefault(), "%.1f/%.0fg", carbs, targetCarbs));
-            carbsProgress.setProgress((int) Math.min(carbs * 100 / targetCarbs, 100));
+            double carbsPercent = (carbs * 100 / targetCarbs);
+            tvCarbsStats.setText(String.format(Locale.getDefault(), "%.1f/%.0fg (%.1f%%)", carbs, targetCarbs, carbsPercent));
+            carbsProgress.setProgress((int) Math.min(carbsPercent, 100));
 
-            tvProteinStats.setText(String.format(Locale.getDefault(), "%.1f/%.0fg", protein, targetProtein));
-            proteinProgress.setProgress((int) Math.min(protein * 100 / targetProtein, 100));
+            double proteinPercent = (protein * 100 / targetProtein);
+            tvProteinStats.setText(String.format(Locale.getDefault(), "%.1f/%.0fg (%.1f%%)", protein, targetProtein, proteinPercent));
+            proteinProgress.setProgress((int) Math.min(proteinPercent, 100));
 
-            tvFatsStats.setText(String.format(Locale.getDefault(), "%.1f/%.0fg", fats, targetFats));
-            fatsProgress.setProgress((int) Math.min(fats * 100 / targetFats, 100));
+            double fatsPercent = (fats * 100 / targetFats);
+            tvFatsStats.setText(String.format(Locale.getDefault(), "%.1f/%.0fg (%.1f%%)", fats, targetFats, fatsPercent));
+            fatsProgress.setProgress((int) Math.min(fatsPercent, 100));
         });
 
         viewModel.getTodayScreenTime().observe(this, apps -> {
@@ -550,6 +555,24 @@ public class DashboardActivity extends AppCompatActivity {
 
         final NutrientEntity[] selectedNutrient = {null};
 
+        String[] tagSuggestions = {"Pre workout", "Post Workout", "Morning Breakfast", "Lunch", "Evening Breakfast", "Dinner"};
+        ArrayAdapter<String> tagAdapter = new ArrayAdapter<>(this, R.layout.item_dropdown_divider, R.id.tvDropdownItem, tagSuggestions);
+        actvTags.setAdapter(tagAdapter);
+        actvTags.setOnClickListener(v -> actvTags.showDropDown());
+        actvTags.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && actvTags.getAdapter() != null) {
+                actvTags.postDelayed(actvTags::showDropDown, 200);
+            }
+        });
+
+        etQuantity.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateNutritionPreview(s.toString(), selectedNutrient[0], tvPreview);
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+
         viewModel.getAllNutrients(nutrients -> {
             List<String> names = new ArrayList<>();
             for (NutrientEntity n : nutrients) names.add(n.getFoodItem());
@@ -573,60 +596,85 @@ public class DashboardActivity extends AppCompatActivity {
                     }
                 }
             });
-        });
 
-        String[] tagSuggestions = {"Pre workout", "Post Workout", "Morning Breakfast", "Lunch", "Evening Breakfast", "Dinner"};
-        ArrayAdapter<String> tagAdapter = new ArrayAdapter<>(this, R.layout.item_dropdown_divider, R.id.tvDropdownItem, tagSuggestions);
-        actvTags.setAdapter(tagAdapter);
-        actvTags.setOnClickListener(v -> actvTags.showDropDown());
-        actvTags.setOnFocusChangeListener((v, hasFocus) -> {
-            if (hasFocus && actvTags.getAdapter() != null) {
-                actvTags.postDelayed(actvTags::showDropDown, 200);
+            AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                    .setTitle("Log Nutrition")
+                    .setView(dialogView)
+                    .setPositiveButton("Save", (d, which) -> {
+                        String qtyStr = etQuantity.getText().toString();
+                        String foodName = actvFood.getText().toString().trim();
+
+                        if (foodName.isEmpty() || qtyStr.isEmpty()) {
+                            Toast.makeText(this, "Please enter food and quantity", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
+
+                        if (selectedNutrient[0] != null && selectedNutrient[0].getFoodItem().equalsIgnoreCase(foodName)) {
+                            performSaveNutrition(selectedNutrient[0], qtyStr, selectedDateTime.getTimeInMillis(), actvTags.getText().toString());
+                        } else {
+                            // Check if food exists in the loaded list
+                            NutrientEntity existing = null;
+                            for (NutrientEntity n : nutrients) {
+                                if (n.getFoodItem().equalsIgnoreCase(foodName)) {
+                                    existing = n;
+                                    break;
+                                }
+                            }
+
+                            if (existing != null) {
+                                performSaveNutrition(existing, qtyStr, selectedDateTime.getTimeInMillis(), actvTags.getText().toString());
+                            } else {
+                                // Show alert to add new nutrient
+                                AlertDialog newNutrientDialog = new MaterialAlertDialogBuilder(this)
+                                        .setTitle("New Food Item")
+                                        .setMessage("'" + foodName + "' is not in your knowledge base. Would you like to add it?")
+                                        .setPositiveButton("Yes", (di, w) -> {
+                                            viewModel.addNewNutrient(foodName, newId -> {
+                                                // After adding, we need to log it. We fetch all again to get the entity.
+                                                viewModel.getAllNutrients(refreshed -> {
+                                                    for (NutrientEntity rn : refreshed) {
+                                                        if (rn.getNutrientId() == newId) {
+                                                            performSaveNutrition(rn, qtyStr, selectedDateTime.getTimeInMillis(), actvTags.getText().toString());
+                                                            break;
+                                                        }
+                                                    }
+                                                });
+                                            });
+                                        })
+                                        .setNegativeButton("No", null)
+                                        .create();
+                                
+                                newNutrientDialog.show();
+                                if (newNutrientDialog.getWindow() != null) {
+                                    newNutrientDialog.getWindow().setBackgroundDrawableResource(R.color.card_background);
+                                }
+                            }
+                        }
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .create();
+
+            dialog.show();
+            if (dialog.getWindow() != null) {
+                dialog.getWindow().setBackgroundDrawableResource(R.color.card_background);
             }
         });
+    }
 
-        etQuantity.addTextChangedListener(new android.text.TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
-                updateNutritionPreview(s.toString(), selectedNutrient[0], tvPreview);
-            }
-            @Override public void afterTextChanged(android.text.Editable s) {}
-        });
+    private void performSaveNutrition(NutrientEntity nutrient, String qtyStr, long timestamp, String tags) {
+        try {
+            double quantity = Double.parseDouble(qtyStr);
+            String tagStr = tags.trim();
 
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle("Log Nutrition")
-                .setView(dialogView)
-                .setPositiveButton("Save", (d, which) -> {
-                    String qtyStr = etQuantity.getText().toString();
-                    if (selectedNutrient[0] == null || qtyStr.isEmpty()) {
-                        Toast.makeText(this, "Please select food and enter quantity", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    try {
-                        double qty = Double.parseDouble(qtyStr);
-                        double ratio = qty / selectedNutrient[0].getPerUnit();
-                        String tags = actvTags.getText().toString().trim();
-
-                        viewModel.addNutrition(
-                                selectedNutrient[0].getNutrientId(),
-                                selectedNutrient[0].getCalories() * ratio,
-                                selectedNutrient[0].getCarbs() * ratio,
-                                selectedNutrient[0].getProtein() * ratio,
-                                selectedNutrient[0].getFats() * ratio,
-                                selectedDateTime.getTimeInMillis(),
-                                tags.isEmpty() ? null : tags
-                        );
-                        Toast.makeText(this, "Nutrition logged", Toast.LENGTH_SHORT).show();
-                    } catch (NumberFormatException e) {
-                        Toast.makeText(this, "Invalid quantity", Toast.LENGTH_SHORT).show();
-                    }
-                })
-                .setNegativeButton("Cancel", null)
-                .create();
-
-        dialog.show();
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(R.color.card_background);
+            viewModel.addNutrition(
+                    nutrient.getNutrientId(),
+                    quantity,
+                    timestamp,
+                    tagStr.isEmpty() ? null : tagStr
+            );
+            Toast.makeText(this, "Nutrition logged", Toast.LENGTH_SHORT).show();
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "Invalid quantity", Toast.LENGTH_SHORT).show();
         }
     }
 

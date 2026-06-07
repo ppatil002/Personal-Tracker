@@ -349,7 +349,7 @@
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp">
+                        android:layout_marginTop="12dp">
 
                         <com.google.android.material.progressindicator.CircularProgressIndicator
                             android:id="@+id/calorieProgress"
@@ -357,7 +357,7 @@
                             android:layout_height="wrap_content"
                             android:layout_centerHorizontal="true"
                             app:indicatorColor="@color/nutrition_purple"
-                            app:indicatorSize="120dp"
+                            app:indicatorSize="130dp"
                             app:trackColor="@color/surface_container"
                             app:trackThickness="8dp" />
 
@@ -383,6 +383,15 @@
                                 android:text="REMAINING"
                                 android:textColor="@color/text_muted"
                                 android:textSize="10sp" />
+
+                            <TextView
+                                android:id="@+id/tvCalorieStats"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:text="0 / 0"
+                                android:textColor="@color/text_muted"
+                                android:textSize="12sp" />
                         </LinearLayout>
                     </RelativeLayout>
 
@@ -390,7 +399,7 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="24dp"
+                        android:layout_marginTop="12dp"
                         android:orientation="vertical">
 
                         <!-- Carbs -->
@@ -399,20 +408,28 @@
                             android:layout_height="wrap_content"
                             android:orientation="horizontal">
                             <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingEnd="4dp"
+                                android:text="●"
+                                android:textColor="@color/carbs_pink"
+                                android:textSize="12sp" />
+                            <TextView
                                 android:id="@+id/tvCarbsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:text="Carbs"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="@color/text_primary"
                                 android:textSize="12sp" />
+
                             <TextView
                                 android:id="@+id/tvCarbsStats"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="0/0g"
-                                android:textColor="@color/text_muted"
-                                android:textSize="10sp" />
+                                android:text="0/0g (0%)"
+                                android:textColor="@color/carbs_pink"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <com.google.android.material.progressindicator.LinearProgressIndicator
@@ -422,6 +439,7 @@
                             android:layout_marginTop="4dp"
                             app:indicatorColor="@color/carbs_pink"
                             app:trackColor="@color/surface_container"
+                            app:trackCornerRadius="4dp"
                             app:trackThickness="6dp" />
 
                         <!-- Protein -->
@@ -431,20 +449,27 @@
                             android:layout_marginTop="12dp"
                             android:orientation="horizontal">
                             <TextView
-                                android:id="@+id/tvProteinLabel"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingEnd="4dp"
+                                android:text="●"
+                                android:textColor="@color/hydration_blue"
+                                android:textSize="12sp" />
+                            <TextView
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:text="Protein"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="@color/text_primary"
                                 android:textSize="12sp" />
+
                             <TextView
                                 android:id="@+id/tvProteinStats"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="0/0g"
-                                android:textColor="@color/text_muted"
-                                android:textSize="10sp" />
+                                android:text="0/0g (0%)"
+                                android:textColor="@color/hydration_blue"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <com.google.android.material.progressindicator.LinearProgressIndicator
@@ -454,6 +479,7 @@
                             android:layout_marginTop="4dp"
                             app:indicatorColor="@color/hydration_blue"
                             app:trackColor="@color/surface_container"
+                            app:trackCornerRadius="4dp"
                             app:trackThickness="6dp" />
 
                         <!-- Fats -->
@@ -463,20 +489,28 @@
                             android:layout_marginTop="12dp"
                             android:orientation="horizontal">
                             <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:paddingEnd="4dp"
+                                android:text="●"
+                                android:textColor="@color/fats_green"
+                                android:textSize="12sp" />
+                            <TextView
                                 android:id="@+id/tvFatsLabel"
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
                                 android:text="Fats"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="@color/text_primary"
                                 android:textSize="12sp" />
+
                             <TextView
                                 android:id="@+id/tvFatsStats"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="0/0g"
-                                android:textColor="@color/text_muted"
-                                android:textSize="10sp" />
+                                android:text="0/0g (0%)"
+                                android:textColor="@color/fats_green"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <com.google.android.material.progressindicator.LinearProgressIndicator
@@ -485,6 +519,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             app:indicatorColor="@color/fats_green"
+                            app:trackCornerRadius="4dp"
                             app:trackColor="@color/surface_container"
                             app:trackThickness="6dp" />
                     </LinearLayout>

@@ -12,6 +12,7 @@ import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.entity.HydrationIntake;
+import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.data.local.model.NutritionSummary;
@@ -79,8 +80,27 @@ public class DashboardViewModel extends AndroidViewModel {
         WaterIntakeScheduler.logIntakeAndReschedule(getApplication(), ml, timestamp);
     }
 
-    public void addNutrition(Long nutrientId, double cal, double carbs, double protein, double fats, long timestamp, String tags) {
-        nutritionRepository.addIntake(nutrientId, cal, carbs, protein, fats, timestamp, tags);
+    public void addNutrition(Long nutrientId, double quantity, long timestamp, String tags) {
+        nutritionRepository.addIntake(nutrientId, quantity, timestamp, tags);
+    }
+
+    public void addNewNutrient(String foodName, OnNutrientAddedCallback callback) {
+        long now = System.currentTimeMillis();
+        NutrientEntity newNutrient = new NutrientEntity(foodName, 0, 0, 0, 0, 100, "gram", now, now);
+        nutrientRepository.addNutrient(newNutrient, () -> {
+            nutrientRepository.getAllNutrients(nutrients -> {
+                for (NutrientEntity n : nutrients) {
+                    if (n.getFoodItem().equalsIgnoreCase(foodName)) {
+                        callback.onAdded(n.getNutrientId());
+                        return;
+                    }
+                }
+            });
+        });
+    }
+
+    public interface OnNutrientAddedCallback {
+        void onAdded(long nutrientId);
     }
 
     public LiveData<List<ScreenTimeDao.AppUsageSummary>> getTodayScreenTime() {

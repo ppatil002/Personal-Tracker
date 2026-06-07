@@ -36,12 +36,18 @@ public interface NutritionDao {
         return stats;
     }
 
-    @Query("SELECT SUM(calories) as totalCalories, SUM(carbs_g) as totalCarbs, SUM(protein_g) as totalProtein, SUM(fats_g) as totalFats FROM nutrition_intake WHERE timestamp >= :startOfDay")
+    @Query("SELECT SUM((ni.quantity / nd.per_unit) * nd.calories) as totalCalories, " +
+           "SUM((ni.quantity / nd.per_unit) * nd.carbs) as totalCarbs, " +
+           "SUM((ni.quantity / nd.per_unit) * nd.protein) as totalProtein, " +
+           "SUM((ni.quantity / nd.per_unit) * nd.fats) as totalFats " +
+           "FROM nutrition_intake ni " +
+           "JOIN nutrient_data nd ON ni.nutrient_id = nd.nutrient_id " +
+           "WHERE ni.intake_timestamp >= :startOfDay")
     LiveData<NutritionSummary> getTodaySummary(long startOfDay);
 
     @Query("SELECT * FROM nutrition_intake")
     List<NutritionIntake> getAllIntakes();
 
-    @Query("SELECT * FROM nutrition_intake WHERE timestamp >= :startOfDay ORDER BY timestamp DESC LIMIT 1")
+    @Query("SELECT * FROM nutrition_intake WHERE intake_timestamp >= :startOfDay ORDER BY intake_timestamp DESC LIMIT 1")
     LiveData<NutritionIntake> getLastIntake(long startOfDay);
 }

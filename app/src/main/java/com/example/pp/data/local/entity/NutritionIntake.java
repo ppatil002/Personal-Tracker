@@ -24,31 +24,23 @@ public class NutritionIntake {
     @ColumnInfo(name = "nutrient_id")
     public Long nutrientId; // Can be null if food is deleted
 
-    @ColumnInfo(name = "calories")
-    public double calories;
+    @ColumnInfo(name = "quantity")
+    public double quantity;
 
-    @ColumnInfo(name = "carbs_g")
-    public double carbsG;
+    @ColumnInfo(name = "intake_timestamp")
+    public long intakeTimestamp;
 
-    @ColumnInfo(name = "protein_g")
-    public double proteinG;
-
-    @ColumnInfo(name = "fats_g")
-    public double fatsG;
-
-    @ColumnInfo(name = "timestamp")
-    public long timestamp;
+    @ColumnInfo(name = "updated_timestamp")
+    public long updatedTimestamp;
 
     @ColumnInfo(name = "tags")
     public String tags;
 
-    public NutritionIntake(Long nutrientId, double calories, double carbsG, double proteinG, double fatsG, long timestamp, String tags) {
+    public NutritionIntake(Long nutrientId, double quantity, long intakeTimestamp, long updatedTimestamp, String tags) {
         this.nutrientId = nutrientId;
-        this.calories = calories;
-        this.carbsG = carbsG;
-        this.proteinG = proteinG;
-        this.fatsG = fatsG;
-        this.timestamp = timestamp;
+        this.quantity = quantity;
+        this.intakeTimestamp = intakeTimestamp;
+        this.updatedTimestamp = updatedTimestamp;
         this.tags = tags;
     }
 }
