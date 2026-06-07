@@ -21,9 +21,9 @@ public class NutritionRepository {
         this.nutritionDao = db.nutritionDao();
     }
 
-    public void addIntake(String foodItem, double calories, double carbs, double protein, double fats, long timestamp) {
+    public void addIntake(Long nutrientId, double calories, double carbs, double protein, double fats, long timestamp, String tags) {
         executor.execute(() -> {
-            nutritionDao.insert(new NutritionIntake(foodItem, calories, carbs, protein, fats, timestamp));
+            nutritionDao.insert(new NutritionIntake(nutrientId, calories, carbs, protein, fats, timestamp, tags));
         });
     }
 

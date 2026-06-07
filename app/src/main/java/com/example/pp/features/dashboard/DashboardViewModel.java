@@ -16,6 +16,7 @@ import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.data.local.model.NutritionSummary;
 import com.example.pp.data.repository.HydrationRepository;
+import com.example.pp.data.repository.NutrientRepository;
 import com.example.pp.data.repository.NutritionRepository;
 import com.example.pp.data.repository.ScreenTimeRepository;
 import com.example.pp.data.repository.SleepRepository;
@@ -28,6 +29,7 @@ import java.util.List;
 public class DashboardViewModel extends AndroidViewModel {
     private final HydrationRepository hydrationRepository;
     private final NutritionRepository nutritionRepository;
+    private final NutrientRepository nutrientRepository;
     private final ScreenTimeRepository screenTimeRepository;
     private final SleepRepository sleepRepository;
     private final MutableLiveData<String> userName = new MutableLiveData<>("Champion");
@@ -36,6 +38,7 @@ public class DashboardViewModel extends AndroidViewModel {
         super(application);
         hydrationRepository = ((PPApplication) application).getHydrationRepository();
         nutritionRepository = ((PPApplication) application).getNutritionRepository();
+        nutrientRepository = ((PPApplication) application).getNutrientRepository();
         screenTimeRepository = ((PPApplication) application).getScreenTimeRepository();
         sleepRepository = ((PPApplication) application).getSleepRepository();
         loadUserName();
@@ -76,8 +79,8 @@ public class DashboardViewModel extends AndroidViewModel {
         WaterIntakeScheduler.logIntakeAndReschedule(getApplication(), ml, timestamp);
     }
 
-    public void addNutrition(String food, double cal, double carbs, double protein, double fats, long timestamp) {
-        nutritionRepository.addIntake(food, cal, carbs, protein, fats, timestamp);
+    public void addNutrition(Long nutrientId, double cal, double carbs, double protein, double fats, long timestamp, String tags) {
+        nutritionRepository.addIntake(nutrientId, cal, carbs, protein, fats, timestamp, tags);
     }
 
     public LiveData<List<ScreenTimeDao.AppUsageSummary>> getTodayScreenTime() {
@@ -86,6 +89,10 @@ public class DashboardViewModel extends AndroidViewModel {
 
     public LiveData<SleepEntity> getLastSleep() {
         return sleepRepository.getLastSleep();
+    }
+
+    public void getAllNutrients(NutrientRepository.OnNutrientsLoadedCallback callback) {
+        nutrientRepository.getAllNutrients(callback);
     }
 
     public void getLastSleepSync(OnSleepLoadedCallback callback) {

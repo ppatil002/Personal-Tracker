@@ -12,6 +12,8 @@ import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -26,6 +28,7 @@ import com.example.pp.R;
 import com.example.pp.core.orchestrator.sleep.SleepScheduler;
 import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
 import com.example.pp.data.local.dao.ScreenTimeDao;
+import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.features.analytics.AnalyticsActivity;
 import com.example.pp.features.screentime.analytics.ScreenTimeAnalyticsActivity;
@@ -38,8 +41,10 @@ import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -130,6 +135,11 @@ public class DashboardActivity extends AppCompatActivity {
         findViewById(R.id.cardSleep).setOnClickListener(v -> {
             viewModel.getLastSleepSync(this::showSleepEntryDialog);
         });
+
+        findViewById(R.id.cardNutrition).setOnClickListener(v -> {
+            showLogNutritionDialog();
+        });
+
         // TODO Do I need to manually schedule the activity again and again.
         SleepScheduler.schedule(this, null);
         WaterIntakeScheduler.schedule(this, null);
@@ -503,6 +513,141 @@ public class DashboardActivity extends AppCompatActivity {
         dialog.show();
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(R.color.card_background);
+        }
+    }
+
+    private void showLogNutritionDialog() {
+        Calendar selectedDateTime = Calendar.getInstance();
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_log_nutrition, null);
+        TextView tvDate = dialogView.findViewById(R.id.tvLogDate);
+        TextView tvTime = dialogView.findViewById(R.id.tvLogTime);
+        AutoCompleteTextView actvFood = dialogView.findViewById(R.id.actvFoodItem);
+        EditText etQuantity = dialogView.findViewById(R.id.etQuantity);
+        TextView tvUnitInfo = dialogView.findViewById(R.id.tvUnitInfo);
+        AutoCompleteTextView actvTags = dialogView.findViewById(R.id.actvTags);
+        TextView tvPreview = dialogView.findViewById(R.id.tvPreviewStats);
+
+        SimpleDateFormat sdfDate = new SimpleDateFormat("dd MMM, yyyy", Locale.getDefault());
+        SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+
+        tvDate.setText(sdfDate.format(selectedDateTime.getTime()));
+        tvTime.setText(sdfTime.format(selectedDateTime.getTime()));
+
+        tvDate.setOnClickListener(v -> {
+            new DatePickerDialog(this, (view, year, month, day) -> {
+                selectedDateTime.set(year, month, day);
+                tvDate.setText(sdfDate.format(selectedDateTime.getTime()));
+            }, selectedDateTime.get(Calendar.YEAR), selectedDateTime.get(Calendar.MONTH), selectedDateTime.get(Calendar.DAY_OF_MONTH)).show();
+        });
+
+        tvTime.setOnClickListener(v -> {
+            new TimePickerDialog(this, (view, hour, min) -> {
+                selectedDateTime.set(Calendar.HOUR_OF_DAY, hour);
+                selectedDateTime.set(Calendar.MINUTE, min);
+                tvTime.setText(sdfTime.format(selectedDateTime.getTime()));
+            }, selectedDateTime.get(Calendar.HOUR_OF_DAY), selectedDateTime.get(Calendar.MINUTE), false).show();
+        });
+
+        final NutrientEntity[] selectedNutrient = {null};
+
+        viewModel.getAllNutrients(nutrients -> {
+            List<String> names = new ArrayList<>();
+            for (NutrientEntity n : nutrients) names.add(n.getFoodItem());
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.item_dropdown_divider, R.id.tvDropdownItem, names);
+            actvFood.setAdapter(adapter);
+
+            actvFood.setOnClickListener(v -> actvFood.showDropDown());
+            actvFood.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus && actvFood.getAdapter() != null) {
+                    actvFood.postDelayed(actvFood::showDropDown, 200);
+                }
+            });
+            actvFood.setOnItemClickListener((parent, view, position, id) -> {
+                String selectedName = (String) parent.getItemAtPosition(position);
+                for (NutrientEntity n : nutrients) {
+                    if (n.getFoodItem().equals(selectedName)) {
+                        selectedNutrient[0] = n;
+                        tvUnitInfo.setText("Unit: " + n.getUnit() + " (Base: " + n.getPerUnit() + " " + n.getUnit() + ")");
+                        updateNutritionPreview(etQuantity.getText().toString(), selectedNutrient[0], tvPreview);
+                        break;
+                    }
+                }
+            });
+        });
+
+        String[] tagSuggestions = {"Pre workout", "Post Workout", "Morning Breakfast", "Lunch", "Evening Breakfast", "Dinner"};
+        ArrayAdapter<String> tagAdapter = new ArrayAdapter<>(this, R.layout.item_dropdown_divider, R.id.tvDropdownItem, tagSuggestions);
+        actvTags.setAdapter(tagAdapter);
+        actvTags.setOnClickListener(v -> actvTags.showDropDown());
+        actvTags.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus && actvTags.getAdapter() != null) {
+                actvTags.postDelayed(actvTags::showDropDown, 200);
+            }
+        });
+
+        etQuantity.addTextChangedListener(new android.text.TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+                updateNutritionPreview(s.toString(), selectedNutrient[0], tvPreview);
+            }
+            @Override public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle("Log Nutrition")
+                .setView(dialogView)
+                .setPositiveButton("Save", (d, which) -> {
+                    String qtyStr = etQuantity.getText().toString();
+                    if (selectedNutrient[0] == null || qtyStr.isEmpty()) {
+                        Toast.makeText(this, "Please select food and enter quantity", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    try {
+                        double qty = Double.parseDouble(qtyStr);
+                        double ratio = qty / selectedNutrient[0].getPerUnit();
+                        String tags = actvTags.getText().toString().trim();
+
+                        viewModel.addNutrition(
+                                selectedNutrient[0].getNutrientId(),
+                                selectedNutrient[0].getCalories() * ratio,
+                                selectedNutrient[0].getCarbs() * ratio,
+                                selectedNutrient[0].getProtein() * ratio,
+                                selectedNutrient[0].getFats() * ratio,
+                                selectedDateTime.getTimeInMillis(),
+                                tags.isEmpty() ? null : tags
+                        );
+                        Toast.makeText(this, "Nutrition logged", Toast.LENGTH_SHORT).show();
+                    } catch (NumberFormatException e) {
+                        Toast.makeText(this, "Invalid quantity", Toast.LENGTH_SHORT).show();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .create();
+
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.color.card_background);
+        }
+    }
+
+    private void updateNutritionPreview(String qtyStr, NutrientEntity nutrient, TextView tvPreview) {
+        if (nutrient == null || qtyStr.isEmpty()) {
+            tvPreview.setText("Calculated nutrients will appear here");
+            return;
+        }
+        try {
+            double qty = Double.parseDouble(qtyStr);
+            double ratio = qty / nutrient.getPerUnit();
+            double cals = nutrient.getCalories() * ratio;
+            double pro = nutrient.getProtein() * ratio;
+            double carb = nutrient.getCarbs() * ratio;
+            double fat = nutrient.getFats() * ratio;
+
+            tvPreview.setText(String.format(Locale.getDefault(),
+                    "%.1f kcal | P: %.1fg | C: %.1fg | F: %.1fg",
+                    cals, pro, carb, fat));
+        } catch (NumberFormatException e) {
+            tvPreview.setText("Invalid quantity");
         }
     }
 
