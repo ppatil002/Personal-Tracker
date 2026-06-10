@@ -394,27 +394,38 @@ public class AnalyticsActivity extends AppCompatActivity {
             tableExpandableContainer.setVisibility(expanded ? View.VISIBLE : View.GONE);
             tvExpandTable.setText(expanded ? "Tap to collapse" : "Tap to expand table");
         });
-        
-        viewModel.getRootCategories().observe(this, roots -> {
-            if (roots != null && !roots.isEmpty()) {
-                if (currentRootCategoryId == null) {
-                    currentRootCategoryId = roots.get(0).getCategoryId();
-                }
-                
-                // Update dropdown text based on current root category
-                if ("all".equals(currentRootCategoryId)) {
-                    tvSelectedTableCategory.setText("All Category");
-                } else {
+
+        viewModel.getSelectedTableCategoryId().observe(this, id -> {
+            currentRootCategoryId = id;
+            if ("all".equals(id)) {
+                tvSelectedTableCategory.setText("All Category");
+            } else {
+                List<CategoryEntity> roots = viewModel.getRootCategories().getValue();
+                if (roots != null) {
                     for (CategoryEntity root : roots) {
-                        if (root.getCategoryId().equals(currentRootCategoryId)) {
+                        if (root.getCategoryId().equals(id)) {
                             tvSelectedTableCategory.setText(root.getName());
                             break;
                         }
                     }
                 }
-
-                if (tvSelectedTableCategory.getText().equals("Category")) {
-                    tvSelectedTableCategory.setText(roots.get(0).getName());
+            }
+        });
+        
+        viewModel.getRootCategories().observe(this, roots -> {
+            if (roots != null && !roots.isEmpty()) {
+                String selectedId = viewModel.getSelectedTableCategoryId().getValue();
+                if (selectedId != null) {
+                    if ("all".equals(selectedId)) {
+                        tvSelectedTableCategory.setText("All Category");
+                    } else {
+                        for (CategoryEntity root : roots) {
+                            if (root.getCategoryId().equals(selectedId)) {
+                                tvSelectedTableCategory.setText(root.getName());
+                                break;
+                            }
+                        }
+                    }
                 }
             }
         });
