@@ -14,7 +14,7 @@ import com.example.pp.data.local.model.SyncStats;
 import java.util.List;
 
 @Dao
-public interface NutritionDao {
+public interface NutritionIntakeDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(NutritionIntake log);
 

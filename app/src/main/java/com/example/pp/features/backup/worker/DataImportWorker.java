@@ -62,7 +62,7 @@ public class DataImportWorker extends BaseFeatureWorker {
                 allStats.add(db.backgroundJobLogDao().upsertAll(backupData.backgroundJobLogs));
                 allStats.add(db.hydrationDao().upsertAll(backupData.hydrationIntakes));
                 allStats.add(db.nutrientDao().upsertAll(backupData.nutrientData));
-                allStats.add(db.nutritionDao().upsertAll(backupData.nutritionIntakes));
+                allStats.add(db.nutritionIntakeDao().upsertAll(backupData.nutritionIntakes));
                 allStats.add(db.sleepDao().upsertAll(backupData.sleep));
                 allStats.add(db.screenTimeDao().upsertAll(backupData.screenTime));
             });

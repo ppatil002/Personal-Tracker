@@ -2,18 +2,11 @@ package com.example.pp.data.local.entity;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
 @Entity(
     tableName = "nutrition_intake",
-    foreignKeys = @ForeignKey(
-        entity = NutrientEntity.class,
-        parentColumns = "nutrient_id",
-        childColumns = "nutrient_id",
-        onDelete = ForeignKey.SET_NULL
-    ),
     indices = {@Index("nutrient_id")}
 )
 public class NutritionIntake {
@@ -22,7 +15,7 @@ public class NutritionIntake {
     public long id;
 
     @ColumnInfo(name = "nutrient_id")
-    public Long nutrientId; // Can be null if food is deleted
+    public Long nutrientId;
 
     @ColumnInfo(name = "quantity")
     public double quantity;

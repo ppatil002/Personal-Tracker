@@ -11,8 +11,8 @@ import com.example.pp.data.local.dao.BackgroundJobLogDao;
 import com.example.pp.data.local.dao.CategoryDao;
 import com.example.pp.data.local.dao.CommonDao;
 import com.example.pp.data.local.dao.HydrationDao;
-import com.example.pp.data.local.dao.NutrientDao;
-import com.example.pp.data.local.dao.NutritionDao;
+import com.example.pp.data.local.dao.NutrientEntityDao;
+import com.example.pp.data.local.dao.NutritionIntakeDao;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.dao.SleepDao;
 import com.example.pp.data.local.dao.TagDao;
@@ -58,8 +58,8 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract BackgroundJobLogDao backgroundJobLogDao();
     public abstract TaskDao taskDao();
     public abstract HydrationDao hydrationDao();
-    public abstract NutritionDao nutritionDao();
-    public abstract NutrientDao nutrientDao();
+    public abstract NutritionIntakeDao nutritionIntakeDao();
+    public abstract NutrientEntityDao nutrientDao();
     public abstract ScreenTimeDao screenTimeDao();
     public abstract SleepDao sleepDao();
 
