@@ -9,6 +9,7 @@ import androidx.room.Transaction;
 
 import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.local.model.NutritionSummary;
+import com.example.pp.data.local.model.NutritionIntakeWithFood;
 import com.example.pp.data.local.model.SyncStats;
 
 import java.util.List;
@@ -50,4 +51,12 @@ public interface NutritionIntakeDao {
 
     @Query("SELECT * FROM nutrition_intake WHERE intake_timestamp >= :startOfDay ORDER BY intake_timestamp DESC LIMIT 1")
     LiveData<NutritionIntake> getLastIntake(long startOfDay);
+
+    @Transaction
+    @Query("SELECT * FROM nutrition_intake WHERE intake_timestamp >= :start AND intake_timestamp <= :end ORDER BY intake_timestamp ASC")
+    LiveData<List<NutritionIntakeWithFood>> getIntakesInRange(long start, long end);
+
+    @Transaction
+    @Query("SELECT * FROM nutrition_intake WHERE intake_timestamp >= :start AND intake_timestamp <= :end ORDER BY intake_timestamp ASC")
+    List<NutritionIntakeWithFood> getIntakesInRangeSync(long start, long end);
 }

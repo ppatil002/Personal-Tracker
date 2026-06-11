@@ -9,6 +9,7 @@ import com.example.pp.data.local.dao.HydrationDao;
 import com.example.pp.data.local.entity.HydrationIntake;
 
 import java.util.Calendar;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -63,5 +64,13 @@ public class HydrationRepository {
 
     public LiveData<HydrationIntake> getLastIntakeForDate(long startOfDay) {
         return hydrationDao.getLatestIntakeForDate(startOfDay);
+    }
+
+    public LiveData<List<HydrationIntake>> getIntakesInRange(long start, long end) {
+        return hydrationDao.getIntakesInRange(start, end);
+    }
+
+    public List<HydrationIntake> getIntakesInRangeSync(long start, long end) {
+        return hydrationDao.getIntakesInRangeSync(start, end);
     }
 }

@@ -128,6 +128,18 @@
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.PP" />
 
+        <activity
+            android:name=".features.hydration.analytics.WaterAnalyticsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.PP" />
+
+        <activity
+            android:name=".features.nutrition.analytics.NutritionAnalyticsActivity"
+            android:exported="false"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/Theme.PP" />
+
         <receiver
             android:name=".core.orchestrator.backup.BackupAlarmReceiver"
             android:enabled="true"

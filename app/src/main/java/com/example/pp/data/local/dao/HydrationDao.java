@@ -49,4 +49,10 @@ public interface HydrationDao {
 
     @Query("SELECT * FROM hydration_intakes")
     List<HydrationIntake> getAllIntakes();
+
+    @Query("SELECT * FROM hydration_intakes WHERE timestamp >= :start AND timestamp <= :end ORDER BY timestamp ASC")
+    LiveData<List<HydrationIntake>> getIntakesInRange(long start, long end);
+
+    @Query("SELECT * FROM hydration_intakes WHERE timestamp >= :start AND timestamp <= :end ORDER BY timestamp ASC")
+    List<HydrationIntake> getIntakesInRangeSync(long start, long end);
 }

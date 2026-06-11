@@ -103,6 +103,9 @@
                         android:textColor="@color/hydration_blue"
                         android:textSize="18sp"
                         android:textStyle="bold"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:background="?attr/selectableItemBackground"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent" />
 
@@ -312,12 +315,16 @@
                         android:layout_height="wrap_content">
 
                         <TextView
+                            android:id="@+id/tvNutritionTitle"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="🍴 Nutrition"
                             android:textColor="@color/nutrition_purple"
                             android:textSize="18sp"
                             android:textStyle="bold"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:background="?attr/selectableItemBackground"
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent" />
 

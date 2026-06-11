@@ -31,6 +31,8 @@ import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.features.analytics.AnalyticsActivity;
+import com.example.pp.features.hydration.analytics.WaterAnalyticsActivity;
+import com.example.pp.features.nutrition.analytics.NutritionAnalyticsActivity;
 import com.example.pp.features.screentime.analytics.ScreenTimeAnalyticsActivity;
 import com.example.pp.features.settings.MoreActivity;
 import com.example.pp.features.sleep.analytics.SleepAnalyticsActivity;
@@ -125,6 +127,14 @@ public class DashboardActivity extends AppCompatActivity {
         findViewById(R.id.btnMedWater).setOnClickListener(v -> viewModel.addWater(250, System.currentTimeMillis()));
         findViewById(R.id.btnCustomWater).setOnClickListener(v -> showCustomIntakeDialog());
         
+        findViewById(R.id.tvHydrationTitle).setOnClickListener(v -> {
+            startActivity(new Intent(this, WaterAnalyticsActivity.class));
+        });
+
+        findViewById(R.id.tvNutritionTitle).setOnClickListener(v -> {
+            startActivity(new Intent(this, NutritionAnalyticsActivity.class));
+        });
+
         findViewById(R.id.ivScreenTimeIcon).setOnClickListener(v -> {
             startActivity(new Intent(this, ScreenTimeAnalyticsActivity.class));
         });
