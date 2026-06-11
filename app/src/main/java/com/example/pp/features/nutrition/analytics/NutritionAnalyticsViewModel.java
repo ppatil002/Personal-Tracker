@@ -10,7 +10,7 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.PPApplication;
 import com.example.pp.core.enums.PeriodType;
-import com.example.pp.data.local.model.NutritionIntakeWithFood;
+import com.example.pp.data.local.model.GroupedNutritionIntake;
 import com.example.pp.data.repository.NutritionRepository;
 import com.example.pp.utils.DateUtils;
 
@@ -24,8 +24,8 @@ public class NutritionAnalyticsViewModel extends AndroidViewModel {
     private final MutableLiveData<PeriodType> periodType = new MutableLiveData<>(PeriodType.WEEK);
     private final MutableLiveData<Long> selectedDate = new MutableLiveData<>(DateUtils.getStartOfDay(System.currentTimeMillis()));
     private final MutableLiveData<String> periodLabel = new MutableLiveData<>("");
-    private final MediatorLiveData<List<NutritionIntakeWithFood>> nutritionData = new MediatorLiveData<>();
-    private LiveData<List<NutritionIntakeWithFood>> currentDataSource;
+    private final MediatorLiveData<List<GroupedNutritionIntake>> nutritionData = new MediatorLiveData<>();
+    private LiveData<List<GroupedNutritionIntake>> currentDataSource;
 
     public NutritionAnalyticsViewModel(@NonNull Application application) {
         super(application);
@@ -43,7 +43,7 @@ public class NutritionAnalyticsViewModel extends AndroidViewModel {
         long start = getRangeStart();
         long end = getRangeEnd();
         
-        currentDataSource = repository.getIntakesInRange(start, end);
+        currentDataSource = repository.getGroupedIntakesInRange(start, end);
         nutritionData.addSource(currentDataSource, nutritionData::setValue);
         updatePeriodLabel();
     }
@@ -123,5 +123,5 @@ public class NutritionAnalyticsViewModel extends AndroidViewModel {
     public LiveData<Long> getSelectedDate() { return selectedDate; }
     public void setSelectedDate(long date) { selectedDate.setValue(date); }
     public LiveData<String> getPeriodLabel() { return periodLabel; }
-    public LiveData<List<NutritionIntakeWithFood>> getNutritionData() { return nutritionData; }
+    public LiveData<List<GroupedNutritionIntake>> getNutritionData() { return nutritionData; }
 }

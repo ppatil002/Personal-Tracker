@@ -43,5 +43,14 @@ public class AppConstants {
     public static final String SLEEP_WORKER = "SleepWorker";
     public static final String WATER_WORKER = "WaterWorker";
 
+    public static final String[] MONTHS_OF_YEAR = new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
     public static final long SCREEN_BREAK_INTERVAL_MS = 20 * 60 * 1000; // 20 minutes
+
+    // Nutrition Targets
+    public static final double TARGET_CALORIES = 2000.0;
+    public static final double TARGET_CARBS = 200.0;
+    public static final double TARGET_PROTEIN = 120.0;
+    public static final double TARGET_FATS = 65.0;
+    public static final double TARGET_WATER_ML = 3000.0;
 }

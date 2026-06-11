@@ -55,4 +55,9 @@ public interface HydrationDao {
 
     @Query("SELECT * FROM hydration_intakes WHERE timestamp >= :start AND timestamp <= :end ORDER BY timestamp ASC")
     List<HydrationIntake> getIntakesInRangeSync(long start, long end);
+
+    @Query("SELECT (timestamp / 300000) * 300000 as timestamp, SUM(amount_ml) as amount_ml, 0 as id " +
+           "FROM hydration_intakes WHERE timestamp >= :start AND timestamp <= :end " +
+           "GROUP BY (timestamp / 300000) ORDER BY timestamp ASC")
+    LiveData<List<HydrationIntake>> getGroupedIntakesInRange(long start, long end);
 }

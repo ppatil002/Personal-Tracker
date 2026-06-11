@@ -19,6 +19,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.R;
+import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.ui.components.timeline.TimelineAdapter;
@@ -57,8 +58,6 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
     private RecyclerView rvTimeline;
     private TimelineAdapter timelineAdapter;
     private TextView tvTimelineTitle;
-
-    private static final float TARGET_WATER_ML = 3000f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,7 +122,7 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
         waterChart.getAxisRight().setEnabled(false);
 
         // Add Target Line
-        LimitLine ll = new LimitLine(TARGET_WATER_ML, "Target 3L");
+        LimitLine ll = new LimitLine((float) AppConstants.TARGET_WATER_ML, "Target 3L");
         ll.setLineColor(Color.WHITE);
         ll.setLineWidth(1f);
         ll.enableDashedLine(10f, 10f, 0f);
@@ -211,8 +210,8 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
             if (total == 0) {
                 colors.add(Color.TRANSPARENT);
             } else if (total < 1500) {
-                colors.add(Color.parseColor("#0C4A6E")); // Darker blue
-            } else if (total < TARGET_WATER_ML) {
+                colors.add(ContextCompat.getColor(this, R.color.hydration_dark_blue));
+            } else if (total < AppConstants.TARGET_WATER_ML) {
                 colors.add(ContextCompat.getColor(this, R.color.hydration_blue));
             } else {
                 colors.add(ContextCompat.getColor(this, R.color.emerald_green));
@@ -235,6 +234,7 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
     private void updateTimeline(long date) {
         List<HydrationIntake> data = viewModel.getHydrationData().getValue();
         List<HydrationIntake> filtered = new ArrayList<>();
+        int totalSoFar = 0;
         if (data != null) {
             for (HydrationIntake h : data) {
                 if (DateUtils.getStartOfDay(h.timestamp) == date) {
@@ -257,6 +257,7 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
 
         for (int i = 0; i < filtered.size(); i++) {
             HydrationIntake current = filtered.get(i);
+            totalSoFar += current.amountMl;
             
             // Add Gap if not first
             if (i > 0) {
@@ -267,18 +268,18 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
                 timelineItems.add(new TimelineAdapter.GapItem(gapLabel + (isWarning ? " gap detected" : " since last sip"), isWarning));
             }
 
-            int iconRes = R.drawable.ic_cup;
-            if (current.amountMl >= 500) iconRes = R.drawable.ic_bottle;
-            else if (current.amountMl >= 250) iconRes = R.drawable.ic_glass;
+            int percentage = (int) ((totalSoFar / AppConstants.TARGET_WATER_ML) * 100);
+            int remaining = (int) (AppConstants.TARGET_WATER_ML - totalSoFar);
+            if (remaining < 0) remaining = 0;
 
+            String stats = String.format(Locale.getDefault(), "Target: %d%%\n%dml left", percentage, remaining);
             boolean isRecent = (System.currentTimeMillis() - current.timestamp) < TimeUnit.MINUTES.toMillis(30);
 
             timelineItems.add(new TimelineAdapter.IntakeItem(
                     sdfTime.format(new Date(current.timestamp)),
                     current.amountMl + "ml",
                     null,
-                    iconRes,
-                    R.color.hydration_blue,
+                    stats,
                     isRecent
             ));
         }
@@ -296,7 +297,7 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
     }
 
     private void showPeriodPopup() {
-        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_period_type_sleep, null);
+        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_week_month_period, null);
         PopupWindow popup = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popup.setElevation(8f);
         popup.showAsDropDown(periodDropdown);
@@ -335,7 +336,7 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
         NumberPicker monthPicker = new NumberPicker(this);
         monthPicker.setMinValue(0);
         monthPicker.setMaxValue(11);
-        monthPicker.setDisplayedValues(new String[]{"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"});
+        monthPicker.setDisplayedValues(AppConstants.MONTHS_OF_YEAR);
         NumberPicker yearPicker = new NumberPicker(this);
         yearPicker.setMinValue(2020);
         yearPicker.setMaxValue(2030);

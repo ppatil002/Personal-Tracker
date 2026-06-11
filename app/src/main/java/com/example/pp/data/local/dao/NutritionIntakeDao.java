@@ -8,6 +8,7 @@ import androidx.room.Query;
 import androidx.room.Transaction;
 
 import com.example.pp.data.local.entity.NutritionIntake;
+import com.example.pp.data.local.model.GroupedNutritionIntake;
 import com.example.pp.data.local.model.NutritionSummary;
 import com.example.pp.data.local.model.NutritionIntakeWithFood;
 import com.example.pp.data.local.model.SyncStats;
@@ -59,4 +60,18 @@ public interface NutritionIntakeDao {
     @Transaction
     @Query("SELECT * FROM nutrition_intake WHERE intake_timestamp >= :start AND intake_timestamp <= :end ORDER BY intake_timestamp ASC")
     List<NutritionIntakeWithFood> getIntakesInRangeSync(long start, long end);
+
+    @Query("SELECT (ni.intake_timestamp / 300000) * 300000 as intake_timestamp, " +
+           "SUM((ni.quantity / nd.per_unit) * nd.calories) as totalCalories, " +
+           "SUM((ni.quantity / nd.per_unit) * nd.carbs) as totalCarbs, " +
+           "SUM((ni.quantity / nd.per_unit) * nd.protein) as totalProtein, " +
+           "SUM((ni.quantity / nd.per_unit) * nd.fats) as totalFats, " +
+           "GROUP_CONCAT(nd.food_item, ', ') as foodItems, " +
+           "GROUP_CONCAT(ni.tags, ', ') as tags " +
+           "FROM nutrition_intake ni " +
+           "JOIN nutrient_data nd ON ni.nutrient_id = nd.nutrient_id " +
+           "WHERE ni.intake_timestamp >= :start AND ni.intake_timestamp <= :end " +
+           "GROUP BY (ni.intake_timestamp / 300000) " +
+           "ORDER BY intake_timestamp ASC")
+    LiveData<List<GroupedNutritionIntake>> getGroupedIntakesInRange(long start, long end);
 }

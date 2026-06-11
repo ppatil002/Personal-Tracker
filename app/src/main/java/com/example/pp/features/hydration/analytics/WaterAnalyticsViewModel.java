@@ -43,7 +43,7 @@ public class WaterAnalyticsViewModel extends AndroidViewModel {
         long start = getRangeStart();
         long end = getRangeEnd();
         
-        currentDataSource = repository.getIntakesInRange(start, end);
+        currentDataSource = repository.getGroupedIntakesInRange(start, end);
         hydrationData.addSource(currentDataSource, hydrationData::setValue);
         updatePeriodLabel();
     }

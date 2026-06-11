@@ -3,7 +3,6 @@ package com.example.pp.ui.components.timeline;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -26,16 +25,14 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         public String time;
         public String amount;
         public String subtitle;
-        public int iconRes;
-        public int iconTint;
+        public String stats;
         public boolean isRecent;
 
-        public IntakeItem(String time, String amount, String subtitle, int iconRes, int iconTint, boolean isRecent) {
+        public IntakeItem(String time, String amount, String subtitle, String stats, boolean isRecent) {
             this.time = time;
             this.amount = amount;
             this.subtitle = subtitle;
-            this.iconRes = iconRes;
-            this.iconTint = iconTint;
+            this.stats = stats;
             this.isRecent = isRecent;
         }
     }
@@ -90,8 +87,7 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     }
 
     static class IntakeViewHolder extends RecyclerView.ViewHolder {
-        TextView tvTime, tvTitle, tvSubtitle;
-        ImageView ivIcon;
+        TextView tvTime, tvTitle, tvSubtitle, tvStats;
         View timelineLine;
 
         IntakeViewHolder(View view) {
@@ -99,7 +95,7 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             tvTime = view.findViewById(R.id.tvIntakeTime);
             tvTitle = view.findViewById(R.id.tvIntakeTitle);
             tvSubtitle = view.findViewById(R.id.tvIntakeSubtitle);
-            ivIcon = view.findViewById(R.id.ivIntakeIcon);
+            tvStats = view.findViewById(R.id.tvIntakeStats);
             timelineLine = view.findViewById(R.id.timelineLine);
         }
 
@@ -112,8 +108,12 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             } else {
                 tvSubtitle.setVisibility(View.GONE);
             }
-            ivIcon.setImageResource(item.iconRes);
-            ivIcon.setColorFilter(ContextCompat.getColor(itemView.getContext(), item.iconTint));
+            if (item.stats != null) {
+                tvStats.setText(item.stats);
+                tvStats.setVisibility(View.VISIBLE);
+            } else {
+                tvStats.setVisibility(View.GONE);
+            }
         }
     }
 
@@ -128,11 +128,11 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         }
 
         void bind(GapItem item) {
-            tvLabel.setText(item.gapLabel);
             if (item.isWarning) {
+                tvLabel.setText("⚠️ " + item.gapLabel);
                 tvLabel.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.error_red));
-                // Optional: add a warning icon prefix if needed
             } else {
+                tvLabel.setText(item.gapLabel);
                 tvLabel.setTextColor(ContextCompat.getColor(itemView.getContext(), R.color.text_secondary));
             }
         }

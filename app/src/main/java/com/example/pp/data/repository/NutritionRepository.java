@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.NutritionIntakeDao;
 import com.example.pp.data.local.entity.NutritionIntake;
+import com.example.pp.data.local.model.GroupedNutritionIntake;
 import com.example.pp.data.local.model.NutritionIntakeWithFood;
 import com.example.pp.data.local.model.NutritionSummary;
 
@@ -40,6 +41,10 @@ public class NutritionRepository {
 
     public LiveData<List<NutritionIntakeWithFood>> getIntakesInRange(long start, long end) {
         return nutritionDao.getIntakesInRange(start, end);
+    }
+
+    public LiveData<List<GroupedNutritionIntake>> getGroupedIntakesInRange(long start, long end) {
+        return nutritionDao.getGroupedIntakesInRange(start, end);
     }
 
     public List<NutritionIntakeWithFood> getIntakesInRangeSync(long start, long end) {

@@ -70,6 +70,10 @@ public class HydrationRepository {
         return hydrationDao.getIntakesInRange(start, end);
     }
 
+    public LiveData<List<HydrationIntake>> getGroupedIntakesInRange(long start, long end) {
+        return hydrationDao.getGroupedIntakesInRange(start, end);
+    }
+
     public List<HydrationIntake> getIntakesInRangeSync(long start, long end) {
         return hydrationDao.getIntakesInRangeSync(start, end);
     }

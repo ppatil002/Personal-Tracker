@@ -19,8 +19,9 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.R;
+import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.PeriodType;
-import com.example.pp.data.local.model.NutritionIntakeWithFood;
+import com.example.pp.data.local.model.GroupedNutritionIntake;
 import com.example.pp.ui.components.timeline.TimelineAdapter;
 import com.example.pp.utils.DateUtils;
 import com.github.mikephil.charting.charts.BarChart;
@@ -57,8 +58,6 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
     private RecyclerView rvTimeline;
     private TimelineAdapter timelineAdapter;
     private TextView tvTimelineTitle;
-
-    private static final float TARGET_CALORIES = 2000f;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -123,7 +122,7 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
         nutritionChart.getAxisRight().setEnabled(false);
 
         // Add Target Line
-        LimitLine ll = new LimitLine(TARGET_CALORIES, "Target 2k");
+        LimitLine ll = new LimitLine((float) AppConstants.TARGET_CALORIES, "Target 2k");
         ll.setLineColor(Color.WHITE);
         ll.setLineWidth(1f);
         ll.enableDashedLine(10f, 10f, 0f);
@@ -177,7 +176,7 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
         });
     }
 
-    private void renderChart(List<NutritionIntakeWithFood> data) {
+    private void renderChart(List<GroupedNutritionIntake> data) {
         List<BarEntry> entries = new ArrayList<>();
         List<String> labels = new ArrayList<>();
         List<Integer> colors = new ArrayList<>();
@@ -188,11 +187,9 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
 
         Map<Long, Double> dailyTotals = new HashMap<>();
         if (data != null) {
-            for (NutritionIntakeWithFood item : data) {
-                if (item.food == null) continue;
-                long day = DateUtils.getStartOfDay(item.intake.intakeTimestamp);
-                double calories = (item.intake.quantity / item.food.getPerUnit()) * item.food.getCalories();
-                dailyTotals.put(day, dailyTotals.getOrDefault(day, 0.0) + calories);
+            for (GroupedNutritionIntake item : data) {
+                long day = DateUtils.getStartOfDay(item.intake_timestamp);
+                dailyTotals.put(day, dailyTotals.getOrDefault(day, 0.0) + item.totalCalories);
             }
         }
 
@@ -211,8 +208,8 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
             if (total == 0) {
                 colors.add(Color.TRANSPARENT);
             } else if (total < 1200) {
-                colors.add(Color.parseColor("#4C1D95")); // Low
-            } else if (total < TARGET_CALORIES) {
+                colors.add(ContextCompat.getColor(this, R.color.nutrition_dark_purple));
+            } else if (total < AppConstants.TARGET_CALORIES) {
                 colors.add(ContextCompat.getColor(this, R.color.nutrition_purple));
             } else {
                 colors.add(ContextCompat.getColor(this, R.color.emerald_green));
@@ -233,11 +230,11 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
     }
 
     private void updateTimeline(long date) {
-        List<NutritionIntakeWithFood> data = viewModel.getNutritionData().getValue();
-        List<NutritionIntakeWithFood> filtered = new ArrayList<>();
+        List<GroupedNutritionIntake> data = viewModel.getNutritionData().getValue();
+        List<GroupedNutritionIntake> filtered = new ArrayList<>();
         if (data != null) {
-            for (NutritionIntakeWithFood item : data) {
-                if (DateUtils.getStartOfDay(item.intake.intakeTimestamp) == date) {
+            for (GroupedNutritionIntake item : data) {
+                if (DateUtils.getStartOfDay(item.intake_timestamp) == date) {
                     filtered.add(item);
                 }
             }
@@ -255,37 +252,63 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
         List<TimelineAdapter.TimelineItem> timelineItems = new ArrayList<>();
         SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.getDefault());
 
+        double runningCal = 0, runningP = 0, runningC = 0, runningF = 0;
+
         for (int i = 0; i < filtered.size(); i++) {
-            NutritionIntakeWithFood current = filtered.get(i);
+            GroupedNutritionIntake current = filtered.get(i);
+            runningCal += current.totalCalories;
+            runningP += current.totalProtein;
+            runningC += current.totalCarbs;
+            runningF += current.totalFats;
             
             if (i > 0) {
-                NutritionIntakeWithFood prev = filtered.get(i - 1);
-                long gapMs = current.intake.intakeTimestamp - prev.intake.intakeTimestamp;
+                GroupedNutritionIntake prev = filtered.get(i - 1);
+                long gapMs = current.intake_timestamp - prev.intake_timestamp;
                 String gapLabel = formatGap(gapMs);
                 boolean isWarning = gapMs > TimeUnit.HOURS.toMillis(5);
                 timelineItems.add(new TimelineAdapter.GapItem(gapLabel + (isWarning ? " gap detected" : " elapsed"), isWarning));
             }
 
-            double calories = 0;
-            String foodName = "Unknown";
-            if (current.food != null) {
-                calories = (current.intake.quantity / current.food.getPerUnit()) * current.food.getCalories();
-                foodName = current.food.getFoodItem();
-            }
+            boolean isRecent = (System.currentTimeMillis() - current.intake_timestamp) < TimeUnit.MINUTES.toMillis(30);
 
-            boolean isRecent = (System.currentTimeMillis() - current.intake.intakeTimestamp) < TimeUnit.MINUTES.toMillis(30);
+            String title = getDisplayTag(current.tags);
+
+            String stats = String.format(Locale.getDefault(),
+                    "kCal: %.0f (%.0f%%), P: %.1f (%.0f%%)\nC: %.1f (%.0f%%), F: %.1f (%.0f%%)",
+                    current.totalCalories, (runningCal / AppConstants.TARGET_CALORIES) * 100,
+                    current.totalProtein, (runningP / AppConstants.TARGET_PROTEIN) * 100,
+                    current.totalCarbs, (runningC / AppConstants.TARGET_CARBS) * 100,
+                    current.totalFats, (runningF / AppConstants.TARGET_FATS) * 100);
 
             timelineItems.add(new TimelineAdapter.IntakeItem(
-                    sdfTime.format(new Date(current.intake.intakeTimestamp)),
-                    String.format(Locale.getDefault(), "%.0f kcal", calories),
-                    foodName + " (" + (int)current.intake.quantity + (current.food != null ? current.food.getUnit() : "") + ")",
-                    R.drawable.ic_restaurant,
-                    R.color.nutrition_purple,
+                    sdfTime.format(new Date(current.intake_timestamp)),
+                    title,
+                    current.foodItems,
+                    stats,
                     isRecent
             ));
         }
 
         timelineAdapter.setItems(timelineItems);
+    }
+
+    private String getDisplayTag(String tags) {
+        if (tags == null || tags.trim().isEmpty()) return "Meal";
+        String[] parts = tags.split(",\\s*");
+        java.util.LinkedHashSet<String> uniqueTags = new java.util.LinkedHashSet<>();
+        for (String p : parts) {
+            String clean = p.trim();
+            if (!clean.isEmpty()) uniqueTags.add(clean);
+        }
+        if (uniqueTags.isEmpty()) return "Meal";
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (String s : uniqueTags) {
+            if (!first) sb.append(", ");
+            sb.append(s);
+            first = false;
+        }
+        return sb.toString();
     }
 
     private String formatGap(long ms) {
@@ -298,7 +321,7 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
     }
 
     private void showPeriodPopup() {
-        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_period_type_sleep, null);
+        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_week_month_period, null);
         PopupWindow popup = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popup.setElevation(8f);
         popup.showAsDropDown(periodDropdown);
@@ -337,7 +360,7 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
         NumberPicker monthPicker = new NumberPicker(this);
         monthPicker.setMinValue(0);
         monthPicker.setMaxValue(11);
-        monthPicker.setDisplayedValues(new String[]{"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"});
+        monthPicker.setDisplayedValues(AppConstants.MONTHS_OF_YEAR);
         NumberPicker yearPicker = new NumberPicker(this);
         yearPicker.setMinValue(2020);
         yearPicker.setMaxValue(2030);

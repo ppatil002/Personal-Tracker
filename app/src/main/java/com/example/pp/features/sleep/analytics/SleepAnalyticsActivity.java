@@ -20,6 +20,7 @@ import androidx.core.content.ContextCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.pp.R;
+import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.features.analytics.chart.TimeMarkerView;
@@ -262,7 +263,7 @@ public class SleepAnalyticsActivity extends AppCompatActivity {
                 colors.add(Color.TRANSPARENT);
             } else if (duration < DANGER_6H_MS) {
                 // Poor sleep
-                colors.add(Color.parseColor("#4C1D95"));
+                colors.add(ContextCompat.getColor(this, R.color.nutrition_dark_purple));
             } else if (duration < TARGET_8H_MS) {
                 // Fair sleep
                 colors.add(ContextCompat.getColor(this, R.color.accent_purple));
@@ -304,7 +305,7 @@ public class SleepAnalyticsActivity extends AppCompatActivity {
     }
 
     private void showPeriodPopup() {
-        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_period_type_sleep, null);
+        View popupView = LayoutInflater.from(this).inflate(R.layout.popup_week_month_period, null);
         PopupWindow popup = new PopupWindow(popupView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
         popup.setElevation(8f);
         popup.showAsDropDown(periodDropdown);
@@ -343,7 +344,7 @@ public class SleepAnalyticsActivity extends AppCompatActivity {
         NumberPicker monthPicker = new NumberPicker(this);
         monthPicker.setMinValue(0);
         monthPicker.setMaxValue(11);
-        monthPicker.setDisplayedValues(new String[]{"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"});
+        monthPicker.setDisplayedValues(AppConstants.MONTHS_OF_YEAR);
         NumberPicker yearPicker = new NumberPicker(this);
         yearPicker.setMinValue(2020);
         yearPicker.setMaxValue(2030);

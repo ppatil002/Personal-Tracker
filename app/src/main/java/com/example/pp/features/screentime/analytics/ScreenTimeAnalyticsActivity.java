@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.R;
+import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.features.analytics.chart.TimeMarkerView;
@@ -495,7 +496,7 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         NumberPicker monthPicker = new NumberPicker(this);
         monthPicker.setMinValue(0);
         monthPicker.setMaxValue(11);
-        monthPicker.setDisplayedValues(new String[]{"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"});
+        monthPicker.setDisplayedValues(AppConstants.MONTHS_OF_YEAR);
         NumberPicker yearPicker = new NumberPicker(this);
         yearPicker.setMinValue(2020);
         yearPicker.setMaxValue(2030);

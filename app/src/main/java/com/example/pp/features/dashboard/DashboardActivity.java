@@ -25,6 +25,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.pp.R;
+import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.orchestrator.sleep.SleepScheduler;
 import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
 import com.example.pp.data.local.dao.ScreenTimeDao;
@@ -167,11 +168,11 @@ public class DashboardActivity extends AppCompatActivity {
 
         viewModel.getTodayWaterTotal().observe(this, total -> {
             int current = total != null ? total : 0;
-            int target = 3000;
-            float percent = (float) current / target;
+            double target = AppConstants.TARGET_WATER_ML;
+            float percent = (float) (current / target);
             waveView.setProgress(percent);
             tvWaterPercent.setText(Math.round(percent * 100) + "%");
-            tvWaterTarget.setText(current + "/" + target + " ml");
+            tvWaterTarget.setText(current + "/" + (int)target + " ml");
         });
 
         viewModel.getTodayWaterCount().observe(this, count -> {
@@ -195,10 +196,10 @@ public class DashboardActivity extends AppCompatActivity {
             double protein = summary != null && summary.totalProtein != null ? summary.totalProtein : 0.0;
             double fats = summary != null && summary.totalFats != null ? summary.totalFats : 0.0;
 
-            double targetCals = 2000.0;
-            double targetCarbs = 200.0;
-            double targetProtein = 150.0;
-            double targetFats = 65.0;
+            double targetCals = AppConstants.TARGET_CALORIES;
+            double targetCarbs = AppConstants.TARGET_CARBS;
+            double targetProtein = AppConstants.TARGET_PROTEIN;
+            double targetFats = AppConstants.TARGET_FATS;
 
             tvRemainingCals.setText(String.format(Locale.getDefault(), "%.0f kcal", Math.max(0, targetCals - cals)));
             tvCalorieStats.setText(String.format(Locale.getDefault(), "%.0f / %.0f", cals, targetCals));
