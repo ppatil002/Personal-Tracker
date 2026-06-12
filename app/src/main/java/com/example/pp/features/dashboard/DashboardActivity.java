@@ -237,17 +237,17 @@ public class DashboardActivity extends AppCompatActivity {
             long diffMillis = totalTargetMillis - totalUsedMillis;
 
             if (diffMillis < 0) {
-                tvRemainingTime.setText("-" + formatMillis(Math.abs(diffMillis)));
+                tvRemainingTime.setText("-" + DateUtils.convertTimestampIntoHoursAndMinutes(Math.abs(diffMillis)));
                 tvRemainingTime.setTextColor(getColor(R.color.error_red));
             } else {
-                tvRemainingTime.setText(formatMillis(diffMillis));
+                tvRemainingTime.setText(DateUtils.convertTimestampIntoHoursAndMinutes(diffMillis));
                 if (diffMillis <= 30 * 60 * 1000) {
                     tvRemainingTime.setTextColor(getColor(R.color.warning_orange));
                 } else {
                     tvRemainingTime.setTextColor(getColor(R.color.white));
                 }
             }
-            tvUsedToday.setText("USED TODAY: " + formatMillis(totalUsedMillis));
+            tvUsedToday.setText("USED TODAY: " + DateUtils.convertTimestampIntoHoursAndMinutes(totalUsedMillis));
 
             // Show top 3 apps
             topAppsContainer.removeAllViews();
@@ -265,7 +265,7 @@ public class DashboardActivity extends AppCompatActivity {
                 long yesterday = DateUtils.getStartOfDay(sleep.date - 24 * 3600 * 1000L);
                 viewModel.getSleepByDateSync(yesterday, prevSleep -> {
                     if (prevSleep != null && prevSleep.startTime != 0 && prevSleep.endTime != 0) {
-                        String duration = formatMillis(prevSleep.endTime - prevSleep.startTime).toUpperCase();
+                        String duration = DateUtils.convertTimestampIntoHoursAndMinutes(prevSleep.endTime - prevSleep.startTime).toUpperCase();
                         tvLastNight.setText("LAST NIGHT: " + duration);
                     }
                 });
@@ -293,7 +293,7 @@ public class DashboardActivity extends AppCompatActivity {
         if (sleep.startTime != 0 && sleep.endTime != 0) {
             // Last sleep session finished
             long duration = sleep.endTime - sleep.startTime;
-            tvLastNight.setText("LAST NIGHT: " + formatMillis(duration).toUpperCase());
+            tvLastNight.setText("LAST NIGHT: " + DateUtils.convertTimestampIntoHoursAndMinutes(duration).toUpperCase());
             tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28); // Default size
             
             // Percentage based on 8h target
@@ -316,7 +316,7 @@ public class DashboardActivity extends AppCompatActivity {
             tvCountdown.setTextSize(TypedValue.COMPLEX_UNIT_SP, 28); // Default size
             tvLastNight.setText("LAST NIGHT: --");
             if (now < bedtime) {
-                tvCountdown.setText(formatMillis(bedtime - now));
+                tvCountdown.setText(DateUtils.convertTimestampIntoHoursAndMinutes(bedtime - now));
                 tvPotential.setText("100% POTENTIAL");
                 sleepProgress.setProgress(100);
                 updateSleepProgressColor(100);
@@ -727,19 +727,10 @@ public class DashboardActivity extends AppCompatActivity {
         }
 
         tvAppName.setText(name);
-        tvAppUsage.setText(formatMillis(app.totalDuration));
+        tvAppUsage.setText(DateUtils.convertTimestampIntoHoursAndMinutes(app.totalDuration));
         topAppsContainer.addView(view);
     }
 
-    private String formatMillis(long millis) {
-        long minutes = (millis / (1000 * 60)) % 60;
-        long hours = (millis / (1000 * 60 * 60));
-        if (hours > 0) {
-            return hours + "h " + minutes + "m";
-        } else {
-            return minutes + "m";
-        }
-    }
 
     private void updateLastIntakeStrings() {
         tvLastIntake.setText(formatDuration(lastWaterTimestamp));

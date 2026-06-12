@@ -32,6 +32,7 @@ import com.example.pp.R;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.dao.ScreenTimeDao;
+import com.example.pp.utils.DateUtils;
 import com.example.pp.features.analytics.chart.TimeMarkerView;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
@@ -142,7 +143,7 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
             @Override
             public String getFormattedValue(float value) {
                 if (viewModel.getBreakdownType().getValue() == ScreenTimeAnalyticsViewModel.BreakdownType.SCREEN_TIME) {
-                    return formatMillis((long) value);
+                    return DateUtils.convertTimestampIntoHoursAndMinutes((long) value);
                 }
                 return String.format(Locale.getDefault(), "%.0f", value);
             }
@@ -217,7 +218,7 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         }
 
         if (bType == ScreenTimeAnalyticsViewModel.BreakdownType.SCREEN_TIME) {
-            tvAvgValue.setText(formatMillis((long) s.avgValue));
+            tvAvgValue.setText(DateUtils.convertTimestampIntoHoursAndMinutes((long) s.avgValue));
         } else {
             tvAvgValue.setText(String.format(Locale.getDefault(), "%.1f", s.avgValue));
         }
@@ -620,7 +621,7 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
             
             ScreenTimeAnalyticsViewModel.BreakdownType bType = viewModel.getBreakdownType().getValue();
             if (bType == ScreenTimeAnalyticsViewModel.BreakdownType.SCREEN_TIME) {
-                holder.tvDuration.setText(formatMillis(item.totalDuration));
+                holder.tvDuration.setText(DateUtils.convertTimestampIntoHoursAndMinutes(item.totalDuration));
                 float percent = totalDuration > 0 ? (float) item.totalDuration / totalDuration * 100 : 0;
                 holder.tvPercent.setText(String.format(Locale.getDefault(), "%.1f%%", percent));
             } else if (bType == ScreenTimeAnalyticsViewModel.BreakdownType.TIMES_OPENED) {
@@ -662,10 +663,4 @@ public class ScreenTimeAnalyticsActivity extends AppCompatActivity {
         }
     }
 
-    private String formatMillis(long millis) {
-        long minutes = (millis / (1000 * 60)) % 60;
-        long hours = (millis / (1000 * 60 * 60));
-        if (hours > 0) return hours + "h " + minutes + "m";
-        return minutes + "m";
-    }
 }

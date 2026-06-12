@@ -116,7 +116,7 @@ public class CategoryRepository {
                         "Milk", "🥛", "#E5E7EB", now));
                 categoryDao.insert(new CategoryEntity("1.8", "1",
                         "Gym", "🏋️", "#38BDF8", now));
-                
+
                 // RECURRING
                 categoryDao.insert(new CategoryEntity("2", null,
                         "Recurring", "🔁", "#A855F7", now));
@@ -132,7 +132,7 @@ public class CategoryRepository {
                         "Water", "🚰", "#3B82F6", now));
                 categoryDao.insert(new CategoryEntity("2.6", "2",
                         "Gas", "🔥", "#F97316", now));
-                
+
                 // MONEY TRANSFER
                 categoryDao.insert(new CategoryEntity("3", null,
                         "Money Transfer", "💸", "#22D3EE", now));

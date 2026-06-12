@@ -19,6 +19,7 @@ import com.example.pp.data.local.entity.TransactionTagCrossRef;
 import com.example.pp.data.repository.CategoryRepository;
 import com.example.pp.data.repository.TagRepository;
 import com.example.pp.data.repository.TransactionRepository;
+import com.example.pp.utils.DateUtils;
 import com.example.pp.domain.model.CategoryTreeNode;
 import com.example.pp.features.analytics.model.AnalyticsSummary;
 import com.example.pp.features.analytics.model.CategoryExpense;
@@ -450,7 +451,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
                 }
                 if (!relevant) continue;
 
-                long periodKey = type == PeriodType.YEAR ? floorToMonth(t.getTransactionDate()) : floorToDay(t.getTransactionDate());
+                long periodKey = type == PeriodType.YEAR ? DateUtils.getStartOfMonth(t.getTransactionDate()) : DateUtils.getStartOfDay(t.getTransactionDate());
                 Map<String, Double> dayMap = matrix.computeIfAbsent(periodKey, k -> new HashMap<>());
                 Double current = dayMap.get(t.getCategoryId());
                 dayMap.put(t.getCategoryId(), (current != null ? current : 0.0) + t.getAmount());
@@ -610,7 +611,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
                     List<DailyExpense> lineTrend = new ArrayList<>();
                     Map<Long, Double> dailyMap = new HashMap<>();
                     for (TransactionEntity t : rootTx) {
-                        long day = floorToDay(t.getTransactionDate());
+                        long day = DateUtils.getStartOfDay(t.getTransactionDate());
                         dailyMap.put(day, dailyMap.getOrDefault(day, 0.0) + t.getAmount());
                     }
 
@@ -766,15 +767,15 @@ public class AnalyticsViewModel extends AndroidViewModel {
         Map<Long, Double> dailyMap = new HashMap<>();
         for (TransactionEntity t : transactions) {
             double amount = Math.max(0, t.getAmount()); // Replace negative with 0
-            long day = floorToDay(t.getTransactionDate());
+            long day = DateUtils.getStartOfDay(t.getTransactionDate());
             dailyMap.put(day, dailyMap.getOrDefault(day, 0.0) + amount);
         }
 
         List<DailyExpense> trend = new ArrayList<>();
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(start);
-        long currentDay = floorToDay(cal.getTimeInMillis());
-        long endDay = floorToDay(end - 1); // end is exclusive
+        long currentDay = DateUtils.getStartOfDay(cal.getTimeInMillis());
+        long endDay = DateUtils.getStartOfDay(end - 1); // end is exclusive
 
         while (currentDay <= endDay) {
             double amt = dailyMap.getOrDefault(currentDay, 0.0);
@@ -784,26 +785,6 @@ public class AnalyticsViewModel extends AndroidViewModel {
         return trend;
     }
 
-    private long floorToDay(long timestamp) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(timestamp);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        return cal.getTimeInMillis();
-    }
-
-    private long floorToMonth(long timestamp) {
-        Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(timestamp);
-        cal.set(Calendar.DAY_OF_MONTH, 1);
-        cal.set(Calendar.HOUR_OF_DAY, 0);
-        cal.set(Calendar.MINUTE, 0);
-        cal.set(Calendar.SECOND, 0);
-        cal.set(Calendar.MILLISECOND, 0);
-        return cal.getTimeInMillis();
-    }
 
     public void loadTransactionsForPeriod(long timestamp, String rootCategoryId) {
         PeriodType type = periodType.getValue();

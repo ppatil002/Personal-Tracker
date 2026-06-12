@@ -4,6 +4,7 @@ import android.content.Context;
 import android.widget.TextView;
 
 import com.example.pp.R;
+import com.example.pp.utils.DateUtils;
 import com.github.mikephil.charting.components.MarkerView;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.highlight.Highlight;
@@ -44,19 +45,13 @@ public class TimeMarkerView extends MarkerView {
         }
         
         if (displayMode == DisplayMode.TIME) {
-            tvAmount.setText(formatMillis((long) e.getY()));
+            tvAmount.setText(DateUtils.convertTimestampIntoHoursAndMinutes((long) e.getY()));
         } else {
             tvAmount.setText(String.valueOf((int) e.getY()));
         }
         super.refreshContent(e, highlight);
     }
 
-    private String formatMillis(long millis) {
-        long minutes = (millis / (1000 * 60)) % 60;
-        long hours = (millis / (1000 * 60 * 60));
-        if (hours > 0) return hours + "h " + minutes + "m";
-        return minutes + "m";
-    }
 
     @Override
     public MPPointF getOffset() {

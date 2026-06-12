@@ -23,6 +23,7 @@ import com.example.pp.R;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.entity.SleepEntity;
+import com.example.pp.utils.DateUtils;
 import com.example.pp.features.analytics.chart.TimeMarkerView;
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.components.LimitLine;
@@ -196,7 +197,7 @@ public class SleepAnalyticsActivity extends AppCompatActivity {
 
         SimpleDateFormat sdfDate = new SimpleDateFormat("dd MMM yyyy", Locale.getDefault());
         tvSelectedDate.setText(sdfDate.format(new java.util.Date(date)));
-        tvSelectedDuration.setText(formatMillis(duration));
+        tvSelectedDuration.setText(DateUtils.convertTimestampIntoHoursAndMinutes(duration));
 
         if (selectedEntity != null && selectedEntity.startTime != 0 && selectedEntity.endTime != 0) {
             SimpleDateFormat sdfTime = new SimpleDateFormat("HH:mm", Locale.getDefault());
@@ -221,7 +222,7 @@ public class SleepAnalyticsActivity extends AppCompatActivity {
         });
 
         viewModel.getStats().observe(this, s -> {
-            tvAvgValue.setText(formatMillis((long) s.avgValue));
+            tvAvgValue.setText(DateUtils.convertTimestampIntoHoursAndMinutes((long) s.avgValue));
             String change = String.format(Locale.getDefault(), "%.1f%%", Math.abs(s.percentChange));
             tvPercentChange.setText((s.percentChange >= 0 ? "+" : "-") + change);
             tvPercentChange.setTextColor(ContextCompat.getColor(this, s.percentChange >= 0 ? R.color.emerald_green : R.color.error_red));
@@ -374,9 +375,4 @@ public class SleepAnalyticsActivity extends AppCompatActivity {
         builder.show();
     }
 
-    private String formatMillis(long millis) {
-        long hours = millis / (3600 * 1000);
-        long mins = (millis % (3600 * 1000)) / (60 * 1000);
-        return hours + "h " + mins + "m";
-    }
 }
