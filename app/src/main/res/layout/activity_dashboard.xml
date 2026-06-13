@@ -13,7 +13,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="20dp"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="20dp"
         app:layout_constraintTop_toTopOf="parent">
 
         <TextView
@@ -24,15 +25,6 @@
             android:textColor="@color/on_surface"
             android:textSize="32sp"
             android:fontFamily="sans-serif-black" />
-
-        <TextView
-            android:id="@+id/tvQuote"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="&quot;Push harder than yesterday if you want a different tomorrow.&quot;"
-            android:textColor="@color/text_secondary"
-            android:textStyle="italic" />
     </LinearLayout>
 
     <androidx.core.widget.NestedScrollView
@@ -48,7 +40,132 @@
             android:paddingHorizontal="16dp"
             android:paddingBottom="40dp">
 
-            <!-- Consistency Card -->
+            <!-- 1. Quote of the Day Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardQuote"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/surface_container"
+                app:cardCornerRadius="16dp"
+                app:strokeColor="@color/stroke_color"
+                app:strokeWidth="1dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:id="@+id/tvQuoteMain"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:text="“ The road to success begins with knowing what you need to know and why ”"
+                        android:textColor="@color/text_primary"
+                        android:textSize="15sp"
+                        android:lineSpacingExtra="2dp"
+                        android:fontFamily="serif"
+                        android:textStyle="italic"
+                        app:layout_constraintEnd_toStartOf="@id/quoteActions"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent" />
+
+                    <TextView
+                        android:id="@+id/tvQuoteAuthor"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="Savania China"
+                        android:textColor="@color/accent_purple"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvQuoteMain" />
+
+                    <TextView
+                        android:id="@+id/tvQuoteWork"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="James Bond"
+                        android:textColor="@color/text_muted"
+                        android:textSize="10sp"
+                        app:layout_constraintBottom_toBottomOf="@id/tvQuoteAuthor"
+                        app:layout_constraintStart_toEndOf="@id/tvQuoteAuthor"
+                        app:layout_constraintTop_toTopOf="@id/tvQuoteAuthor" />
+
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/cgQuoteCategories"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        app:chipSpacingHorizontal="4dp"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toBottomOf="@id/tvQuoteAuthor">
+
+                        <com.google.android.material.chip.Chip
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="22dp"
+                            android:text="SUCCESS"
+                            android:textColor="@color/accent_purple"
+                            android:textSize="9sp"
+                            app:chipBackgroundColor="@color/tag_chip_background"
+                            app:chipMinTouchTargetSize="0dp"
+                            app:chipStartPadding="4dp"
+                            app:chipEndPadding="4dp"
+                            app:textStartPadding="2dp"
+                            app:textEndPadding="2dp"
+                            app:chipStrokeWidth="0dp" />
+
+                        <com.google.android.material.chip.Chip
+                            style="@style/Widget.MaterialComponents.Chip.Action"
+                            android:layout_width="wrap_content"
+                            android:layout_height="22dp"
+                            android:text="WISDOM"
+                            android:textColor="@color/accent_purple"
+                            android:textSize="9sp"
+                            app:chipBackgroundColor="@color/tag_chip_background"
+                            app:chipMinTouchTargetSize="0dp"
+                            app:chipStartPadding="4dp"
+                            app:chipEndPadding="4dp"
+                            app:textStartPadding="2dp"
+                            app:textEndPadding="2dp"
+                            app:chipStrokeWidth="0dp" />
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <LinearLayout
+                        android:id="@+id/quoteActions"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageButton
+                            android:id="@+id/btnRefreshQuote"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_sync"
+                            android:padding="6dp"
+                            app:tint="@color/text_muted" />
+
+                        <ImageButton
+                            android:id="@+id/btnSaveQuote"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_save"
+                            android:padding="6dp"
+                            app:tint="@color/text_muted" />
+                    </LinearLayout>
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 2. Consistency Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -80,7 +197,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Hydration Card -->
+            <!-- 3. Hydration Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -158,7 +275,7 @@
                                 android:id="@+id/tvWaterPercent"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="0%"
+                                android:text="45%"
                                 android:textColor="@color/white"
                                 android:textSize="32sp"
                                 android:textStyle="bold" />
@@ -167,7 +284,7 @@
                                 android:id="@+id/tvWaterTarget"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="0/3000 ml"
+                                android:text="1350/3000 ml"
                                 android:textColor="@color/hydration_blue"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -293,7 +410,7 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Nutrition Card -->
+            <!-- 4. Nutrition Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/cardNutrition"
                 android:layout_width="match_parent"
@@ -379,7 +496,7 @@
                                 android:id="@+id/tvRemainingCals"
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:text="0 kcal"
+                                android:text="800 kcal"
                                 android:textColor="@color/white"
                                 android:textSize="18sp"
                                 android:textStyle="bold" />
@@ -396,7 +513,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="4dp"
-                                android:text="0 / 0"
+                                android:text="1200 / 2000"
                                 android:textColor="@color/text_muted"
                                 android:textSize="12sp" />
                         </LinearLayout>
@@ -533,7 +650,68 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Wellness Metrics Section -->
+            <!-- 5. Today at this Date Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/cardTodayHistory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/surface_container"
+                app:cardCornerRadius="16dp"
+                app:strokeColor="@color/stroke_color"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="12dp">
+
+                    <View
+                        android:layout_width="4dp"
+                        android:layout_height="40dp"
+                        android:background="@color/highlight_yellow" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ON THIS DAY"
+                            android:textColor="@color/text_muted"
+                            android:textSize="9sp"
+                            android:letterSpacing="0.1"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvHistoryText"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="2dp"
+                            android:ellipsize="end"
+                            android:maxLines="2"
+                            android:text="1969: Apollo 11's crew successfully makes the first human landing on the Moon."
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:layout_marginStart="8dp"
+                        android:src="@drawable/ic_calendar"
+                        android:alpha="0.5"
+                        app:tint="@color/highlight_yellow" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- 6. Wellness Metrics Section -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
