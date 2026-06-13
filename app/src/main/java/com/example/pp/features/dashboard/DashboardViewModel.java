@@ -19,8 +19,11 @@ import com.example.pp.data.local.model.NutritionSummary;
 import com.example.pp.data.repository.HydrationRepository;
 import com.example.pp.data.repository.NutrientRepository;
 import com.example.pp.data.repository.NutritionRepository;
+import com.example.pp.data.repository.QuoteRepository;
+import com.example.pp.data.repository.HistoryRepository;
 import com.example.pp.data.repository.ScreenTimeRepository;
 import com.example.pp.data.repository.SleepRepository;
+import com.example.pp.data.remote.ApiNinjasService;
 import com.example.pp.utils.DateUtils;
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -33,6 +36,8 @@ public class DashboardViewModel extends AndroidViewModel {
     private final NutrientRepository nutrientRepository;
     private final ScreenTimeRepository screenTimeRepository;
     private final SleepRepository sleepRepository;
+    private final QuoteRepository quoteRepository;
+    private final HistoryRepository historyRepository;
     private final MutableLiveData<String> userName = new MutableLiveData<>("Champion");
 
     public DashboardViewModel(@NonNull Application application) {
@@ -42,6 +47,8 @@ public class DashboardViewModel extends AndroidViewModel {
         nutrientRepository = ((PPApplication) application).getNutrientRepository();
         screenTimeRepository = ((PPApplication) application).getScreenTimeRepository();
         sleepRepository = ((PPApplication) application).getSleepRepository();
+        quoteRepository = ((PPApplication) application).getQuoteRepository();
+        historyRepository = ((PPApplication) application).getHistoryRepository();
         loadUserName();
     }
 
@@ -136,6 +143,18 @@ public class DashboardViewModel extends AndroidViewModel {
 
     public void saveSleepEntry(long start, long end, long target, long date, String reason) {
         sleepRepository.saveManualSleepEntry(start, end, target, date, reason);
+    }
+
+    public LiveData<ApiNinjasService.QuoteResponse> getCurrentQuote() {
+        return quoteRepository.getCurrentQuote();
+    }
+
+    public LiveData<ApiNinjasService.HistoryResponse> getCurrentHistory() {
+        return historyRepository.getCurrentHistory();
+    }
+
+    public void refreshQuote() {
+        quoteRepository.refreshQuoteManually();
     }
 
     private long getStartOfDay() {

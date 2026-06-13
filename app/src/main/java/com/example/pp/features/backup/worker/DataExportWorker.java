@@ -45,7 +45,9 @@ public class DataExportWorker extends BaseFeatureWorker {
                 db.nutrientDao().getAllList(),
                 db.nutritionIntakeDao().getAllIntakes(),
                 db.sleepDao().getAllSleepEntries(),
-                db.screenTimeDao().getAllEntriesSync()
+                db.screenTimeDao().getAllEntriesSync(),
+                db.historyDao().getAllHistoryList(),
+                db.quotesDao().getAllQuotesList()
             );
 
             Gson gson = new Gson();

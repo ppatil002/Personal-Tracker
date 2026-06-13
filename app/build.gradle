@@ -38,10 +38,12 @@ android {
             def backupKey = props.getProperty('PP_BACKUP_KEY', 'DefaultFallbackDevelopmentKeyString')
             def googleClientId = props.getProperty('GOOGLE_WEB_CLIENT_ID', '')
             def backupPath = props.getProperty('BACKUP_PATH', 'backups')
+            def quotesApiKey = props.getProperty('QUOTES_API_KEY', '')
             
             buildConfigField "String", "BACKUP_SECRET_KEY", "\"${backupKey}\""
             buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleClientId}\""
             buildConfigField "String", "BACKUP_PATH", "\"${backupPath}\""
+            buildConfigField "String", "QUOTES_API_KEY", "\"${quotesApiKey}\""
         }
         debug {
             def props = new Properties()
@@ -52,10 +54,12 @@ android {
             def backupKey = props.getProperty('PP_BACKUP_KEY', 'DefaultFallbackDevelopmentKeyString')
             def googleClientId = props.getProperty('GOOGLE_WEB_CLIENT_ID', '')
             def backupPath = props.getProperty('BACKUP_PATH', 'backups')
+            def quotesApiKey = props.getProperty('QUOTES_API_KEY', '')
             
             buildConfigField "String", "BACKUP_SECRET_KEY", "\"${backupKey}\""
             buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleClientId}\""
             buildConfigField "String", "BACKUP_PATH", "\"${backupPath}\""
+            buildConfigField "String", "QUOTES_API_KEY", "\"${quotesApiKey}\""
         }
     }
     compileOptions {
@@ -93,6 +97,10 @@ dependencies {
     implementation libs.lifecycle.viewmodel
     implementation libs.lifecycle.livedata
     implementation libs.mpandroidchart
+    implementation libs.retrofit
+    implementation libs.retrofit.gson
+    implementation libs.okhttp
+    implementation libs.okhttp.logging
 
     testImplementation libs.junit
     androidTestImplementation libs.espresso.core

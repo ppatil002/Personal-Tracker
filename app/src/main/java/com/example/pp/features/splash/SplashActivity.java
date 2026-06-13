@@ -42,7 +42,7 @@ public class SplashActivity extends AppCompatActivity {
 //        ((PPApplication) getApplication()).getCategoryRepository().seedDatabaseIfEmpty();
 //        ((PPApplication) getApplication()).getTagRepository().seedTagsIfEmpty();
 //        ((PPApplication) getApplication()).getTransactionRepository().seedTransactionsIfEmpty();
-//        ((PPApplication) getApplication()).getSleepRepository().seedSleep();
+        ((PPApplication) getApplication()).getSleepRepository().seedSleep();
         ((PPApplication) getApplication()).getTaskRepository().seedTasksIfEmpty();
 //        ((PPApplication) getApplication()).getNutrientRepository().seedNutrientData();
 

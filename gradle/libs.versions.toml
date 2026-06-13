@@ -21,6 +21,8 @@ googleApiClientAndroid = "2.9.0"
 googleHttpClientGson = "1.44.1"
 googleHttpAndroid = "1.44.1"
 googleServices = "4.4.1"
+retrofit = "2.9.0"
+okhttp = "4.12.0"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -46,6 +48,10 @@ google-drive = { group = "com.google.apis", name = "google-api-services-drive", 
 google-api-client = { group = "com.google.api-client", name = "google-api-client-android", version.ref = "googleApiClientAndroid" }
 google-http-gson = { group = "com.google.http-client", name = "google-http-client-gson", version.ref = "googleHttpClientGson" }
 google-http-android = { group = "com.google.http-client", name = "google-http-client-android", version.ref = "googleHttpAndroid" }
+retrofit = { group = "com.squareup.retrofit2", name = "retrofit", version.ref = "retrofit" }
+retrofit-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -2,17 +2,21 @@ package com.example.pp.data.local;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
 import com.example.pp.data.local.dao.BackgroundJobLogDao;
 import com.example.pp.data.local.dao.CategoryDao;
 import com.example.pp.data.local.dao.CommonDao;
+import com.example.pp.data.local.dao.HistoryDao;
 import com.example.pp.data.local.dao.HydrationDao;
 import com.example.pp.data.local.dao.NutrientEntityDao;
 import com.example.pp.data.local.dao.NutritionIntakeDao;
+import com.example.pp.data.local.dao.QuotesDao;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.dao.SleepDao;
 import com.example.pp.data.local.dao.TagDao;
@@ -20,9 +24,11 @@ import com.example.pp.data.local.dao.TaskDao;
 import com.example.pp.data.local.dao.TransactionDao;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.CategoryEntity;
+import com.example.pp.data.local.entity.HistoryApiTrack;
 import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.NutritionIntake;
+import com.example.pp.data.local.entity.QuotesApiTrack;
 import com.example.pp.data.local.entity.ScreenTime;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.data.local.entity.TagEntity;
@@ -42,10 +48,12 @@ import com.example.pp.utils.TaskTypeConverters;
     TaskState.class,
     HydrationIntake.class,
     NutritionIntake.class,
-    NutrientEntity.class,
+    NutrientEntity.class, 
     ScreenTime.class,
-    SleepEntity.class
-}, version = 21, exportSchema = false)
+    SleepEntity.class,
+    HistoryApiTrack.class,
+    QuotesApiTrack.class
+}, version = 22, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -62,6 +70,8 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract NutrientEntityDao nutrientDao();
     public abstract ScreenTimeDao screenTimeDao();
     public abstract SleepDao sleepDao();
+    public abstract HistoryDao historyDao();
+    public abstract QuotesDao quotesDao();
 
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {
@@ -69,11 +79,36 @@ public abstract class AppDatabase extends RoomDatabase {
                 if (instance == null) {
                     instance = Room.databaseBuilder(context.getApplicationContext(),
                             AppDatabase.class, "personal_tracker_db")
+                            .addCallback(new Callback() {
+                                @Override
+                                public void onCreate(@NonNull SupportSQLiteDatabase db) {
+                                    super.onCreate(db);
+                                    createTriggers(db);
+                                }
+
+                                @Override
+                                public void onOpen(@NonNull SupportSQLiteDatabase db) {
+                                    super.onOpen(db);
+                                    createTriggers(db);
+                                }
+                            })
                             .fallbackToDestructiveMigration()
                             .build();
                 }
             }
         }
         return instance;
+    }
+
+    private static void createTriggers(SupportSQLiteDatabase db) {
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS limit_history_rows AFTER INSERT ON history_api_track " +
+                "BEGIN " +
+                "DELETE FROM history_api_track WHERE id IN (SELECT id FROM history_api_track ORDER BY fetch_timestamp DESC LIMIT -1 OFFSET 20); " +
+                "END;");
+
+        db.execSQL("CREATE TRIGGER IF NOT EXISTS limit_quotes_rows AFTER INSERT ON quotes_api_track " +
+                "BEGIN " +
+                "DELETE FROM quotes_api_track WHERE id IN (SELECT id FROM quotes_api_track ORDER BY fetch_timestamp DESC LIMIT -1 OFFSET 20); " +
+                "END;");
     }
 }

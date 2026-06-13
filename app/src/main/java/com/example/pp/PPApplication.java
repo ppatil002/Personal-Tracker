@@ -8,6 +8,8 @@ import com.example.pp.data.repository.GenericTableRepository;
 import com.example.pp.data.repository.HydrationRepository;
 import com.example.pp.data.repository.NutrientRepository;
 import com.example.pp.data.repository.NutritionRepository;
+import com.example.pp.data.repository.QuoteRepository;
+import com.example.pp.data.repository.HistoryRepository;
 import com.example.pp.data.repository.ScreenTimeRepository;
 import com.example.pp.data.repository.SleepRepository;
 import com.example.pp.data.repository.TagRepository;
@@ -27,6 +29,8 @@ public class PPApplication extends Application {
     private ScreenTimeRepository screenTimeRepository;
     private SleepRepository sleepRepository;
     private BackgroundJobLogRepository backgroundJobLogRepository;
+    private QuoteRepository quoteRepository;
+    private HistoryRepository historyRepository;
 
     @Override
     public void onCreate() {
@@ -43,6 +47,8 @@ public class PPApplication extends Application {
         nutritionRepository = new NutritionRepository(this);
         nutrientRepository = new NutrientRepository(this);
         backgroundJobLogRepository = new BackgroundJobLogRepository(this);
+        quoteRepository = new QuoteRepository(this);
+        historyRepository = new HistoryRepository(this);
     }
 
     public CategoryRepository getCategoryRepository() {
@@ -87,5 +93,13 @@ public class PPApplication extends Application {
 
     public BackgroundJobLogRepository getBackgroundJobLogRepository() {
         return backgroundJobLogRepository;
+    }
+    
+    public QuoteRepository getQuoteRepository() {
+        return quoteRepository;
+    }
+
+    public HistoryRepository getHistoryRepository() {
+        return historyRepository;
     }
 }

@@ -44,6 +44,8 @@ public class TableListActivity extends AppCompatActivity {
         tables.add(new TableInfo("nutrition_intake", "Nutrients Intake", "Daily Calorie Intake"));
         tables.add(new TableInfo("screen_time", "Screen Time", "Daily Screen Time Monitoring"));
         tables.add(new TableInfo("sleep", "Sleep", "Daily Sleep Monitoring"));
+        tables.add(new TableInfo("history_api_track", "History Tracking", "History API Tracking"));
+        tables.add(new TableInfo("quotes_api_track", "Quotes Tracking", "Quotes API Tracking"));
 
         rvTables.setAdapter(new TableAdapter(tables));
     }

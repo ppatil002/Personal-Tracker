@@ -39,6 +39,7 @@ import com.example.pp.features.settings.MoreActivity;
 import com.example.pp.features.sleep.analytics.SleepAnalyticsActivity;
 import com.example.pp.features.tracker.edit.EditTrackerActivity;
 import com.example.pp.utils.DateUtils;
+import com.google.android.material.chip.Chip;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
@@ -59,6 +60,8 @@ public class DashboardActivity extends AppCompatActivity {
     private LinearProgressIndicator carbsProgress, proteinProgress, fatsProgress, sleepProgress;
     private TextView tvRemainingCals, tvCalorieStats, tvCarbsStats, tvProteinStats, tvFatsStats, tvLastNutritionIntake;
     private TextView tvRemainingTime, tvUsedToday, tvCountdown, tvUntil, tvPotential, tvLastNight;
+    private TextView tvQuoteMain, tvQuoteAuthor, tvQuoteWork, tvHistoryText;
+    private com.google.android.material.chip.ChipGroup cgQuoteCategories;
     private LinearLayout topAppsContainer;
 
     private Long lastWaterTimestamp = null;
@@ -124,6 +127,14 @@ public class DashboardActivity extends AppCompatActivity {
         tvLastNight = findViewById(R.id.tvLastNight);
         sleepProgress = findViewById(R.id.sleepProgress);
 
+        tvQuoteMain = findViewById(R.id.tvQuoteMain);
+        tvQuoteAuthor = findViewById(R.id.tvQuoteAuthor);
+        tvQuoteWork = findViewById(R.id.tvQuoteWork);
+        cgQuoteCategories = findViewById(R.id.cgQuoteCategories);
+        tvHistoryText = findViewById(R.id.tvHistoryText);
+
+        findViewById(R.id.btnRefreshQuote).setOnClickListener(v -> viewModel.refreshQuote());
+
         findViewById(R.id.btnSmallWater).setOnClickListener(v -> viewModel.addWater(100, System.currentTimeMillis()));
         findViewById(R.id.btnMedWater).setOnClickListener(v -> viewModel.addWater(250, System.currentTimeMillis()));
         findViewById(R.id.btnCustomWater).setOnClickListener(v -> showCustomIntakeDialog());
@@ -150,6 +161,14 @@ public class DashboardActivity extends AppCompatActivity {
 
         findViewById(R.id.cardNutrition).setOnClickListener(v -> {
             showLogNutritionDialog();
+        });
+
+        findViewById(R.id.cardTodayHistory).setOnClickListener(v -> {
+            if (tvHistoryText.getMaxLines() == 2) {
+                tvHistoryText.setMaxLines(Integer.MAX_VALUE);
+            } else {
+                tvHistoryText.setMaxLines(2);
+            }
         });
 
         // TODO Do I need to manually schedule the activity again and again.
@@ -269,6 +288,43 @@ public class DashboardActivity extends AppCompatActivity {
                         tvLastNight.setText("LAST NIGHT: " + duration);
                     }
                 });
+            }
+        });
+
+        viewModel.getCurrentQuote().observe(this, quote -> {
+            if (quote != null) {
+                tvQuoteMain.setText("“ " + quote.quote + " ”");
+                tvQuoteAuthor.setText(quote.author);
+                tvQuoteWork.setText(quote.work != null ? quote.work : "");
+                
+                cgQuoteCategories.removeAllViews();
+                if (quote.categories != null) {
+                    float density = getResources().getDisplayMetrics().density;
+                    for (String cat : quote.categories) {
+                        Chip chip = new com.google.android.material.chip.Chip(this);
+                        chip.setText(cat.toUpperCase());
+                        chip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);
+                        chip.setTextColor(getColor(R.color.accent_purple));
+                        chip.setChipBackgroundColorResource(R.color.tag_chip_background);
+
+                        // Restrict width and height to content
+                        chip.setEnsureMinTouchTargetSize(false);
+                        chip.setChipMinHeight(22 * density);
+                        chip.setChipStartPadding(4 * density);
+                        chip.setChipEndPadding(4 * density);
+                        chip.setTextStartPadding(2 * density);
+                        chip.setTextEndPadding(2 * density);
+                        chip.setChipStrokeWidth(0);
+
+                        cgQuoteCategories.addView(chip);
+                    }
+                }
+            }
+        });
+
+        viewModel.getCurrentHistory().observe(this, history -> {
+            if (history != null) {
+                tvHistoryText.setText(history.year + ": " + history.event);
             }
         });
     }
