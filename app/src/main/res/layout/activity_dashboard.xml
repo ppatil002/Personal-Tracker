@@ -534,15 +534,6 @@
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Wellness Metrics Section -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="Wellness Metrics"
-                android:textColor="@color/on_surface"
-                android:textSize="20sp"
-                android:fontFamily="sans-serif-black" />
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
