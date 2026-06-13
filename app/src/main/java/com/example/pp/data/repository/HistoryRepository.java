@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.BuildConfig;
+import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.HistoryDao;
 import com.example.pp.data.local.entity.HistoryApiTrack;
@@ -19,8 +20,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -35,7 +34,7 @@ public class HistoryRepository {
     private final ApiNinjasService apiService;
     private final HistoryDao historyDao;
     private final QuoteHistoryPrefs prefs;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final AppExecutors appExecutors;
     
     private final MutableLiveData<ApiNinjasService.HistoryResponse> currentHistory = new MutableLiveData<>();
 
@@ -49,12 +48,13 @@ public class HistoryRepository {
         AppDatabase db = AppDatabase.getInstance(context);
         this.historyDao = db.historyDao();
         this.prefs = new QuoteHistoryPrefs(context);
+        this.appExecutors = AppExecutors.getInstance();
         
         loadInitialData();
     }
 
     private void loadInitialData() {
-        executor.execute(() -> {
+        appExecutors.diskIO().execute(() -> {
             ApiNinjasService.HistoryResponse h = prefs.getLatestHistory();
             if (h != null) currentHistory.postValue(h);
             checkAndFetchToday();
@@ -70,7 +70,7 @@ public class HistoryRepository {
             return;
         }
 
-        executor.execute(() -> {
+        appExecutors.diskIO().execute(() -> {
             int count = historyDao.getCount();
             if (count == 0) {
                 Log.d(TAG, "History Database is empty. Skipping auto-fetch (Source of Truth check).");
@@ -117,7 +117,7 @@ public class HistoryRepository {
     }
 
     private void saveHistory(ApiNinjasService.HistoryResponse history, String dateKey) {
-        executor.execute(() -> {
+        appExecutors.diskIO().execute(() -> {
             prefs.saveLatestHistory(history);
             if (dateKey != null) prefs.saveLastFetchDate(dateKey);
             

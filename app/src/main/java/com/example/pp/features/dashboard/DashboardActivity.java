@@ -22,6 +22,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.view.ContextThemeWrapper;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.pp.R;
@@ -299,23 +300,9 @@ public class DashboardActivity extends AppCompatActivity {
                 
                 cgQuoteCategories.removeAllViews();
                 if (quote.categories != null) {
-                    float density = getResources().getDisplayMetrics().density;
                     for (String cat : quote.categories) {
-                        Chip chip = new com.google.android.material.chip.Chip(this);
+                        Chip chip = new Chip(new ContextThemeWrapper(this, R.style.QuotesCategoryChip), null, 0);
                         chip.setText(cat.toUpperCase());
-                        chip.setTextSize(TypedValue.COMPLEX_UNIT_SP, 9);
-                        chip.setTextColor(getColor(R.color.accent_purple));
-                        chip.setChipBackgroundColorResource(R.color.tag_chip_background);
-
-                        // Restrict width and height to content
-                        chip.setEnsureMinTouchTargetSize(false);
-                        chip.setChipMinHeight(22 * density);
-                        chip.setChipStartPadding(4 * density);
-                        chip.setChipEndPadding(4 * density);
-                        chip.setTextStartPadding(2 * density);
-                        chip.setTextEndPadding(2 * density);
-                        chip.setChipStrokeWidth(0);
-
                         cgQuoteCategories.addView(chip);
                     }
                 }

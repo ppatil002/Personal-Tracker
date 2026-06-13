@@ -51,8 +51,23 @@
     <style name="NeonChip" parent="Widget.MaterialComponents.Chip.Action">
         <item name="chipBackgroundColor">@color/tag_chip_background</item>
         <item name="chipStrokeColor">@color/accent_purple</item>
-        <item name="chipStrokeWidth">1dp</item>
         <item name="android:textColor">@color/text_primary</item>
+        <item name="chipStrokeWidth">1dp</item>
         <item name="chipCornerRadius">16dp</item>
+    </style>
+
+    <style name="QuotesCategoryChip" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="chipBackgroundColor">@color/tag_chip_background</item>
+        <item name="android:textColor">@color/accent_purple</item>
+        <item name="android:textSize">10sp</item>
+        <item name="chipMinHeight">22dp</item>
+        <item name="chipCornerRadius">12dp</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+        <item name="chipStartPadding">8dp</item>
+        <item name="chipEndPadding">8dp</item>
+        <item name="textStartPadding">0dp</item>
+        <item name="textEndPadding">0dp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
     </style>
 </resources>

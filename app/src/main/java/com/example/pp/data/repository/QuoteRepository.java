@@ -7,6 +7,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.BuildConfig;
+import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.QuotesDao;
 import com.example.pp.data.local.entity.QuotesApiTrack;
@@ -19,8 +20,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -35,7 +34,7 @@ public class QuoteRepository {
     private final ApiNinjasService apiService;
     private final QuotesDao quotesDao;
     private final QuoteHistoryPrefs prefs;
-    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+    private final AppExecutors appExecutors;
     
     private final MutableLiveData<ApiNinjasService.QuoteResponse> currentQuote = new MutableLiveData<>();
 
@@ -49,12 +48,13 @@ public class QuoteRepository {
         AppDatabase db = AppDatabase.getInstance(context);
         this.quotesDao = db.quotesDao();
         this.prefs = new QuoteHistoryPrefs(context);
+        this.appExecutors = AppExecutors.getInstance();
         
         loadInitialData();
     }
 
     private void loadInitialData() {
-        executor.execute(() -> {
+        appExecutors.diskIO().execute(() -> {
             ApiNinjasService.QuoteResponse q = prefs.getLatestQuote();
             Log.d(TAG, "loadInitialData: Prefs latest quote: " + (q != null ? q.quote : "null"));
             if (q != null) currentQuote.postValue(q);
@@ -72,7 +72,7 @@ public class QuoteRepository {
             return;
         }
 
-        executor.execute(() -> {
+        appExecutors.diskIO().execute(() -> {
             int count = quotesDao.getCount();
             Log.d(TAG, "checkAndFetchToday: DB count=" + count);
             if (count == 0) {
@@ -148,7 +148,7 @@ public class QuoteRepository {
     }
 
     private void saveQuote(ApiNinjasService.QuoteResponse quote, String dateKey) {
-        executor.execute(() -> {
+        appExecutors.diskIO().execute(() -> {
             Log.d(TAG, "saveQuote: Saving to Prefs and DB. dateKey=" + dateKey);
             prefs.saveLatestQuote(quote);
             if (dateKey != null) prefs.saveLastFetchDate(dateKey);
