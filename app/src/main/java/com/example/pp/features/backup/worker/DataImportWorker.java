@@ -67,6 +67,7 @@ public class DataImportWorker extends BaseFeatureWorker {
                 allStats.add(db.screenTimeDao().upsertAll(backupData.screenTime));
                 allStats.add(db.historyDao().upsertAll(backupData.history));
                 allStats.add(db.quotesDao().upsertAll(backupData.quotes));
+                allStats.add(db.quotesDao().upsertAllSavedQuotes(backupData.savedQuotes));
             });
 
             StringBuilder summary = new StringBuilder("Restore Summary:\n");

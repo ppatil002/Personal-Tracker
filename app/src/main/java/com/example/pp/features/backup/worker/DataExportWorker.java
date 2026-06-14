@@ -47,7 +47,8 @@ public class DataExportWorker extends BaseFeatureWorker {
                 db.sleepDao().getAllSleepEntries(),
                 db.screenTimeDao().getAllEntriesSync(),
                 db.historyDao().getAllHistoryList(),
-                db.quotesDao().getAllQuotesList()
+                db.quotesDao().getAllQuotesList(),
+                db.quotesDao().getAllSavedQuotesList()
             );
 
             Gson gson = new Gson();

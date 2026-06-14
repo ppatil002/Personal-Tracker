@@ -7,6 +7,7 @@ import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.local.entity.QuotesApiTrack;
+import com.example.pp.data.local.entity.SavedQuote;
 import com.example.pp.data.local.entity.ScreenTime;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.data.local.entity.TagEntity;
@@ -32,6 +33,7 @@ public class BackupData {
     public List<ScreenTime> screenTime;
     public List<HistoryApiTrack> history;
     public List<QuotesApiTrack> quotes;
+    public List<SavedQuote> savedQuotes;
 
     public BackupData(List<CategoryEntity> categories, List<TagEntity> tags, 
                       List<TransactionEntity> transactions, List<TransactionTagCrossRef> transactionTags,
@@ -43,7 +45,8 @@ public class BackupData {
                       List<SleepEntity> sleep,
                       List<ScreenTime> screenTime,
                       List<HistoryApiTrack> history,
-                      List<QuotesApiTrack> quotes) {
+                      List<QuotesApiTrack> quotes,
+                      List<SavedQuote> savedQuotes) {
         this.categories = categories;
         this.tags = tags;
         this.transactions = transactions;
@@ -58,5 +61,6 @@ public class BackupData {
         this.screenTime = screenTime;
         this.history = history;
         this.quotes = quotes;
+        this.savedQuotes = savedQuotes;
     }
 }
