@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -32,15 +33,18 @@ import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.SleepEntity;
+import com.example.pp.data.remote.ApiNinjasService;
 import com.example.pp.features.analytics.AnalyticsActivity;
 import com.example.pp.features.hydration.analytics.WaterAnalyticsActivity;
 import com.example.pp.features.nutrition.analytics.NutritionAnalyticsActivity;
+import com.example.pp.features.quotes.SavedQuotesActivity;
 import com.example.pp.features.screentime.analytics.ScreenTimeAnalyticsActivity;
 import com.example.pp.features.settings.MoreActivity;
 import com.example.pp.features.sleep.analytics.SleepAnalyticsActivity;
 import com.example.pp.features.tracker.edit.EditTrackerActivity;
 import com.example.pp.utils.DateUtils;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.progressindicator.CircularProgressIndicator;
 import com.google.android.material.progressindicator.LinearProgressIndicator;
@@ -62,6 +66,7 @@ public class DashboardActivity extends AppCompatActivity {
     private TextView tvRemainingCals, tvCalorieStats, tvCarbsStats, tvProteinStats, tvFatsStats, tvLastNutritionIntake;
     private TextView tvRemainingTime, tvUsedToday, tvCountdown, tvUntil, tvPotential, tvLastNight;
     private TextView tvQuoteMain, tvQuoteAuthor, tvQuoteWork, tvHistoryText;
+    private ImageButton btnSaveQuote;
     private com.google.android.material.chip.ChipGroup cgQuoteCategories;
     private LinearLayout topAppsContainer;
 
@@ -133,8 +138,15 @@ public class DashboardActivity extends AppCompatActivity {
         tvQuoteWork = findViewById(R.id.tvQuoteWork);
         cgQuoteCategories = findViewById(R.id.cgQuoteCategories);
         tvHistoryText = findViewById(R.id.tvHistoryText);
+        btnSaveQuote = findViewById(R.id.btnSaveQuote);
 
         findViewById(R.id.btnRefreshQuote).setOnClickListener(v -> viewModel.refreshQuote());
+
+        btnSaveQuote.setOnClickListener(v -> showSaveQuoteDialog());
+
+        findViewById(R.id.cardQuote).setOnClickListener(v -> {
+            startActivity(new Intent(this, SavedQuotesActivity.class));
+        });
 
         findViewById(R.id.btnSmallWater).setOnClickListener(v -> viewModel.addWater(100, System.currentTimeMillis()));
         findViewById(R.id.btnMedWater).setOnClickListener(v -> viewModel.addWater(250, System.currentTimeMillis()));
@@ -306,6 +318,15 @@ public class DashboardActivity extends AppCompatActivity {
                         cgQuoteCategories.addView(chip);
                     }
                 }
+
+                // Check if already saved
+                viewModel.isQuoteSaved(quote.quote).observe(this, saved -> {
+                    if (saved != null && saved) {
+                        btnSaveQuote.setColorFilter(getColor(R.color.accent_purple));
+                    } else {
+                        btnSaveQuote.setColorFilter(getColor(R.color.text_muted));
+                    }
+                });
             }
         });
 
@@ -314,6 +335,93 @@ public class DashboardActivity extends AppCompatActivity {
                 tvHistoryText.setText(history.year + ": " + history.event);
             }
         });
+    }
+
+    private void showSaveQuoteDialog() {
+        ApiNinjasService.QuoteResponse currentQuote = viewModel.getCurrentQuote().getValue();
+        if (currentQuote == null) {
+            Toast.makeText(this, "No quote to save", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_save_quote, null);
+        TextView tvQuotePreview = dialogView.findViewById(R.id.tvQuotePreview);
+        ChipGroup cgSelectedCategories = dialogView.findViewById(R.id.cgSelectedCategories);
+        AutoCompleteTextView actvCategory = dialogView.findViewById(R.id.actvCategoryFilter);
+        EditText etNotes = dialogView.findViewById(R.id.etQuoteNotes);
+
+        tvQuotePreview.setText("“ " + currentQuote.quote + " ”\n\n— " + currentQuote.author);
+
+        List<String> selectedCategories = new ArrayList<>();
+        if (currentQuote.categories != null) {
+            for (String cat : currentQuote.categories) {
+                addCategoryChip(cat, cgSelectedCategories, selectedCategories);
+            }
+        }
+
+        viewModel.getAvailableCategories().observe(this, categories -> {
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.item_dropdown_divider, R.id.tvDropdownItem, categories);
+            actvCategory.setAdapter(adapter);
+            actvCategory.setOnClickListener(v -> actvCategory.showDropDown());
+            actvCategory.setOnFocusChangeListener((v, hasFocus) -> {
+                if (hasFocus && actvCategory.getAdapter() != null) {
+                    actvCategory.postDelayed(actvCategory::showDropDown, 200);
+                }
+            });
+            actvCategory.setOnItemClickListener((parent, view, position, id) -> {
+                String cat = (String) parent.getItemAtPosition(position);
+                addCategoryChip(cat, cgSelectedCategories, selectedCategories);
+                actvCategory.setText("");
+            });
+        });
+
+        actvCategory.setOnEditorActionListener((v, actionId, event) -> {
+            String cat = actvCategory.getText().toString().trim();
+            if (!cat.isEmpty()) {
+                addCategoryChip(cat, cgSelectedCategories, selectedCategories);
+                actvCategory.setText("");
+                return true;
+            }
+            return false;
+        });
+
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setTitle("Save Quote")
+                .setView(dialogView)
+                .setPositiveButton("Save", (d, which) -> {
+                    viewModel.isQuoteSaved(currentQuote.quote).observe(this, saved -> {
+                        if (saved != null && saved) {
+                            Toast.makeText(this, "Quote already saved!", Toast.LENGTH_SHORT).show();
+                        } else {
+                            String notes = etNotes.getText().toString().trim();
+                            viewModel.saveQuote(currentQuote.quote, currentQuote.author, selectedCategories, notes);
+                            Toast.makeText(this, "Quote saved!", Toast.LENGTH_SHORT).show();
+                            btnSaveQuote.setColorFilter(getColor(R.color.accent_purple));
+                        }
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .create();
+
+        dialog.show();
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(R.color.card_background);
+        }
+    }
+
+    private void addCategoryChip(String category, com.google.android.material.chip.ChipGroup chipGroup, List<String> selectedList) {
+        String catClean = category.trim();
+        if (catClean.isEmpty() || selectedList.contains(catClean)) return;
+
+        selectedList.add(catClean);
+        Chip chip = new Chip(new ContextThemeWrapper(this, R.style.QuotesCategoryChip), null, 0);
+        chip.setText(catClean.toUpperCase());
+        chip.setCloseIconVisible(true);
+        chip.setOnCloseIconClickListener(v -> {
+            chipGroup.removeView(chip);
+            selectedList.remove(catClean);
+        });
+        chipGroup.addView(chip);
     }
 
     private void updateSleepUI(SleepEntity sleep) {

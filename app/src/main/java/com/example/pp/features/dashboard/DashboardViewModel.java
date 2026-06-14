@@ -157,6 +157,18 @@ public class DashboardViewModel extends AndroidViewModel {
         quoteRepository.refreshQuoteManually();
     }
 
+    public void saveQuote(String quote, String author, List<String> categories, String notes) {
+        quoteRepository.saveQuote(quote, author, categories, notes);
+    }
+
+    public LiveData<Boolean> isQuoteSaved(String quote) {
+        return quoteRepository.isQuoteSaved(quote);
+    }
+
+    public LiveData<List<String>> getAvailableCategories() {
+        return quoteRepository.getAllDistinctCategories();
+    }
+
     private long getStartOfDay() {
         return DateUtils.getStartOfDay(System.currentTimeMillis());
     }

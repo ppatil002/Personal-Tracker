@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.Log;
 
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.BuildConfig;
@@ -11,15 +12,21 @@ import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.QuotesDao;
 import com.example.pp.data.local.entity.QuotesApiTrack;
+import com.example.pp.data.local.entity.SavedQuote;
 import com.example.pp.data.remote.ApiNinjasService;
 import com.example.pp.core.preferences.QuoteHistoryPrefs;
 import com.example.pp.utils.DateUtils;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -106,7 +113,7 @@ public class QuoteRepository {
                 if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
                     ApiNinjasService.QuoteResponse quote = response.body().get(0);
                     currentQuote.postValue(quote);
-                    saveQuote(quote, dateKey);
+                    saveQuoteToHistory(quote, dateKey);
                 } else {
                     try {
                         String errorMsg = response.errorBody() != null ? response.errorBody().string() : "Unknown error";
@@ -134,7 +141,7 @@ public class QuoteRepository {
                     ApiNinjasService.QuoteResponse quote = response.body().get(0);
                     Log.d(TAG, "refreshQuoteManually: Success. New Quote: " + quote.quote);
                     currentQuote.postValue(quote);
-                    saveQuote(quote, null);
+                    saveQuoteToHistory(quote, null);
                 } else {
                     Log.e(TAG, "refreshQuoteManually: Unsuccessful or empty body");
                 }
@@ -147,18 +154,126 @@ public class QuoteRepository {
         });
     }
 
-    private void saveQuote(ApiNinjasService.QuoteResponse quote, String dateKey) {
+    private void saveQuoteToHistory(ApiNinjasService.QuoteResponse quote, String dateKey) {
         appExecutors.diskIO().execute(() -> {
-            Log.d(TAG, "saveQuote: Saving to Prefs and DB. dateKey=" + dateKey);
+            Log.d(TAG, "saveQuoteToHistory: Saving to Prefs and DB. dateKey=" + dateKey);
             prefs.saveLatestQuote(quote);
             if (dateKey != null) prefs.saveLastFetchDate(dateKey);
             
-            String cat = (quote.categories != null && !quote.categories.isEmpty()) ? quote.categories.get(0) : "";
-            quotesDao.insert(new QuotesApiTrack(quote.quote, quote.author, quote.work, cat, System.currentTimeMillis()));
+            String sortedCategories = "";
+            if (quote.categories != null && !quote.categories.isEmpty()) {
+                List<String> cats = new ArrayList<>(quote.categories);
+                Collections.sort(cats);
+                StringBuilder sb = new StringBuilder();
+                for (int i = 0; i < cats.size(); i++) {
+                    sb.append(cats.get(i).trim());
+                    if (i < cats.size() - 1) sb.append(", ");
+                }
+                sortedCategories = sb.toString();
+            }
+            quotesDao.insert(new QuotesApiTrack(quote.quote, quote.author, quote.work, sortedCategories, System.currentTimeMillis()));
         });
     }
 
     public LiveData<ApiNinjasService.QuoteResponse> getCurrentQuote() {
         return currentQuote;
+    }
+
+    // --- Saved Quotes Logic ---
+
+    public void saveQuote(String quote, String author, List<String> categories, String notes) {
+        appExecutors.diskIO().execute(() -> {
+            if (quotesDao.existsByQuote(quote)) {
+                Log.d(TAG, "saveQuote: Quote already exists. Skipping save.");
+                return;
+            }
+            performSave(quote, author, categories, notes);
+        });
+    }
+
+    private void performSave(String quote, String author, List<String> categories, String notes) {
+        long now = System.currentTimeMillis();
+        List<SavedQuote> toSave = new ArrayList<>();
+        if (categories == null || categories.isEmpty()) {
+            toSave.add(new SavedQuote(quote, author, "", notes, now));
+        } else {
+            for (String cat : categories) {
+                toSave.add(new SavedQuote(quote, author, cat.trim(), notes, now));
+            }
+        }
+        quotesDao.insertSavedQuotesBatch(toSave);
+    }
+
+    public void deleteQuote(String quote) {
+        appExecutors.diskIO().execute(() -> quotesDao.deleteByQuote(quote));
+    }
+
+    public void updateQuote(String oldQuote, String newQuote, String author, List<String> categories, String notes) {
+        appExecutors.diskIO().execute(() -> {
+            quotesDao.deleteByQuote(oldQuote);
+            performSave(newQuote, author, categories, notes);
+        });
+    }
+
+    public LiveData<Boolean> isQuoteSaved(String quote) {
+        MutableLiveData<Boolean> result = new MutableLiveData<>();
+        appExecutors.diskIO().execute(() -> {
+            result.postValue(quotesDao.existsByQuote(quote));
+        });
+        return result;
+    }
+
+    public LiveData<List<String>> getAllDistinctCategories() {
+        MediatorLiveData<List<String>> mediator = new MediatorLiveData<>();
+        LiveData<List<String>> savedCats = quotesDao.getSavedDistinctCategories();
+        LiveData<List<String>> apiCats = quotesDao.getApiDistinctCategories();
+
+        mediator.addSource(savedCats, saved -> {
+            List<String> api = apiCats.getValue();
+            mediator.setValue(combineCategories(saved, api));
+        });
+
+        mediator.addSource(apiCats, api -> {
+            List<String> saved = savedCats.getValue();
+            mediator.setValue(combineCategories(saved, api));
+        });
+
+        return mediator;
+    }
+
+    private List<String> combineCategories(List<String> saved, List<String> api) {
+        Set<String> set = new HashSet<>();
+        if (saved != null) set.addAll(saved);
+        if (api != null) set.addAll(api);
+        List<String> result = new ArrayList<>(set);
+        Collections.sort(result);
+        return result;
+    }
+
+    public LiveData<List<SavedQuote>> getSavedQuotes(int page, int pageSize, List<String> categoryFilters) {
+        int offset = (page - 1) * pageSize;
+        if (categoryFilters == null || categoryFilters.isEmpty()) {
+            return quotesDao.getSavedQuotesPaged(pageSize, offset);
+        } else {
+            // Room doesn't handle List in @Query directly for paged results in this specific way easily without custom query building
+            // But we can simplify: if only one category is selected, use the existing DAO method.
+            // For multiple, we'll need a new DAO method or filter in memory (less ideal for pagination but simple)
+            if (categoryFilters.size() == 1) {
+                return quotesDao.getSavedQuotesByCategoryPaged(categoryFilters.get(0), pageSize, offset);
+            }
+            // For multiple categories, we use a custom IN query
+            return quotesDao.getSavedQuotesByMultipleCategoriesPaged(categoryFilters, pageSize, offset);
+        }
+    }
+
+    public LiveData<Integer> getSavedQuotesCount(List<String> categoryFilters) {
+        if (categoryFilters == null || categoryFilters.isEmpty()) {
+            return quotesDao.getSavedQuotesCount();
+        } else {
+            if (categoryFilters.size() == 1) {
+                return quotesDao.getSavedQuotesCountByCategory(categoryFilters.get(0));
+            }
+            return quotesDao.getSavedQuotesCountByMultipleCategories(categoryFilters);
+        }
     }
 }

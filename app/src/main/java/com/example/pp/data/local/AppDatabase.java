@@ -29,6 +29,7 @@ import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.local.entity.QuotesApiTrack;
+import com.example.pp.data.local.entity.SavedQuote;
 import com.example.pp.data.local.entity.ScreenTime;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.data.local.entity.TagEntity;
@@ -52,8 +53,9 @@ import com.example.pp.utils.TaskTypeConverters;
     ScreenTime.class,
     SleepEntity.class,
     HistoryApiTrack.class,
-    QuotesApiTrack.class
-}, version = 22, exportSchema = false)
+    QuotesApiTrack.class,
+    SavedQuote.class
+}, version = 23, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 

@@ -46,6 +46,7 @@ public class TableListActivity extends AppCompatActivity {
         tables.add(new TableInfo("sleep", "Sleep", "Daily Sleep Monitoring"));
         tables.add(new TableInfo("history_api_track", "History Tracking", "History API Tracking"));
         tables.add(new TableInfo("quotes_api_track", "Quotes Tracking", "Quotes API Tracking"));
+        tables.add(new TableInfo("saved_quotes", "Quotes Saved", "Saved Quotes"));
 
         rvTables.setAdapter(new TableAdapter(tables));
     }
