@@ -17,6 +17,7 @@ import com.example.pp.utils.DateUtils;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -62,6 +63,13 @@ public class HistoryRepository {
     }
 
     private void checkAndFetchToday() {
+        Calendar cal = Calendar.getInstance();
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        if (hour < 6) {
+            Log.d(TAG, "checkAndFetchToday: Too early (" + hour + " AM). Skipping fetch until after 6 AM.");
+            return;
+        }
+
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         String lastFetch = prefs.getLastFetchDate();
         

@@ -70,6 +70,13 @@ public class QuoteRepository {
     }
 
     private void checkAndFetchToday() {
+        Calendar cal = Calendar.getInstance();
+        int hour = cal.get(Calendar.HOUR_OF_DAY);
+        if (hour < 6) {
+            Log.d(TAG, "checkAndFetchToday: Too early (" + hour + " AM). Skipping fetch until after 6 AM.");
+            return;
+        }
+
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
         String lastFetch = prefs.getLastFetchDate();
         Log.d(TAG, "checkAndFetchToday: today=" + today + ", lastFetch=" + lastFetch);
