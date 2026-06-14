@@ -70,4 +70,17 @@
         <item name="textEndPadding">0dp</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
+
+    <style name="savedQuotesFilterChips" parent="Widget.MaterialComponents.Chip.Action">
+        <item name="chipBackgroundColor">@color/elevated_surface</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="chipStrokeWidth">0dp</item>
+        <item name="chipCornerRadius">16dp</item>
+        <item name="chipMinHeight">32dp</item>
+        <item name="chipMinTouchTargetSize">0dp</item>
+        <item name="ensureMinTouchTargetSize">false</item>
+        <item name="chipIconVisible">false</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+    </style>
 </resources>
