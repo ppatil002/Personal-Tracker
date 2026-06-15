@@ -16,9 +16,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class SavedQuotesAdapter extends RecyclerView.Adapter<SavedQuotesAdapter.ViewHolder> {
     private List<SavedQuote> quotes = new ArrayList<>();
@@ -39,18 +41,25 @@ public class SavedQuotesAdapter extends RecyclerView.Adapter<SavedQuotesAdapter.
         Map<String, SavedQuote> grouped = new LinkedHashMap<>();
         for (SavedQuote q : newQuotesList) {
             if (!grouped.containsKey(q.quote)) {
-                grouped.put(q.quote, q);
+                // Create a shallow copy to avoid modifying the original if it's cached
+                SavedQuote copy = new SavedQuote(q.quote, q.author, q.category, q.notes, q.createdDate);
+                copy.id = q.id;
+                grouped.put(q.quote, copy);
             } else {
-                // Combine categories if needed, but for now we just show one entry
                 SavedQuote existing = grouped.get(q.quote);
                 if (existing != null && q.category != null && !q.category.isEmpty()) {
+                    Set<String> categories = new LinkedHashSet<>();
                     if (existing.category != null && !existing.category.isEmpty()) {
-                        if (!existing.category.contains(q.category)) {
-                            existing.category += ", " + q.category;
+                        for (String s : existing.category.split(",")) {
+                            String t = s.trim();
+                            if (!t.isEmpty()) categories.add(t);
                         }
-                    } else {
-                        existing.category = q.category;
                     }
+                    for (String s : q.category.split(",")) {
+                        String t = s.trim();
+                        if (!t.isEmpty()) categories.add(t);
+                    }
+                    existing.category = String.join(", ", categories);
                 }
             }
         }

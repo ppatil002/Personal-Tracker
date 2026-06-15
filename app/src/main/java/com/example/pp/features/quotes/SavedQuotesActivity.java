@@ -17,6 +17,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -44,8 +45,8 @@ public class SavedQuotesActivity extends AppCompatActivity {
     private final int pageSize = 10;
     private int totalPages = 1;
     private List<String> selectedCategoriesList = new ArrayList<>();
-    private androidx.lifecycle.LiveData<List<SavedQuote>> quotesLiveData;
-    private androidx.lifecycle.LiveData<Integer> countLiveData;
+    private LiveData<List<SavedQuote>> quotesLiveData;
+    private LiveData<Integer> countLiveData;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

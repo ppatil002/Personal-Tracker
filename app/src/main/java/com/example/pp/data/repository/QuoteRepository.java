@@ -251,7 +251,15 @@ public class QuoteRepository {
     private List<String> combineCategories(List<String> saved, List<String> api) {
         Set<String> set = new HashSet<>();
         if (saved != null) set.addAll(saved);
-        if (api != null) set.addAll(api);
+        if (api != null) {
+            for (String s : api) {
+                if (s == null) continue;
+                for (String part : s.split(",")) {
+                    String trimmed = part.trim();
+                    if (!trimmed.isEmpty()) set.add(trimmed);
+                }
+            }
+        }
         List<String> result = new ArrayList<>(set);
         Collections.sort(result);
         return result;
