@@ -112,7 +112,8 @@ public class ScreenTrackingService extends AccessibilityService {
 
     private boolean isExcludedPackage(String packageName) {
         return excludedPackages.contains(packageName) || 
-               packageName.toLowerCase().contains("launcher");
+               packageName.toLowerCase().contains("launcher") || // Remove any system app monitoring
+                packageName.toLowerCase().contains("dailer"); // Remove the phone call from screen time monitoring
     }
 
     private void scheduleBreakAlarm(long delayMs) {
