@@ -22,12 +22,14 @@ import com.example.pp.core.enums.TableAlignment;
 import com.example.pp.core.enums.TableColumnType;
 import com.example.pp.data.repository.GenericTableRepository;
 import com.example.pp.ui.components.table.adapter.GenericTableAdapter;
+import com.example.pp.ui.components.table.model.TableCell;
 import com.example.pp.ui.components.table.model.TableColumn;
 import com.example.pp.ui.components.table.model.TableConfig;
 import com.example.pp.ui.components.table.model.TableQuery;
 import com.example.pp.ui.components.table.model.TableRow;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import android.content.Intent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,7 +45,7 @@ public class TableViewActivity extends AppCompatActivity {
     private List<TableColumn> columns = new ArrayList<>();
     private final int columnWidth = 400; // Pixels
     
-    private View btnPrev, btnNext, btnDeleteAll;
+    private View btnPrev, btnNext, btnDeleteAll, btnDownload;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,6 +69,7 @@ public class TableViewActivity extends AppCompatActivity {
         tvPageInfo = findViewById(R.id.tvPageInfo);
         progressBar = findViewById(R.id.progressBar);
         btnDeleteAll = findViewById(R.id.btnDeleteAll);
+        btnDownload = findViewById(R.id.btnDownload);
 
         currentQuery = new TableQuery();
         currentQuery.setLimit(20);
@@ -95,8 +98,67 @@ public class TableViewActivity extends AppCompatActivity {
         });
 
         btnDeleteAll.setOnClickListener(v -> showTruncateConfirmation());
+        btnDownload.setOnClickListener(v -> exportTableToCSV());
 
         loadData();
+    }
+
+    private void exportTableToCSV() {
+        if (progressBar != null) progressBar.setVisibility(View.VISIBLE);
+        
+        TableQuery exportQuery = new TableQuery();
+        exportQuery.setLimit(10000); // Fetch a large chunk for export
+        exportQuery.setOffset(0);
+        exportQuery.setSortBy(currentQuery.getSortBy());
+        exportQuery.setSortDirection(currentQuery.getSortDirection());
+
+        PPApplication app = (PPApplication) getApplication();
+        app.getGenericTableRepository().getRawTableData(tableName, exportQuery, new GenericTableRepository.TableDataCallback() {
+            @Override
+            public void onDataLoaded(List<String> columnNames, List<TableRow> rows, int totalRecords) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                
+                if (rows == null || rows.isEmpty()) {
+                    Toast.makeText(TableViewActivity.this, "No data to export", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                StringBuilder csv = new StringBuilder();
+                // Header
+                for (int i = 0; i < columnNames.size(); i++) {
+                    csv.append(columnNames.get(i));
+                    if (i < columnNames.size() - 1) csv.append(",");
+                }
+                csv.append("\n");
+
+                // Rows
+                for (TableRow row : rows) {
+                    List<TableCell> cells = row.getCells();
+                    for (int i = 0; i < cells.size(); i++) {
+                        String val = cells.get(i).getValue();
+                        if (val == null) val = "";
+                        // Basic CSV escaping
+                        val = val.replace(",", " ").replace("\n", " ").trim();
+                        csv.append(val);
+                        if (i < cells.size() - 1) csv.append(",");
+                    }
+                    csv.append("\n");
+                }
+
+                // Share CSV
+                Intent intent = new Intent(Intent.ACTION_SEND);
+                intent.setType("text/plain");
+                intent.putExtra(Intent.EXTRA_SUBJECT, "Table Export: " + tableName);
+                intent.putExtra(Intent.EXTRA_TEXT, csv.toString());
+                startActivity(Intent.createChooser(intent, "Export " + tableName));
+            }
+
+            @Override
+            public void onError(String message) {
+                if (progressBar != null) progressBar.setVisibility(View.GONE);
+                Toast.makeText(TableViewActivity.this, "Export failed: " + message, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void showTruncateConfirmation() {

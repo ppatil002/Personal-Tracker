@@ -34,6 +34,17 @@
         app:layout_constraintTop_toTopOf="@id/btnBack" />
 
     <ImageView
+        android:id="@+id/btnDownload"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:padding="12dp"
+        android:src="@drawable/ic_download"
+        android:contentDescription="Download CSV"
+        app:layout_constraintEnd_toStartOf="@id/btnDeleteAll"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/accent_purple" />
+
+    <ImageView
         android:id="@+id/btnDeleteAll"
         android:layout_width="48dp"
         android:layout_height="48dp"
