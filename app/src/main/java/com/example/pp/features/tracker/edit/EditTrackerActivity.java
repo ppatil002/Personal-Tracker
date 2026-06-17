@@ -466,6 +466,9 @@ public class EditTrackerActivity extends AppCompatActivity {
         if (etParticular == null || etAmount == null || etNote == null) return;
 
         String item = etParticular.getText().toString().trim();
+        if (!item.isEmpty()) {
+            item = item.substring(0, 1).toUpperCase() + item.substring(1);
+        }
         String amountStr = etAmount.getText().toString().trim();
         String notes = etNote.getText().toString().trim();
         
