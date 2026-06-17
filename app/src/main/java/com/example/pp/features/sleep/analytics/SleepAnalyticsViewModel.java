@@ -16,8 +16,10 @@ import com.example.pp.utils.DateUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 public class SleepAnalyticsViewModel extends AndroidViewModel {
 
@@ -59,56 +61,57 @@ public class SleepAnalyticsViewModel extends AndroidViewModel {
 
     private void calculateStats(List<SleepEntity> currentData) {
         long start = getRangeStart();
-        
+
         Calendar cal = Calendar.getInstance();
         cal.setTimeInMillis(start);
         PeriodType type = periodType.getValue();
         if (type == PeriodType.WEEK) cal.add(Calendar.WEEK_OF_YEAR, -1);
         else if (type == PeriodType.MONTH) cal.add(Calendar.MONTH, -1);
-        
+
         final long prevStartFinal;
         if (type == PeriodType.WEEK) prevStartFinal = DateUtils.getStartOfWeek(cal.getTimeInMillis());
         else prevStartFinal = DateUtils.getStartOfMonth(cal.getTimeInMillis());
-        
+
         final long prevEndFinal = start;
 
         new Thread(() -> {
             List<SleepEntity> prevData = repository.getSleepHistorySync(prevStartFinal, prevEndFinal);
             
             double currentTotal = 0;
-            int currentDaysWithData = 0;
+            Set<Long> currentUniqueDays = new HashSet<>();
             if (currentData != null) {
                 for (SleepEntity s : currentData) {
                     if (s.endTime > s.startTime) {
                         currentTotal += (s.endTime - s.startTime);
+                        currentUniqueDays.add(DateUtils.getStartOfDay(s.date));
                     }
                 }
-                currentDaysWithData = countDaysWithData(currentData);
             }
 
             double prevTotal = 0;
+            Set<Long> prevUniqueDays = new HashSet<>();
             if (prevData != null) {
                 for (SleepEntity s : prevData) {
                     if (s.endTime > s.startTime) {
                         prevTotal += (s.endTime - s.startTime);
+                        prevUniqueDays.add(DateUtils.getStartOfDay(s.date));
                     }
                 }
             }
 
+            int currentDaysCount = currentUniqueDays.size();
+            int prevDaysCount = prevUniqueDays.size();
+
+            double currentAvg = currentDaysCount > 0 ? currentTotal / currentDaysCount : 0;
+            double prevAvg = prevDaysCount > 0 ? prevTotal / prevDaysCount : 0;
+
             SleepStats s = new SleepStats();
-            s.avgValue = currentDaysWithData > 0 ? currentTotal / currentDaysWithData : 0;
-            s.percentChange = prevTotal > 0 ? ((currentTotal - prevTotal) / prevTotal) * 100 : 0;
+            s.avgValue = currentAvg;
+            // Percent change should be based on average sleep duration, not total,
+            // otherwise comparing a partial week to a full week would be misleading.
+            s.percentChange = prevAvg > 0 ? ((currentAvg - prevAvg) / prevAvg) * 100 : 0;
             stats.postValue(s);
         }).start();
-    }
-
-    private int countDaysWithData(List<SleepEntity> data) {
-        if (data == null || data.isEmpty()) return 0;
-        java.util.Set<Long> days = new java.util.HashSet<>();
-        for (SleepEntity s : data) {
-            days.add(DateUtils.getStartOfDay(s.startTime));
-        }
-        return days.size();
     }
 
     private void updatePeriodLabel() {

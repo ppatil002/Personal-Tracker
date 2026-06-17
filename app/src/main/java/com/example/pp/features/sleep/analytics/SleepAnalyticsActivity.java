@@ -243,7 +243,7 @@ public class SleepAnalyticsActivity extends AppCompatActivity {
         Map<Long, Long> dailySleep = new HashMap<>();
         if (data != null) {
             for (SleepEntity s : data) {
-                long day = s.date;
+                long day = DateUtils.getStartOfDay(s.date);
                 long duration = (s.endTime > s.startTime) ? (s.endTime - s.startTime) : 0;
                 dailySleep.put(day, dailySleep.getOrDefault(day, 0L) + duration);
             }
