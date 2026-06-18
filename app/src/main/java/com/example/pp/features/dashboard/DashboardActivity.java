@@ -35,6 +35,7 @@ import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.SleepEntity;
 import com.example.pp.data.remote.ApiNinjasService;
 import com.example.pp.features.analytics.AnalyticsActivity;
+import com.example.pp.features.gym.GymActivity;
 import com.example.pp.features.hydration.analytics.WaterAnalyticsActivity;
 import com.example.pp.features.nutrition.analytics.NutritionAnalyticsActivity;
 import com.example.pp.features.quotes.SavedQuotesActivity;
@@ -190,6 +191,9 @@ public class DashboardActivity extends AppCompatActivity {
     }
 
     private void setupBottomNav() {
+        findViewById(R.id.btnQuickGym).setOnClickListener(v -> startActivity(new Intent(this, GymActivity.class)));
+        findViewById(R.id.btnQuickVocab).setOnClickListener(v -> Toast.makeText(this, "Vocab feature coming soon!", Toast.LENGTH_SHORT).show());
+
         findViewById(R.id.navAnalytics).setOnClickListener(v -> startActivity(new Intent(this, AnalyticsActivity.class)));
         findViewById(R.id.btnCenterFab).setOnClickListener(v -> startActivity(new Intent(this, EditTrackerActivity.class)));
         findViewById(R.id.navMore).setOnClickListener(v -> startActivity(new Intent(this, MoreActivity.class)));

@@ -50,7 +50,7 @@ public class AppConstants {
     // Nutrition Targets
     public static final double TARGET_CALORIES = 2000.0;
     public static final double TARGET_CARBS = 200.0;
-    public static final double TARGET_PROTEIN = 120.0;
+    public static final double TARGET_PROTEIN = 90;
     public static final double TARGET_FATS = 65.0;
     public static final double TARGET_WATER_ML = 3000.0;
 }
