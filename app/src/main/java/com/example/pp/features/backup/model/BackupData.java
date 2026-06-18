@@ -1,7 +1,9 @@
 package com.example.pp.features.backup.model;
 
 import com.example.pp.data.local.entity.BackgroundJobLog;
+import com.example.pp.data.local.entity.BodyWeight;
 import com.example.pp.data.local.entity.CategoryEntity;
+import com.example.pp.data.local.entity.GymTracking;
 import com.example.pp.data.local.entity.HistoryApiTrack;
 import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutrientEntity;
@@ -34,6 +36,8 @@ public class BackupData {
     public List<HistoryApiTrack> history;
     public List<QuotesApiTrack> quotes;
     public List<SavedQuote> savedQuotes;
+    public List<BodyWeight> bodyWeight;
+    public List<GymTracking> gymTracking;
 
     public BackupData(List<CategoryEntity> categories, List<TagEntity> tags, 
                       List<TransactionEntity> transactions, List<TransactionTagCrossRef> transactionTags,
@@ -46,7 +50,9 @@ public class BackupData {
                       List<ScreenTime> screenTime,
                       List<HistoryApiTrack> history,
                       List<QuotesApiTrack> quotes,
-                      List<SavedQuote> savedQuotes) {
+                      List<SavedQuote> savedQuotes,
+                      List<BodyWeight> bodyWeight,
+                      List<GymTracking> gymTracking) {
         this.categories = categories;
         this.tags = tags;
         this.transactions = transactions;
@@ -62,5 +68,7 @@ public class BackupData {
         this.history = history;
         this.quotes = quotes;
         this.savedQuotes = savedQuotes;
+        this.bodyWeight = bodyWeight;
+        this.gymTracking = gymTracking;
     }
 }

@@ -47,6 +47,8 @@ public class TableListActivity extends AppCompatActivity {
         tables.add(new TableInfo("history_api_track", "History Tracking", "History API Tracking"));
         tables.add(new TableInfo("quotes_api_track", "Quotes Tracking", "Quotes API Tracking"));
         tables.add(new TableInfo("saved_quotes", "Quotes Saved", "Saved Quotes"));
+        tables.add(new TableInfo("body_weight", "Body Weight", "Body Weight History"));
+        tables.add(new TableInfo("gym_tracking", "Gym Tracking", "Workout Progress Logs"));
 
         rvTables.setAdapter(new TableAdapter(tables));
     }
