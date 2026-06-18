@@ -12,6 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase;
 import com.example.pp.data.local.dao.BackgroundJobLogDao;
 import com.example.pp.data.local.dao.CategoryDao;
 import com.example.pp.data.local.dao.CommonDao;
+import com.example.pp.data.local.dao.GymDao;
 import com.example.pp.data.local.dao.HistoryDao;
 import com.example.pp.data.local.dao.HydrationDao;
 import com.example.pp.data.local.dao.NutrientEntityDao;
@@ -23,7 +24,9 @@ import com.example.pp.data.local.dao.TagDao;
 import com.example.pp.data.local.dao.TaskDao;
 import com.example.pp.data.local.dao.TransactionDao;
 import com.example.pp.data.local.entity.BackgroundJobLog;
+import com.example.pp.data.local.entity.BodyWeight;
 import com.example.pp.data.local.entity.CategoryEntity;
+import com.example.pp.data.local.entity.GymTracking;
 import com.example.pp.data.local.entity.HistoryApiTrack;
 import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutrientEntity;
@@ -54,8 +57,10 @@ import com.example.pp.utils.TaskTypeConverters;
     SleepEntity.class,
     HistoryApiTrack.class,
     QuotesApiTrack.class,
-    SavedQuote.class
-}, version = 23, exportSchema = false)
+    SavedQuote.class,
+    BodyWeight.class,
+    GymTracking.class
+}, version = 24, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -74,6 +79,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract SleepDao sleepDao();
     public abstract HistoryDao historyDao();
     public abstract QuotesDao quotesDao();
+    public abstract GymDao gymDao();
 
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {
