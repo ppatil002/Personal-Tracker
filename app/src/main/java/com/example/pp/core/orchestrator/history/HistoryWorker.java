@@ -8,8 +8,6 @@ import androidx.work.WorkerParameters;
 
 import com.example.pp.PPApplication;
 import com.example.pp.core.orchestrator.BaseFeatureWorker;
-import com.example.pp.data.local.entity.BackgroundJobLog;
-import com.example.pp.data.repository.BackgroundJobLogRepository;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -27,19 +25,11 @@ public class HistoryWorker extends BaseFeatureWorker {
     public Result doWork() {
         Log.d(TAG, "Starting HistoryWorker (Daily History Fetch)");
         String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
-        String customJobId = "history_" + today;
+        String dailyJobId = "history_" + today;
         
         PPApplication app = (PPApplication) getApplicationContext();
-        BackgroundJobLogRepository logRepo = app.getBackgroundJobLogRepository();
 
-        logRepo.mergeDuplicateDailyWorkerLog(new BackgroundJobLog(
-                customJobId,
-                "HistoryFetchWorker",
-                "RUNNING",
-                "Daily History",
-                "Worker triggered fetch for " + today,
-                System.currentTimeMillis()
-        ));
+        mergeUpdateTodayLog(dailyJobId, "RUNNING", "Daily History", "Worker triggered fetch for " + today);
 
         try {
             app.getHistoryRepository().fetchHistoryOfDay(today);
@@ -47,14 +37,7 @@ public class HistoryWorker extends BaseFeatureWorker {
             return Result.success();
         } catch (Exception e) {
             Log.e(TAG, "Error in HistoryWorker", e);
-            logRepo.mergeDuplicateDailyWorkerLog(new BackgroundJobLog(
-                    customJobId,
-                    "HistoryFetchWorker",
-                    "FAILED",
-                    "Daily History",
-                    "Worker Error: " + e.getMessage(),
-                    System.currentTimeMillis()
-            ));
+            mergeUpdateTodayLog(dailyJobId, "FAILED", "Daily History", "Worker Error: " + e.getMessage());
             failTask(e.getMessage());
             return Result.failure();
         }

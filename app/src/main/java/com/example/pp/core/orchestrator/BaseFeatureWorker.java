@@ -56,6 +56,20 @@ public abstract class BaseFeatureWorker extends Worker {
         backgroundJobLogRepository.insert(log);
     }
 
+    protected void mergeUpdateTodayLog(String dailyJobId, String status, String step, String message) {
+        BackgroundJobLog log = new BackgroundJobLog(
+                dailyJobId,
+                getClass().getSimpleName(),
+                status,
+                step,
+                message,
+                System.currentTimeMillis()
+        );
+        BackgroundJobLogRepository backgroundJobLogRepository = ((PPApplication) getApplicationContext())
+                .getBackgroundJobLogRepository();
+        backgroundJobLogRepository.mergeDuplicateDailyWorkerLog(log);
+    }
+
     protected void updateTaskProgress(int progress) {
         if (taskId != null) {
             TaskState state = taskDao.getStateForTask(taskId);

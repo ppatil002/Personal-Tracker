@@ -11,6 +11,10 @@ import com.example.pp.core.orchestrator.BaseFeatureWorker;
 import com.example.pp.data.repository.ScreenTimeRepository;
 import com.example.pp.utils.DateUtils;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+
 public class ScreenTimeSyncWorker extends BaseFeatureWorker {
     private static final String TAG = "ScreenTimeSyncWorker";
     private final ScreenTimeRepository repository;
@@ -24,7 +28,10 @@ public class ScreenTimeSyncWorker extends BaseFeatureWorker {
     @Override
     public Result doWork() {
         Log.i(TAG, "Worker execution started.");
-        updateLog("RUNNING", "Syncing Screen Time", "Refreshing last 24-48 hours of usage data.");
+        String today = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(new Date());
+        String dailyJobId = "screentime_" + today;
+
+        mergeUpdateTodayLog(dailyJobId, "RUNNING", "Syncing Screen Time", "Refreshing usage data for " + today);
         
         try {
             long end = System.currentTimeMillis();
@@ -34,12 +41,12 @@ public class ScreenTimeSyncWorker extends BaseFeatureWorker {
             
             repository.syncScreenTimeSync(start, end);
 
-            updateLog("SUCCESS", "Syncing Screen Time", "Usage data updated successfully.");
+            mergeUpdateTodayLog(dailyJobId, "SUCCESS", "Syncing Screen Time", "Usage data updated successfully.");
             completeTask();
 //            Log.i(TAG, "Worker execution completed successfully.");
             return Result.success();
         } catch (Exception e) {
-            updateLog("FAILED", "Syncing Screen Time", "Error: " + e.getMessage());
+            mergeUpdateTodayLog(dailyJobId, "FAILED", "Syncing Screen Time", "Error: " + e.getMessage());
             failTask(e.getMessage());
             return Result.failure();
         }
