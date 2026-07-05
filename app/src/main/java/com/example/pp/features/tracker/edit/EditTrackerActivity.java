@@ -78,7 +78,7 @@ public class EditTrackerActivity extends AppCompatActivity {
     private List<Tag> allTags = new ArrayList<>();
     private List<Tag> selectedTags = new ArrayList<>();
     private List<CategoryTreeNode> categories = new ArrayList<>();
-    private String currentTransactionType = "Expense";
+    private String currentTransactionType = "EXPENSE";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,7 +98,7 @@ public class EditTrackerActivity extends AppCompatActivity {
 
     private void observeData() {
         PPApplication app = (PPApplication) getApplication();
-        
+
         app.getCategoryRepository().getCategoryTree().observe(this, newCategories -> {
             this.categories = newCategories;
         });
@@ -349,7 +349,7 @@ public class EditTrackerActivity extends AppCompatActivity {
             holder.tvParticular.setText(transaction.getItem());
             holder.tvAmount.setText(String.format(Locale.getDefault(), "₹%.2f", transaction.getAmount()));
             
-            if ("Refund".equalsIgnoreCase(transaction.getTransactionType())) {
+            if ("REFUND".equalsIgnoreCase(transaction.getTransactionType())) {
                 holder.tvAmount.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.emerald_green));
             } else {
                 holder.tvAmount.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.accent_pink));
@@ -442,14 +442,14 @@ public class EditTrackerActivity extends AppCompatActivity {
         tvTypeRefund = findViewById(R.id.tvTypeRefund);
 
         if (tvTypeExpense != null && tvTypeRefund != null) {
-            tvTypeExpense.setOnClickListener(v -> setTransactionType("Expense"));
-            tvTypeRefund.setOnClickListener(v -> setTransactionType("Refund"));
+            tvTypeExpense.setOnClickListener(v -> setTransactionType("EXPENSE"));
+            tvTypeRefund.setOnClickListener(v -> setTransactionType("REFUND"));
         }
     }
 
     private void setTransactionType(String type) {
         currentTransactionType = type;
-        if (type.equals("Expense")) {
+        if (type.equals("EXPENSE")) {
             tvTypeExpense.setBackgroundResource(R.drawable.bg_type_selected);
             tvTypeExpense.setTextColor(ContextCompat.getColor(this, R.color.white));
             tvTypeRefund.setBackground(null);
@@ -477,7 +477,16 @@ public class EditTrackerActivity extends AppCompatActivity {
         if (selectedCategory == null) { Toast.makeText(this, "Please select a category", Toast.LENGTH_SHORT).show(); return; }
 
         double amount;
-        try { amount = Double.parseDouble(amountStr); } catch (NumberFormatException e) { etAmount.setError("Invalid amount"); return; }
+        try { 
+            amount = Double.parseDouble(amountStr);
+            // Ensure refund is always negative
+            if ("REFUND".equals(currentTransactionType)) {
+                amount = -Math.abs(amount);
+            }
+        } catch (NumberFormatException e) { 
+            etAmount.setError("Invalid amount"); 
+            return; 
+        }
 
         progressBar.setVisibility(View.VISIBLE);
         
@@ -527,7 +536,7 @@ public class EditTrackerActivity extends AppCompatActivity {
         selectedTags.clear();
         for (Tag t : allTags) t.setSelected(false);
         updateSelectedTagsUI(new ArrayList<>());
-        setTransactionType("Expense");
+        setTransactionType("EXPENSE");
 
         if (containerDayTransactions != null && containerDayTransactions.getVisibility() == View.VISIBLE) {
             loadDayTransactions();
