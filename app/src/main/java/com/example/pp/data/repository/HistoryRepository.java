@@ -7,12 +7,14 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.BuildConfig;
+import com.example.pp.PPApplication;
+import com.example.pp.core.preferences.QuoteHistoryPrefs;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.HistoryDao;
+import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.HistoryApiTrack;
 import com.example.pp.data.remote.ApiNinjasService;
-import com.example.pp.core.preferences.QuoteHistoryPrefs;
 import com.example.pp.utils.DateUtils;
 
 import java.io.IOException;
@@ -34,6 +36,7 @@ public class HistoryRepository {
     
     private final ApiNinjasService apiService;
     private final HistoryDao historyDao;
+    private final BackgroundJobLogRepository logRepository;
     private final QuoteHistoryPrefs prefs;
     private final AppExecutors appExecutors;
     
@@ -48,6 +51,7 @@ public class HistoryRepository {
         this.apiService = retrofit.create(ApiNinjasService.class);
         AppDatabase db = AppDatabase.getInstance(context);
         this.historyDao = db.historyDao();
+        this.logRepository = ((PPApplication) context.getApplicationContext()).getBackgroundJobLogRepository();
         this.prefs = new QuoteHistoryPrefs(context);
         this.appExecutors = AppExecutors.getInstance();
         
@@ -100,6 +104,9 @@ public class HistoryRepository {
     }
 
     public void fetchHistoryOfDay(String dateKey) {
+        String jobId = "history_" + dateKey;
+        logBackgroundJob(jobId, "HistoryFetchWorker", "RUNNING", "Fetching History", "Initiating API call to Ninja History");
+
         apiService.getDayInHistory(BuildConfig.QUOTES_API_KEY).enqueue(new Callback<List<ApiNinjasService.HistoryResponse>>() {
             @Override
             public void onResponse(Call<List<ApiNinjasService.HistoryResponse>> call, Response<List<ApiNinjasService.HistoryResponse>> response) {
@@ -107,20 +114,28 @@ public class HistoryRepository {
                     ApiNinjasService.HistoryResponse history = response.body().get(0);
                     currentHistory.postValue(history);
                     saveHistory(history, dateKey);
-                } else{
+                    logBackgroundJob(jobId, "HistoryFetchWorker", "SUCCESS", "Completed", "Successfully fetched history");
+                } else {
+                    String errorMsg = "Unknown error";
                     try {
-                        String errorMsg = response.errorBody() != null ? response.errorBody().string() : "Unknown error";
-                        Log.e(TAG, "fetchHistoryOfDay: Error body=" + errorMsg);
-                    } catch (IOException e) {
-                        Log.e(TAG, "fetchHistoryOfDay: Could not read error body");
-                    }
+                        if (response.errorBody() != null) errorMsg = response.errorBody().string();
+                    } catch (IOException ignored) {}
+                    Log.e(TAG, "fetchHistoryOfDay: Error body=" + errorMsg);
+                    logBackgroundJob(jobId, "HistoryFetchWorker", "FAILED", "Error", "API Error: " + errorMsg);
                 }
             }
 
             @Override
             public void onFailure(Call<List<ApiNinjasService.HistoryResponse>> call, Throwable t) {
                 Log.e(TAG, "Failed to fetch history", t);
+                logBackgroundJob(jobId, "HistoryFetchWorker", "FAILED", "Network Failure", t.getMessage());
             }
+        });
+    }
+
+    private void logBackgroundJob(String jobId, String worker, String status, String step, String msg) {
+        appExecutors.diskIO().execute(() -> {
+            logRepository.mergeDuplicateDailyWorkerLog(new BackgroundJobLog(jobId, worker, status, step, msg, System.currentTimeMillis()));
         });
     }
 

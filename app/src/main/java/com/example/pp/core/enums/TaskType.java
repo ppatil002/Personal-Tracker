@@ -4,5 +4,7 @@ public enum TaskType {
     BACKUP,
     WATER_REMINDER,
     SCREEN_TIME_SYNC,
-    SLEEP_REMINDER
+    SLEEP_REMINDER,
+    QUOTES,
+    HISTORY
 }

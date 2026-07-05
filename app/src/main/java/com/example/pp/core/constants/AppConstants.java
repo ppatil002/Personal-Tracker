@@ -42,6 +42,8 @@ public class AppConstants {
     public static final String SCREEN_WORKER = "ScreenWorker";
     public static final String SLEEP_WORKER = "SleepWorker";
     public static final String WATER_WORKER = "WaterWorker";
+    public static final String QUOTES_WORKER = "QuotesWorker";
+    public static final String HISTORY_WORKER = "HistoryWorker";
 
     public static final String[] MONTHS_OF_YEAR = new String[]{"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 

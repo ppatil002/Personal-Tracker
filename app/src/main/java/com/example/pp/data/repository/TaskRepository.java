@@ -65,6 +65,74 @@ public class TaskRepository {
         seedWaterTask();
         seedScreenTimeTask();
         seedSleepTask();
+        seedQuotesTask();
+        seedHistoryTask();
+    }
+
+    private void seedQuotesTask() {
+        TaskDefinition quotesDef = new TaskDefinition(
+                "QUOTES_TASK_001",
+                TaskType.QUOTES,
+                true,
+                TimeUnit.HOURS.toMillis(24),
+                1,
+                false,
+                0,
+                false,
+                60,
+                System.currentTimeMillis(),
+                System.currentTimeMillis()
+        );
+
+        TaskState quotesState = new TaskState(
+                "QUOTES_TASK_001",
+                TaskStatus.SCHEDULED,
+                0,
+                0,
+                0,
+                0,
+                0,
+                null,
+                false,
+                false,
+                0
+        );
+
+        taskDao.insertDefinition(quotesDef);
+        taskDao.insertState(quotesState);
+    }
+
+    private void seedHistoryTask() {
+        TaskDefinition historyDef = new TaskDefinition(
+                "HISTORY_TASK_001",
+                TaskType.HISTORY,
+                true,
+                TimeUnit.HOURS.toMillis(24),
+                1,
+                false,
+                0,
+                false,
+                60,
+                System.currentTimeMillis(),
+                System.currentTimeMillis()
+        );
+
+        TaskState historyState = new TaskState(
+                "HISTORY_TASK_001",
+                TaskStatus.SCHEDULED,
+                0,
+                0,
+                0,
+                0,
+                0,
+                null,
+                false,
+                false,
+                0
+        );
+
+        taskDao.insertDefinition(historyDef);
+        taskDao.insertState(historyState);
     }
 
     private void seedSleepTask() {
@@ -250,6 +318,16 @@ public class TaskRepository {
                     WaterNotificationHelper.showNotification(context, taskId);
                 } else if (def.getTaskType() == TaskType.SCREEN_TIME_SYNC) {
                     ScreenTimeScheduler.runNow(context, taskId);
+                } else if (def.getTaskType() == TaskType.QUOTES) {
+                    androidx.work.OneTimeWorkRequest work = new androidx.work.OneTimeWorkRequest.Builder(com.example.pp.core.orchestrator.quotes.QuoteWorker.class)
+                            .setInputData(new androidx.work.Data.Builder().putString("TASK_ID", taskId).build())
+                            .build();
+                    WorkManager.getInstance(context).enqueue(work);
+                } else if (def.getTaskType() == TaskType.HISTORY) {
+                    androidx.work.OneTimeWorkRequest work = new androidx.work.OneTimeWorkRequest.Builder(com.example.pp.core.orchestrator.history.HistoryWorker.class)
+                            .setInputData(new androidx.work.Data.Builder().putString("TASK_ID", taskId).build())
+                            .build();
+                    WorkManager.getInstance(context).enqueue(work);
                 }
             }
         });

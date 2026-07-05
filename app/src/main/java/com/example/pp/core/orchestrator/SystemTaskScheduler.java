@@ -2,15 +2,18 @@ package com.example.pp.core.orchestrator;
 
 import android.content.Context;
 import android.util.Log;
+
 import com.example.pp.PPApplication;
-import com.example.pp.core.task.AppExecutors;
-import com.example.pp.data.local.dao.TaskDao;
-import com.example.pp.data.local.entity.TaskDefinition;
-import com.example.pp.data.repository.TaskRepository;
 import com.example.pp.core.orchestrator.backup.BackupScheduler;
+import com.example.pp.core.orchestrator.history.HistoryScheduler;
+import com.example.pp.core.orchestrator.quotes.QuoteScheduler;
 import com.example.pp.core.orchestrator.screentime.ScreenTimeScheduler;
 import com.example.pp.core.orchestrator.sleep.SleepScheduler;
 import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
+import com.example.pp.data.local.dao.TaskDao;
+import com.example.pp.data.local.entity.TaskDefinition;
+import com.example.pp.data.repository.TaskRepository;
+
 import java.util.List;
 
 public class SystemTaskScheduler {
@@ -41,6 +44,12 @@ public class SystemTaskScheduler {
                 break;
             case SLEEP_REMINDER:
                 SleepScheduler.schedule(context, def);
+                break;
+            case QUOTES:
+                QuoteScheduler.schedule(context, def);
+                break;
+            case HISTORY:
+                HistoryScheduler.schedule(context, def);
                 break;
             default:
                 Log.w(TAG, "No native scheduler found for task type: " + def.getTaskType());

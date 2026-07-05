@@ -8,13 +8,15 @@ import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.BuildConfig;
+import com.example.pp.PPApplication;
+import com.example.pp.core.preferences.QuoteHistoryPrefs;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.QuotesDao;
+import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.QuotesApiTrack;
 import com.example.pp.data.local.entity.SavedQuote;
 import com.example.pp.data.remote.ApiNinjasService;
-import com.example.pp.core.preferences.QuoteHistoryPrefs;
 import com.example.pp.utils.DateUtils;
 
 import java.io.IOException;
@@ -40,6 +42,7 @@ public class QuoteRepository {
 
     private final ApiNinjasService apiService;
     private final QuotesDao quotesDao;
+    private final BackgroundJobLogRepository logRepository;
     private final QuoteHistoryPrefs prefs;
     private final AppExecutors appExecutors;
     
@@ -54,6 +57,7 @@ public class QuoteRepository {
         this.apiService = retrofit.create(ApiNinjasService.class);
         AppDatabase db = AppDatabase.getInstance(context);
         this.quotesDao = db.quotesDao();
+        this.logRepository = ((PPApplication) context.getApplicationContext()).getBackgroundJobLogRepository();
         this.prefs = new QuoteHistoryPrefs(context);
         this.appExecutors = AppExecutors.getInstance();
         
@@ -114,6 +118,9 @@ public class QuoteRepository {
     }
 
     public void fetchQuoteOfTheDay(String dateKey) {
+        String jobId = "quotes_" + dateKey;
+        logBackgroundJob(jobId, "QuoteFetchWorker", "RUNNING", "Fetching Daily Quote", "Initiating API call to Ninja Quotes");
+
         apiService.getQuoteOfTheDay(BuildConfig.QUOTES_API_KEY).enqueue(new Callback<List<ApiNinjasService.QuoteResponse>>() {
             @Override
             public void onResponse(Call<List<ApiNinjasService.QuoteResponse>> call, Response<List<ApiNinjasService.QuoteResponse>> response) {
@@ -121,20 +128,28 @@ public class QuoteRepository {
                     ApiNinjasService.QuoteResponse quote = response.body().get(0);
                     currentQuote.postValue(quote);
                     saveQuoteToHistory(quote, dateKey);
+                    logBackgroundJob(jobId, "QuoteFetchWorker", "SUCCESS", "Completed", "Successfully fetched and saved quote");
                 } else {
+                    String errorMsg = "Unknown error";
                     try {
-                        String errorMsg = response.errorBody() != null ? response.errorBody().string() : "Unknown error";
-                        Log.e(TAG, "fetchQuoteOfTheDay: Error body=" + errorMsg);
-                    } catch (IOException e) {
-                        Log.e(TAG, "fetchQuoteOfTheDay: Could not read error body");
-                    }
+                        if (response.errorBody() != null) errorMsg = response.errorBody().string();
+                    } catch (IOException ignored) {}
+                    Log.e(TAG, "fetchQuoteOfTheDay: Error body=" + errorMsg);
+                    logBackgroundJob(jobId, "QuoteFetchWorker", "FAILED", "Error", "API Error: " + errorMsg);
                 }
             }
 
             @Override
             public void onFailure(Call<List<ApiNinjasService.QuoteResponse>> call, Throwable t) {
                 Log.e(TAG, "fetchQuoteOfTheDay: Network Failure", t);
+                logBackgroundJob(jobId, "QuoteFetchWorker", "FAILED", "Network Failure", t.getMessage());
             }
+        });
+    }
+
+    private void logBackgroundJob(String jobId, String worker, String status, String step, String msg) {
+        appExecutors.diskIO().execute(() -> {
+            logRepository.mergeDuplicateDailyWorkerLog(new BackgroundJobLog(jobId, worker, status, step, msg, System.currentTimeMillis()));
         });
     }
 
