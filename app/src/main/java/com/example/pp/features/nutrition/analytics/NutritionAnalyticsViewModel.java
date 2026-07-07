@@ -10,7 +10,9 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.PPApplication;
 import com.example.pp.core.enums.PeriodType;
+import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.local.model.GroupedNutritionIntake;
+import com.example.pp.data.local.model.NutritionIntakeWithFood;
 import com.example.pp.data.repository.NutritionRepository;
 import com.example.pp.utils.DateUtils;
 
@@ -124,4 +126,24 @@ public class NutritionAnalyticsViewModel extends AndroidViewModel {
     public void setSelectedDate(long date) { selectedDate.setValue(date); }
     public LiveData<String> getPeriodLabel() { return periodLabel; }
     public LiveData<List<GroupedNutritionIntake>> getNutritionData() { return nutritionData; }
+
+    public LiveData<List<NutritionIntakeWithFood>> getIntakesForGroup(long timestamp) {
+        long start = (timestamp / 300000) * 300000;
+        long end = start + 300000;
+        return repository.getIntakesInRange(start, end);
+    }
+
+    public void updateIntake(NutritionIntake intake) {
+        repository.updateIntake(intake);
+    }
+
+    public void deleteIntake(NutritionIntake intake) {
+        repository.deleteIntake(intake);
+    }
+
+    public void updateGroupTimestamp(long groupTimestamp, long newTimestamp) {
+        long start = (groupTimestamp / 300000) * 300000;
+        long end = start + 300000;
+        repository.updateIntakeTimestamp(start, end, newTimestamp);
+    }
 }

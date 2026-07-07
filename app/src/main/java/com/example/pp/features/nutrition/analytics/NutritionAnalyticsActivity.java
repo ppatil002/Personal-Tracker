@@ -1,15 +1,20 @@
 package com.example.pp.features.nutrition.analytics;
 
 import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -22,6 +27,7 @@ import com.example.pp.R;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.PeriodType;
 import com.example.pp.data.local.model.GroupedNutritionIntake;
+import com.example.pp.data.local.model.NutritionIntakeWithFood;
 import com.example.pp.ui.components.timeline.TimelineAdapter;
 import com.example.pp.utils.DateUtils;
 import com.github.mikephil.charting.charts.BarChart;
@@ -93,6 +99,8 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
         timelineAdapter = new TimelineAdapter();
         rvTimeline.setLayoutManager(new LinearLayoutManager(this));
         rvTimeline.setAdapter(timelineAdapter);
+
+        timelineAdapter.setOnItemClickListener(this::showEditDialogue);
     }
 
     private void setupChart() {
@@ -265,7 +273,7 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
                 GroupedNutritionIntake prev = filtered.get(i - 1);
                 long gapMs = current.intake_timestamp - prev.intake_timestamp;
                 String gapLabel = formatGap(gapMs);
-                boolean isWarning = gapMs > TimeUnit.HOURS.toMillis(5);
+                boolean isWarning = gapMs > TimeUnit.HOURS.toMillis(3);
                 timelineItems.add(new TimelineAdapter.GapItem(gapLabel + (isWarning ? " gap detected" : " elapsed"), isWarning));
             }
 
@@ -285,7 +293,8 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
                     title,
                     current.foodItems,
                     stats,
-                    isRecent
+                    isRecent,
+                    current
             ));
         }
 
@@ -318,6 +327,94 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
         mins %= 60;
         if (mins == 0) return hrs + "h";
         return hrs + "h " + mins + "m";
+    }
+
+    private void showEditDialogue(GroupedNutritionIntake group) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_nutrition_group, null);
+
+        TextView tvTime = view.findViewById(R.id.tvEditTime);
+        LinearLayout itemsContainer = view.findViewById(R.id.itemsContainer);
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(group.intake_timestamp);
+        SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        tvTime.setText("Time: " + sdfTime.format(cal.getTime()));
+
+        tvTime.setOnClickListener(v -> {
+            new TimePickerDialog(this, (view1, hourOfDay, minute) -> {
+                cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                cal.set(Calendar.MINUTE, minute);
+                tvTime.setText("Time: " + sdfTime.format(cal.getTime()));
+            }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), false).show();
+        });
+
+        AlertDialog dialog = builder.setView(view).create();
+        dialog.show();
+
+        viewModel.getIntakesForGroup(group.intake_timestamp).observe(this, intakes -> {
+            itemsContainer.removeAllViews();
+            if (intakes == null || intakes.isEmpty()) {
+                dialog.dismiss();
+                return;
+            }
+
+            for (NutritionIntakeWithFood item : intakes) {
+                View itemView = LayoutInflater.from(this).inflate(R.layout.item_dialog_nutrition_edit, itemsContainer, false);
+                TextView tvName = itemView.findViewById(R.id.tvFoodName);
+                EditText etQty = itemView.findViewById(R.id.etQuantity);
+                TextView tvUnit = itemView.findViewById(R.id.tvUnit);
+                View btnDelete = itemView.findViewById(R.id.btnDelete);
+
+                tvName.setText(item.food.getFoodItem());
+                etQty.setText(String.format(Locale.getDefault(), "%.1f", item.intake.quantity));
+                tvUnit.setText(item.food.getUnit());
+
+                etQty.setOnFocusChangeListener((v, hasFocus) -> {
+                    if (hasFocus) {
+                        etQty.post(() -> {
+                            InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                            if (imm != null) imm.showSoftInput(etQty, InputMethodManager.SHOW_IMPLICIT);
+                        });
+                    }
+                });
+
+                btnDelete.setOnClickListener(v -> {
+                    viewModel.deleteIntake(item.intake);
+                });
+
+                itemView.setTag(item);
+                itemsContainer.addView(itemView);
+            }
+        });
+
+        view.findViewById(R.id.btnSave).setOnClickListener(v -> {
+            // Update timestamp for all items in group
+            viewModel.updateGroupTimestamp(group.intake_timestamp, cal.getTimeInMillis());
+
+            // Update quantities
+            for (int i = 0; i < itemsContainer.getChildCount(); i++) {
+                View itemView = itemsContainer.getChildAt(i);
+                NutritionIntakeWithFood item = (NutritionIntakeWithFood) itemView.getTag();
+                EditText etQty = itemView.findViewById(R.id.etQuantity);
+                try {
+                    double newQty = Double.parseDouble(etQty.getText().toString());
+                    if (Math.abs(newQty - item.intake.quantity) > 0.01) {
+                        item.intake.quantity = newQty;
+                        viewModel.updateIntake(item.intake);
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+            dialog.dismiss();
+            Toast.makeText(this, "Intake updated", Toast.LENGTH_SHORT).show();
+        });
+
+        view.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
     }
 
     private void showPeriodPopup() {

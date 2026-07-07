@@ -31,6 +31,28 @@ public class NutritionRepository {
         });
     }
 
+    public void updateIntake(NutritionIntake intake) {
+        executor.execute(() -> {
+            intake.updatedTimestamp = System.currentTimeMillis();
+            nutritionDao.insert(intake);
+        });
+    }
+
+    public void deleteIntake(NutritionIntake intake) {
+        executor.execute(() -> nutritionDao.delete(intake));
+    }
+
+    public void updateIntakeTimestamp(long oldStart, long oldEnd, long newTimestamp) {
+        executor.execute(() -> {
+            List<NutritionIntakeWithFood> items = nutritionDao.getIntakesInRangeSync(oldStart, oldEnd);
+            for (NutritionIntakeWithFood item : items) {
+                item.intake.intakeTimestamp = newTimestamp;
+                item.intake.updatedTimestamp = System.currentTimeMillis();
+                nutritionDao.insert(item.intake);
+            }
+        });
+    }
+
     public LiveData<NutritionSummary> getTodaySummary(long startOfDay) {
         return nutritionDao.getTodaySummary(startOfDay);
     }

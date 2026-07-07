@@ -2,6 +2,7 @@ package com.example.pp.data.local.dao;
 
 import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
@@ -22,6 +23,12 @@ public interface NutritionIntakeDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertBatch(List<NutritionIntake> logs);
+
+    @Delete
+    void delete(NutritionIntake log);
+
+    @Query("DELETE FROM nutrition_intake WHERE intake_timestamp >= :start AND intake_timestamp < :end")
+    void deleteRange(long start, long end);
 
     @Query("SELECT COUNT(*) FROM nutrition_intake")
     int getCount();
