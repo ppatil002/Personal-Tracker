@@ -264,7 +264,7 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
                 HydrationIntake prev = filtered.get(i - 1);
                 long gapMs = current.timestamp - prev.timestamp;
                 String gapLabel = formatGap(gapMs);
-                boolean isWarning = gapMs > TimeUnit.HOURS.toMillis(3);
+                boolean isWarning = gapMs > TimeUnit.HOURS.toMillis(2);
                 timelineItems.add(new TimelineAdapter.GapItem(gapLabel + (isWarning ? " gap detected" : " since last sip"), isWarning));
             }
 
