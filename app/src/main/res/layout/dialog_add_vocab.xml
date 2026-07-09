@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/card_background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Word 📖"
+            android:textColor="@color/text_muted"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/etWord"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_input_field"
+            android:hint="Enter word"
+            android:inputType="text"
+            android:padding="12dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Part of Speech 🏷️"
+            android:textColor="@color/text_muted"
+            android:textSize="12sp" />
+
+        <AutoCompleteTextView
+            android:id="@+id/actvPartOfSpeech"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_neon_dropdown"
+            android:hint="Select part of speech"
+            android:padding="12dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Meaning 💡"
+            android:textColor="@color/text_muted"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/etMeaning"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_input_field"
+            android:gravity="top"
+            android:hint="Enter meaning"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:padding="12dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Example Usage 📝"
+            android:textColor="@color/text_muted"
+            android:textSize="12sp" />
+
+        <EditText
+            android:id="@+id/etExample"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:background="@drawable/bg_input_field"
+            android:gravity="top"
+            android:hint="Enter example sentence"
+            android:inputType="textMultiLine"
+            android:minLines="2"
+            android:padding="12dp"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint" />
+
+    </LinearLayout>
+</ScrollView>
