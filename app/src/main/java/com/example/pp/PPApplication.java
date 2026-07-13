@@ -15,6 +15,7 @@ import com.example.pp.data.repository.SleepRepository;
 import com.example.pp.data.repository.TagRepository;
 import com.example.pp.data.repository.TaskRepository;
 import com.example.pp.data.repository.TransactionRepository;
+import com.example.pp.data.repository.VocabularyRepository;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
 public class PPApplication extends Application {
@@ -31,6 +32,7 @@ public class PPApplication extends Application {
     private BackgroundJobLogRepository backgroundJobLogRepository;
     private QuoteRepository quoteRepository;
     private HistoryRepository historyRepository;
+    private VocabularyRepository vocabularyRepository;
 
     @Override
     public void onCreate() {
@@ -49,6 +51,7 @@ public class PPApplication extends Application {
         backgroundJobLogRepository = new BackgroundJobLogRepository(this);
         quoteRepository = new QuoteRepository(this);
         historyRepository = new HistoryRepository(this);
+        vocabularyRepository = new VocabularyRepository(this);
     }
 
     public CategoryRepository getCategoryRepository() {
@@ -101,5 +104,9 @@ public class PPApplication extends Application {
 
     public HistoryRepository getHistoryRepository() {
         return historyRepository;
+    }
+
+    public VocabularyRepository getVocabularyRepository() {
+        return vocabularyRepository;
     }
 }
