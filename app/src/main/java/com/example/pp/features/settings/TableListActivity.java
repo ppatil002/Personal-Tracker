@@ -49,6 +49,7 @@ public class TableListActivity extends AppCompatActivity {
         tables.add(new TableInfo("saved_quotes", "Quotes Saved", "Saved Quotes"));
         tables.add(new TableInfo("body_weight", "Body Weight", "Body Weight History"));
         tables.add(new TableInfo("gym_tracking", "Gym Tracking", "Workout Progress Logs"));
+        tables.add(new TableInfo("vocabulary", "Vocabulary", "Words and Meanings"));
 
         rvTables.setAdapter(new TableAdapter(tables));
     }

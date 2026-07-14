@@ -17,6 +17,7 @@ import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.local.entity.TransactionTagCrossRef;
+import com.example.pp.data.local.entity.Vocabulary;
 
 import java.util.List;
 
@@ -38,6 +39,7 @@ public class BackupData {
     public List<SavedQuote> savedQuotes;
     public List<BodyWeight> bodyWeight;
     public List<GymTracking> gymTracking;
+    public List<Vocabulary> vocabulary;
 
     public BackupData(List<CategoryEntity> categories, List<TagEntity> tags, 
                       List<TransactionEntity> transactions, List<TransactionTagCrossRef> transactionTags,
@@ -52,7 +54,8 @@ public class BackupData {
                       List<QuotesApiTrack> quotes,
                       List<SavedQuote> savedQuotes,
                       List<BodyWeight> bodyWeight,
-                      List<GymTracking> gymTracking) {
+                      List<GymTracking> gymTracking,
+                      List<Vocabulary> vocabulary) {
         this.categories = categories;
         this.tags = tags;
         this.transactions = transactions;
@@ -70,5 +73,6 @@ public class BackupData {
         this.savedQuotes = savedQuotes;
         this.bodyWeight = bodyWeight;
         this.gymTracking = gymTracking;
+        this.vocabulary = vocabulary;
     }
 }

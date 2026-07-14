@@ -23,6 +23,7 @@ import com.example.pp.data.local.dao.SleepDao;
 import com.example.pp.data.local.dao.TagDao;
 import com.example.pp.data.local.dao.TaskDao;
 import com.example.pp.data.local.dao.TransactionDao;
+import com.example.pp.data.local.dao.VocabularyDao;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.BodyWeight;
 import com.example.pp.data.local.entity.CategoryEntity;
@@ -40,6 +41,7 @@ import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.local.entity.TransactionTagCrossRef;
+import com.example.pp.data.local.entity.Vocabulary;
 import com.example.pp.utils.TaskTypeConverters;
 
 @Database(entities = {
@@ -59,8 +61,9 @@ import com.example.pp.utils.TaskTypeConverters;
     QuotesApiTrack.class,
     SavedQuote.class,
     BodyWeight.class,
-    GymTracking.class
-}, version = 24, exportSchema = false)
+    GymTracking.class,
+    Vocabulary.class
+}, version = 25, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -80,6 +83,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract HistoryDao historyDao();
     public abstract QuotesDao quotesDao();
     public abstract GymDao gymDao();
+    public abstract VocabularyDao vocabularyDao();
 
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {
