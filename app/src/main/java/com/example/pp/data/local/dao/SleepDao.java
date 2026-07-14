@@ -75,10 +75,10 @@ public interface SleepDao {
     @Query("SELECT * FROM sleep ORDER BY date DESC LIMIT 1")
     LiveData<SleepEntity> getLastSleep();
 
-    @Query("SELECT * FROM sleep WHERE start_time >= :start AND start_time <= :end ORDER BY start_time ASC")
+    @Query("SELECT * FROM sleep WHERE date >= :start AND date < :end ORDER BY date ASC")
     LiveData<List<SleepEntity>> getSleepInRange(long start, long end);
 
-    @Query("SELECT * FROM sleep WHERE start_time >= :start AND start_time <= :end ORDER BY start_time ASC")
+    @Query("SELECT * FROM sleep WHERE date >= :start AND date < :end ORDER BY date ASC")
     List<SleepEntity> getSleepInRangeSync(long start, long end);
 
     @Query("SELECT * FROM sleep WHERE date = :date LIMIT 1")
