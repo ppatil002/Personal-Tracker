@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.R;
+import com.example.pp.data.local.model.GroupedNutritionIntake;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +20,16 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int TYPE_INTAKE = 0;
     private static final int TYPE_GAP = 1;
 
+    public interface OnItemClickListener {
+        void onIntakeClick(GroupedNutritionIntake intake);
+    }
+
+    private OnItemClickListener listener;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     public interface TimelineItem {}
 
     public static class IntakeItem implements TimelineItem {
@@ -27,13 +38,19 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         public String subtitle;
         public String stats;
         public boolean isRecent;
+        public GroupedNutritionIntake originalData;
 
         public IntakeItem(String time, String amount, String subtitle, String stats, boolean isRecent) {
+            this(time, amount, subtitle, stats, isRecent, null);
+        }
+
+        public IntakeItem(String time, String amount, String subtitle, String stats, boolean isRecent, GroupedNutritionIntake originalData) {
             this.time = time;
             this.amount = amount;
             this.subtitle = subtitle;
             this.stats = stats;
             this.isRecent = isRecent;
+            this.originalData = originalData;
         }
     }
 
@@ -65,7 +82,7 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         if (viewType == TYPE_INTAKE) {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_timeline_intake, parent, false);
-            return new IntakeViewHolder(view);
+            return new IntakeViewHolder(view, listener);
         } else {
             View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_timeline_gap, parent, false);
             return new GapViewHolder(view);
@@ -89,9 +106,11 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     static class IntakeViewHolder extends RecyclerView.ViewHolder {
         TextView tvTime, tvTitle, tvSubtitle, tvStats;
         View timelineLine;
+        OnItemClickListener listener;
 
-        IntakeViewHolder(View view) {
+        IntakeViewHolder(View view, OnItemClickListener listener) {
             super(view);
+            this.listener = listener;
             tvTime = view.findViewById(R.id.tvIntakeTime);
             tvTitle = view.findViewById(R.id.tvIntakeTitle);
             tvSubtitle = view.findViewById(R.id.tvIntakeSubtitle);
@@ -114,6 +133,10 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             } else {
                 tvStats.setVisibility(View.GONE);
             }
+
+            itemView.setOnClickListener(v -> {
+                if (listener != null) listener.onIntakeClick(item.originalData);
+            });
         }
     }
 
