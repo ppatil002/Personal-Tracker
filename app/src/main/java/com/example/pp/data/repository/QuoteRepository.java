@@ -128,21 +128,21 @@ public class QuoteRepository {
                     ApiNinjasService.QuoteResponse quote = response.body().get(0);
                     currentQuote.postValue(quote);
                     saveQuoteToHistory(quote, dateKey);
-                    logBackgroundJob(jobId, "QuoteFetchWorker", "SUCCESS", "Completed", "Successfully fetched and saved quote");
+                    logBackgroundJob(jobId, "QuoteFetchWorker", "SUCCESS", "Quotes Refreshed", "Successfully fetched and saved quote");
                 } else {
                     String errorMsg = "Unknown error";
                     try {
                         if (response.errorBody() != null) errorMsg = response.errorBody().string();
                     } catch (IOException ignored) {}
                     Log.e(TAG, "fetchQuoteOfTheDay: Error body=" + errorMsg);
-                    logBackgroundJob(jobId, "QuoteFetchWorker", "FAILED", "Error", "API Error: " + errorMsg);
+                    logBackgroundJob(jobId, "QuoteFetchWorker", "FAILED", "Quotes Error", "API Error: " + errorMsg);
                 }
             }
 
             @Override
             public void onFailure(Call<List<ApiNinjasService.QuoteResponse>> call, Throwable t) {
                 Log.e(TAG, "fetchQuoteOfTheDay: Network Failure", t);
-                logBackgroundJob(jobId, "QuoteFetchWorker", "FAILED", "Network Failure", t.getMessage());
+                logBackgroundJob(jobId, "QuoteFetchWorker", "FAILED", "Quotes Network Failure", t.getMessage());
             }
         });
     }
