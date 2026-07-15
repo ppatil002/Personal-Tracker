@@ -114,21 +114,21 @@ public class HistoryRepository {
                     ApiNinjasService.HistoryResponse history = response.body().get(0);
                     currentHistory.postValue(history);
                     saveHistory(history, dateKey);
-                    logBackgroundJob(jobId, "HistoryFetchWorker", "SUCCESS", "Completed", "Successfully fetched history");
+                    logBackgroundJob(jobId, "HistoryFetchWorker", "SUCCESS", "History Refreshed", "Successfully fetched history");
                 } else {
                     String errorMsg = "Unknown error";
                     try {
                         if (response.errorBody() != null) errorMsg = response.errorBody().string();
                     } catch (IOException ignored) {}
                     Log.e(TAG, "fetchHistoryOfDay: Error body=" + errorMsg);
-                    logBackgroundJob(jobId, "HistoryFetchWorker", "FAILED", "Error", "API Error: " + errorMsg);
+                    logBackgroundJob(jobId, "HistoryFetchWorker", "FAILED", "History Error", "API Error: " + errorMsg);
                 }
             }
 
             @Override
             public void onFailure(Call<List<ApiNinjasService.HistoryResponse>> call, Throwable t) {
                 Log.e(TAG, "Failed to fetch history", t);
-                logBackgroundJob(jobId, "HistoryFetchWorker", "FAILED", "Network Failure", t.getMessage());
+                logBackgroundJob(jobId, "HistoryFetchWorker", "FAILED", "History Network Failure", t.getMessage());
             }
         });
     }
