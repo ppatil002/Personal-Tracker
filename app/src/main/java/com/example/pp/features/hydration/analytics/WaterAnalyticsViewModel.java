@@ -124,4 +124,24 @@ public class WaterAnalyticsViewModel extends AndroidViewModel {
     public void setSelectedDate(long date) { selectedDate.setValue(date); }
     public LiveData<String> getPeriodLabel() { return periodLabel; }
     public LiveData<List<HydrationIntake>> getHydrationData() { return hydrationData; }
+
+    public LiveData<List<HydrationIntake>> getIntakesForGroup(long timestamp) {
+        long start = (timestamp / 300000) * 300000;
+        long end = start + 300000;
+        return repository.getIntakesInRange(start, end);
+    }
+
+    public void updateIntake(HydrationIntake intake) {
+        repository.updateIntake(intake);
+    }
+
+    public void deleteIntake(HydrationIntake intake) {
+        repository.deleteIntake(intake);
+    }
+
+    public void updateGroupTimestamp(long groupTimestamp, long newTimestamp) {
+        long start = (groupTimestamp / 300000) * 300000;
+        long end = start + 300000;
+        repository.updateIntakeTimestamp(start, end, newTimestamp);
+    }
 }

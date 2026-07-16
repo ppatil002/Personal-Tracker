@@ -77,4 +77,16 @@ public class HydrationRepository {
     public List<HydrationIntake> getIntakesInRangeSync(long start, long end) {
         return hydrationDao.getIntakesInRangeSync(start, end);
     }
+
+    public void updateIntake(HydrationIntake intake) {
+        executor.execute(() -> hydrationDao.update(intake));
+    }
+
+    public void deleteIntake(HydrationIntake intake) {
+        executor.execute(() -> hydrationDao.delete(intake));
+    }
+
+    public void updateIntakeTimestamp(long start, long end, long newTimestamp) {
+        executor.execute(() -> hydrationDao.updateIntakeTimestamp(start, end, newTimestamp));
+    }
 }

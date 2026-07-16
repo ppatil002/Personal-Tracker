@@ -2,14 +2,19 @@ package com.example.pp.features.hydration.analytics;
 
 import android.app.DatePickerDialog;
 import android.graphics.Color;
+import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
+import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.PopupWindow;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -93,6 +98,8 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
         timelineAdapter = new TimelineAdapter();
         rvTimeline.setLayoutManager(new LinearLayoutManager(this));
         rvTimeline.setAdapter(timelineAdapter);
+
+        timelineAdapter.setOnItemClickListener(this::showEditDialogue);
     }
 
     private void setupChart() {
@@ -280,11 +287,106 @@ public class WaterAnalyticsActivity extends AppCompatActivity {
                     current.amountMl + "ml",
                     null,
                     stats,
-                    isRecent
+                    isRecent,
+                    current
             ));
         }
 
         timelineAdapter.setItems(timelineItems);
+    }
+
+    private void showEditDialogue(TimelineAdapter.TimelineItem item) {
+        if (!(item instanceof TimelineAdapter.IntakeItem)) return;
+        TimelineAdapter.IntakeItem intakeItem = (TimelineAdapter.IntakeItem) item;
+        if (!(intakeItem.originalData instanceof HydrationIntake)) return;
+
+        HydrationIntake hydrationIntake = (HydrationIntake) intakeItem.originalData;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        View view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_nutrition_group, null);
+
+        TextView tvTime = view.findViewById(R.id.tvEditTime);
+        LinearLayout itemsContainer = view.findViewById(R.id.itemsContainer);
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(hydrationIntake.timestamp);
+        SimpleDateFormat sdfTime = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+        tvTime.setText("Time: " + sdfTime.format(cal.getTime()));
+
+        tvTime.setOnClickListener(v -> {
+            new TimePickerDialog(this, (view1, hourOfDay, minute) -> {
+                cal.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                cal.set(Calendar.MINUTE, minute);
+                tvTime.setText("Time: " + sdfTime.format(cal.getTime()));
+            }, cal.get(Calendar.HOUR_OF_DAY), cal.get(Calendar.MINUTE), false).show();
+        });
+
+        AlertDialog dialog = builder.setView(view).create();
+        dialog.show();
+
+        viewModel.getIntakesForGroup(hydrationIntake.timestamp).observe(this, intakes -> {
+            itemsContainer.removeAllViews();
+            if (intakes == null || intakes.isEmpty()) {
+                dialog.dismiss();
+                return;
+            }
+
+            for (HydrationIntake intake : intakes) {
+                View itemView = LayoutInflater.from(this).inflate(R.layout.item_dialog_nutrition_edit, itemsContainer, false);
+                TextView tvName = itemView.findViewById(R.id.tvFoodName);
+                EditText etQty = itemView.findViewById(R.id.etQuantity);
+                TextView tvUnit = itemView.findViewById(R.id.tvUnit);
+                View btnDelete = itemView.findViewById(R.id.btnDelete);
+
+                tvName.setText("Water");
+                etQty.setText(String.valueOf(intake.amountMl));
+                tvUnit.setText("ml");
+
+                etQty.setOnFocusChangeListener((v, hasFocus) -> {
+                    if (hasFocus) {
+                        etQty.post(() -> {
+                            InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+                            if (imm != null) imm.showSoftInput(etQty, InputMethodManager.SHOW_IMPLICIT);
+                        });
+                    }
+                });
+
+                btnDelete.setOnClickListener(v -> {
+                    viewModel.deleteIntake(intake);
+                });
+
+                itemView.setTag(intake);
+                itemsContainer.addView(itemView);
+            }
+        });
+
+        view.findViewById(R.id.btnSave).setOnClickListener(v -> {
+            // Update timestamp for all items in group
+            viewModel.updateGroupTimestamp(hydrationIntake.timestamp, cal.getTimeInMillis());
+
+            // Update quantities
+            for (int i = 0; i < itemsContainer.getChildCount(); i++) {
+                View itemView = itemsContainer.getChildAt(i);
+                HydrationIntake intake = (HydrationIntake) itemView.getTag();
+                EditText etQty = itemView.findViewById(R.id.etQuantity);
+                try {
+                    int newQty = Integer.parseInt(etQty.getText().toString());
+                    if (newQty != intake.amountMl) {
+                        intake.amountMl = newQty;
+                        viewModel.updateIntake(intake);
+                    }
+                } catch (NumberFormatException ignored) {}
+            }
+            dialog.dismiss();
+            Toast.makeText(this, "Intake updated", Toast.LENGTH_SHORT).show();
+        });
+
+        view.findViewById(R.id.btnCancel).setOnClickListener(v -> dialog.dismiss());
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().clearFlags(WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_ALT_FOCUSABLE_IM);
+            dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE | WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
+        }
     }
 
     private String formatGap(long ms) {

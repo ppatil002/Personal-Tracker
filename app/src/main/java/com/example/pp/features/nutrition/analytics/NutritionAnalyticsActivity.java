@@ -329,7 +329,13 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
         return hrs + "h " + mins + "m";
     }
 
-    private void showEditDialogue(GroupedNutritionIntake group) {
+    private void showEditDialogue(TimelineAdapter.TimelineItem item) {
+        if (!(item instanceof TimelineAdapter.IntakeItem)) return;
+        TimelineAdapter.IntakeItem intakeItem = (TimelineAdapter.IntakeItem) item;
+        if (!(intakeItem.originalData instanceof GroupedNutritionIntake)) return;
+        
+        GroupedNutritionIntake group = (GroupedNutritionIntake) intakeItem.originalData;
+
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_edit_nutrition_group, null);
 
@@ -359,16 +365,16 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
                 return;
             }
 
-            for (NutritionIntakeWithFood item : intakes) {
+            for (NutritionIntakeWithFood nutritionItem : intakes) {
                 View itemView = LayoutInflater.from(this).inflate(R.layout.item_dialog_nutrition_edit, itemsContainer, false);
                 TextView tvName = itemView.findViewById(R.id.tvFoodName);
                 EditText etQty = itemView.findViewById(R.id.etQuantity);
                 TextView tvUnit = itemView.findViewById(R.id.tvUnit);
                 View btnDelete = itemView.findViewById(R.id.btnDelete);
 
-                tvName.setText(item.food.getFoodItem());
-                etQty.setText(String.format(Locale.getDefault(), "%.1f", item.intake.quantity));
-                tvUnit.setText(item.food.getUnit());
+                tvName.setText(nutritionItem.food.getFoodItem());
+                etQty.setText(String.format(Locale.getDefault(), "%.1f", nutritionItem.intake.quantity));
+                tvUnit.setText(nutritionItem.food.getUnit());
 
                 etQty.setOnFocusChangeListener((v, hasFocus) -> {
                     if (hasFocus) {
@@ -380,10 +386,10 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
                 });
 
                 btnDelete.setOnClickListener(v -> {
-                    viewModel.deleteIntake(item.intake);
+                    viewModel.deleteIntake(nutritionItem.intake);
                 });
 
-                itemView.setTag(item);
+                itemView.setTag(nutritionItem);
                 itemsContainer.addView(itemView);
             }
         });
@@ -395,13 +401,13 @@ public class NutritionAnalyticsActivity extends AppCompatActivity {
             // Update quantities
             for (int i = 0; i < itemsContainer.getChildCount(); i++) {
                 View itemView = itemsContainer.getChildAt(i);
-                NutritionIntakeWithFood item = (NutritionIntakeWithFood) itemView.getTag();
+                NutritionIntakeWithFood nutritionItem = (NutritionIntakeWithFood) itemView.getTag();
                 EditText etQty = itemView.findViewById(R.id.etQuantity);
                 try {
                     double newQty = Double.parseDouble(etQty.getText().toString());
-                    if (Math.abs(newQty - item.intake.quantity) > 0.01) {
-                        item.intake.quantity = newQty;
-                        viewModel.updateIntake(item.intake);
+                    if (Math.abs(newQty - nutritionItem.intake.quantity) > 0.01) {
+                        nutritionItem.intake.quantity = newQty;
+                        viewModel.updateIntake(nutritionItem.intake);
                     }
                 } catch (NumberFormatException ignored) {}
             }

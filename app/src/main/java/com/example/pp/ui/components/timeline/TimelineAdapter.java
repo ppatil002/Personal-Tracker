@@ -21,7 +21,7 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     private static final int TYPE_GAP = 1;
 
     public interface OnItemClickListener {
-        void onIntakeClick(GroupedNutritionIntake intake);
+        void onIntakeClick(TimelineItem item);
     }
 
     private OnItemClickListener listener;
@@ -38,13 +38,13 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         public String subtitle;
         public String stats;
         public boolean isRecent;
-        public GroupedNutritionIntake originalData;
+        public Object originalData;
 
         public IntakeItem(String time, String amount, String subtitle, String stats, boolean isRecent) {
             this(time, amount, subtitle, stats, isRecent, null);
         }
 
-        public IntakeItem(String time, String amount, String subtitle, String stats, boolean isRecent, GroupedNutritionIntake originalData) {
+        public IntakeItem(String time, String amount, String subtitle, String stats, boolean isRecent, Object originalData) {
             this.time = time;
             this.amount = amount;
             this.subtitle = subtitle;
@@ -135,7 +135,7 @@ public class TimelineAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             }
 
             itemView.setOnClickListener(v -> {
-                if (listener != null) listener.onIntakeClick(item.originalData);
+                if (listener != null) listener.onIntakeClick(item);
             });
         }
     }
