@@ -50,7 +50,10 @@ public interface GymDao {
     @Query("SELECT * FROM gym_tracking WHERE exercise_date >= :start AND exercise_date < :end ORDER BY exercise_date ASC")
     LiveData<List<GymTracking>> getGymLogsForRange(long start, long end);
 
-    @Query("SELECT DISTINCT CAST(exercise_date / 86400000 AS INT) * 86400000 FROM gym_tracking ORDER BY exercise_date DESC")
+    @Query("SELECT DISTINCT exercise FROM gym_tracking WHERE muscle = :muscle ORDER BY exercise ASC")
+    List<String> getExercisesByMuscleSync(String muscle);
+
+    @Query("SELECT DISTINCT exercise_date FROM gym_tracking ORDER BY exercise_date DESC")
     LiveData<List<Long>> getUniqueWorkoutDates();
 
     @Query("SELECT COUNT(*) FROM body_weight")

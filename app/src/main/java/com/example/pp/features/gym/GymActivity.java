@@ -5,9 +5,11 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -258,8 +260,11 @@ public class GymActivity extends AppCompatActivity {
         EditText etWeight = view.findViewById(R.id.etBodyWeight);
         AutoCompleteTextView actvMuscle = view.findViewById(R.id.actvMuscle);
         AutoCompleteTextView actvExercise = view.findViewById(R.id.actvExercise);
+        ProgressBar pbExercises = view.findViewById(R.id.pbExercises);
         LinearLayout containerSets = view.findViewById(R.id.containerSets);
         MaterialButton btnAddSet = view.findViewById(R.id.btnAddSet);
+
+        viewModel.clearSuggestions();
 
         SimpleDateFormat sdf = new SimpleDateFormat("dd MMM, yyyy", Locale.getDefault());
         tvDate.setText(sdf.format(selectedDate.getTime()));
@@ -267,11 +272,61 @@ public class GymActivity extends AppCompatActivity {
         // Populate Pickers
         String[] muscles = {"Back", "Biceps", "Chest", "Shoulders", "Triceps","Legs", "Cardio", "Abs"};
         actvMuscle.setAdapter(new ArrayAdapter<>(this, R.layout.item_dropdown_divider, R.id.tvDropdownItem, muscles));
-        actvMuscle.setOnClickListener(v -> actvMuscle.showDropDown());
+        
+        actvMuscle.setOnClickListener(v -> {
+            hideKeyboard(v);
+            actvMuscle.showDropDown();
+        });
+        actvMuscle.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                hideKeyboard(v);
+                actvMuscle.showDropDown();
+            }
+        });
+
+        // Observe ViewModel for suggested exercises
+        viewModel.getSuggestedExercises().observe(this, exercises -> {
+            if (exercises != null) {
+                ArrayAdapter<String> exerciseAdapter = new ArrayAdapter<>(this, R.layout.item_dropdown_divider, R.id.tvDropdownItem, exercises);
+                actvExercise.setAdapter(exerciseAdapter);
+                if (actvExercise.hasFocus()) actvExercise.showDropDown();
+            }
+        });
+
+        viewModel.getIsFetchingExercises().observe(this, isFetching -> {
+            if (isFetching != null) {
+                pbExercises.setVisibility(isFetching ? View.VISIBLE : View.GONE);
+            }
+        });
+
+        actvMuscle.setOnItemClickListener((parent, v, position, id) -> {
+            viewModel.fetchExercisesForMuscle(actvMuscle.getText().toString());
+        });
+        
+        actvExercise.setOnClickListener(v -> {
+            if (actvExercise.getAdapter() != null && actvExercise.getAdapter().getCount() > 0) {
+                actvExercise.showDropDown();
+            } else {
+                String m = actvMuscle.getText().toString();
+                if (!m.isEmpty()) viewModel.fetchExercisesForMuscle(m);
+            }
+        });
+
+        actvExercise.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                if (actvExercise.getAdapter() != null && actvExercise.getAdapter().getCount() > 0) {
+                    actvExercise.showDropDown();
+                } else {
+                    String m = actvMuscle.getText().toString();
+                    if (!m.isEmpty()) viewModel.fetchExercisesForMuscle(m);
+                }
+            }
+        });
 
         if (existingLog != null) {
             actvMuscle.setText(existingLog.muscle, false);
-            actvExercise.setText(existingLog.exercise);
+            viewModel.fetchExercisesForMuscle(existingLog.muscle);
+            actvExercise.setText(existingLog.exercise, false);
             
             // Load sets
             try {
@@ -347,14 +402,15 @@ public class GymActivity extends AppCompatActivity {
 
                     if (!muscle.isEmpty() && !exercise.isEmpty() && !setsList.isEmpty()) {
                         String json = new Gson().toJson(setsList);
+                        long normalizedDate = DateUtils.getStartOfDay(selectedDate.getTimeInMillis());
                         if (existingLog != null) {
                             existingLog.muscle = muscle;
                             existingLog.exercise = exercise;
                             existingLog.setsJson = json;
-                            existingLog.exerciseDate = selectedDate.getTimeInMillis();
+                            existingLog.exerciseDate = normalizedDate;
                             viewModel.updateGymLog(existingLog);
                         } else {
-                            viewModel.addGymLog(muscle, exercise, json, "", selectedDate.getTimeInMillis());
+                            viewModel.addGymLog(muscle, exercise, json, "", normalizedDate);
                         }
                         Toast.makeText(this, "Workout saved", Toast.LENGTH_SHORT).show();
                     }
@@ -404,5 +460,12 @@ public class GymActivity extends AppCompatActivity {
             }
         }
         return sb.toString().trim();
+    }
+
+    private void hideKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
     }
 }

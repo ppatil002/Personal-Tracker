@@ -42,13 +42,25 @@ public class GymLogAdapter extends RecyclerView.Adapter<GymLogAdapter.ViewHolder
     }
 
     private List<MuscleGroup> groupLogs(List<GymTracking> logs) {
-        // Group by Muscle (TreeMap to keep order or alphabetical)
-        Map<String, MuscleGroup> muscleMap = new TreeMap<>();
+        // Group by Date and Muscle
+        // TreeMap with a custom comparator to sort by Date (DESC) then Muscle (ASC).
+        Map<String, MuscleGroup> groupMap = new TreeMap<>((k1, k2) -> {
+            String[] p1 = k1.split("_", 2);
+            String[] p2 = k2.split("_", 2);
+            int dateComp = p2[0].compareTo(p1[0]); // Date DESC
+            if (dateComp != 0) return dateComp;
+            return p1[1].compareTo(p2[1]); // Muscle ASC
+        });
+        SimpleDateFormat sdfKey = new SimpleDateFormat("yyyyMMdd", Locale.getDefault());
+        
         for (GymTracking log : logs) {
-            MuscleGroup mGroup = muscleMap.get(log.muscle);
+            String dateKey = sdfKey.format(new Date(log.exerciseDate));
+            String key = dateKey + "_" + log.muscle;
+            
+            MuscleGroup mGroup = groupMap.get(key);
             if (mGroup == null) {
                 mGroup = new MuscleGroup(log.muscle, log.exerciseDate);
-                muscleMap.put(log.muscle, mGroup);
+                groupMap.put(key, mGroup);
             }
             
             // Under Muscle, group by Exercise
@@ -59,7 +71,7 @@ public class GymLogAdapter extends RecyclerView.Adapter<GymLogAdapter.ViewHolder
             }
             eGroup.sets.add(log);
         }
-        return new ArrayList<>(muscleMap.values());
+        return new ArrayList<>(groupMap.values());
     }
 
     @NonNull

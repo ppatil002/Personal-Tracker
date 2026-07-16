@@ -26,6 +26,8 @@ public class GymViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> weightLimit = new MutableLiveData<>(10);
     private final MutableLiveData<Long> selectedLogDate = new MutableLiveData<>(DateUtils.getStartOfDay(System.currentTimeMillis()));
     private final LiveData<List<Long>> availableWorkoutDates;
+    private final MutableLiveData<List<String>> suggestedExercises = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> isFetchingExercises = new MutableLiveData<>(false);
 
     public GymViewModel(@NonNull Application application) {
         super(application);
@@ -33,6 +35,32 @@ public class GymViewModel extends AndroidViewModel {
         gymDao = db.gymDao();
         appExecutors = AppExecutors.getInstance();
         availableWorkoutDates = gymDao.getUniqueWorkoutDates();
+    }
+
+    public LiveData<List<String>> getSuggestedExercises() {
+        return suggestedExercises;
+    }
+
+    public LiveData<Boolean> getIsFetchingExercises() {
+        return isFetchingExercises;
+    }
+
+    public void fetchExercisesForMuscle(String muscle) {
+        if (muscle == null || muscle.isEmpty()) {
+            suggestedExercises.postValue(new java.util.ArrayList<>());
+            return;
+        }
+        isFetchingExercises.postValue(true);
+        appExecutors.diskIO().execute(() -> {
+            List<String> exercises = gymDao.getExercisesByMuscleSync(muscle);
+            suggestedExercises.postValue(exercises);
+            isFetchingExercises.postValue(false);
+        });
+    }
+
+    public void clearSuggestions() {
+        suggestedExercises.postValue(new java.util.ArrayList<>());
+        isFetchingExercises.postValue(false);
     }
 
     public LiveData<List<Long>> getAvailableWorkoutDates() {

@@ -101,11 +101,12 @@
             android:completionThreshold="0"
             android:hint="Select Muscle"
             android:inputType="none"
+            android:focusable="false"
+            android:clickable="true"
             android:padding="10dp"
             android:textColor="@color/text_primary"
             android:textColorHint="@color/text_hint"
-            android:textSize="14sp"
-            android:imeOptions="actionNext" />
+            android:textSize="14sp" />
 
         <!-- Exercise -->
         <TextView
@@ -116,20 +117,36 @@
             android:textColor="@color/text_muted"
             android:textSize="11sp" />
 
-        <AutoCompleteTextView
-            android:id="@+id/actvExercise"
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:background="@drawable/bg_input_field"
-            android:hint="e.g. Bench Press"
-            android:padding="10dp"
-            android:textColor="@color/text_primary"
-            android:textColorHint="@color/text_hint"
-            android:textSize="14sp"
-            android:imeOptions="actionNext"
-            android:inputType="textCapWords"
-            android:singleLine="true" />
+            android:layout_marginTop="4dp">
+
+            <AutoCompleteTextView
+                android:id="@+id/actvExercise"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_input_field"
+                android:hint="e.g. Bench Press"
+                android:padding="10dp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_hint"
+                android:textSize="14sp"
+                android:imeOptions="actionNext"
+                android:inputType="textCapWords"
+                android:singleLine="true"
+                android:dropDownHeight="160dp"
+                android:completionThreshold="0"/>
+
+            <ProgressBar
+                android:id="@+id/pbExercises"
+                style="?android:attr/progressBarStyleSmall"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center_vertical|end"
+                android:layout_marginEnd="12dp"
+                android:visibility="gone" />
+        </FrameLayout>
 
         <!-- Dynamic Sets Container -->
         <TextView
