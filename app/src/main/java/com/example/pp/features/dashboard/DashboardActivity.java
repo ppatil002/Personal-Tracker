@@ -43,6 +43,7 @@ import com.example.pp.features.screentime.analytics.ScreenTimeAnalyticsActivity;
 import com.example.pp.features.settings.MoreActivity;
 import com.example.pp.features.sleep.analytics.SleepAnalyticsActivity;
 import com.example.pp.features.tracker.edit.EditTrackerActivity;
+import com.example.pp.features.vocabulary.VocabularyActivity;
 import com.example.pp.utils.DateUtils;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
@@ -192,7 +193,7 @@ public class DashboardActivity extends AppCompatActivity {
 
     private void setupBottomNav() {
         findViewById(R.id.btnQuickGym).setOnClickListener(v -> startActivity(new Intent(this, GymActivity.class)));
-        findViewById(R.id.btnQuickVocab).setOnClickListener(v -> Toast.makeText(this, "Vocab feature coming soon!", Toast.LENGTH_SHORT).show());
+        findViewById(R.id.btnQuickVocab).setOnClickListener(v -> startActivity(new Intent(this, VocabularyActivity.class)));
 
         findViewById(R.id.navAnalytics).setOnClickListener(v -> startActivity(new Intent(this, AnalyticsActivity.class)));
         findViewById(R.id.btnCenterFab).setOnClickListener(v -> startActivity(new Intent(this, EditTrackerActivity.class)));

@@ -3,6 +3,7 @@ package com.example.pp.features.vocabulary;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
@@ -16,6 +17,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.R;
+import com.example.pp.data.local.entity.Vocabulary;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 public class VocabularyActivity extends AppCompatActivity {
@@ -41,6 +43,7 @@ public class VocabularyActivity extends AppCompatActivity {
         rvVocabulary.setLayoutManager(new LinearLayoutManager(this));
         adapter = new VocabularyAdapter();
         rvVocabulary.setAdapter(adapter);
+        adapter.setOnItemClickListener(this::showAddVocabDialog);
 
         rvVocabulary.addOnScrollListener(new RecyclerView.OnScrollListener() {
             @Override
@@ -58,7 +61,7 @@ public class VocabularyActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.fabAddVocab).setOnClickListener(v -> showAddVocabDialog());
+        findViewById(R.id.fabAddVocab).setOnClickListener(v -> showAddVocabDialog(null));
     }
 
     private void observeViewModel() {
@@ -67,23 +70,39 @@ public class VocabularyActivity extends AppCompatActivity {
         });
     }
 
-    private void showAddVocabDialog() {
+    private void showAddVocabDialog(Vocabulary existingVocab) {
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_add_vocab, null);
         EditText etWord = dialogView.findViewById(R.id.etWord);
         AutoCompleteTextView actvPartOfSpeech = dialogView.findViewById(R.id.actvPartOfSpeech);
         EditText etMeaning = dialogView.findViewById(R.id.etMeaning);
         EditText etExample = dialogView.findViewById(R.id.etExample);
 
+        if (existingVocab != null) {
+            etWord.setText(existingVocab.word);
+            actvPartOfSpeech.setText(existingVocab.partOfSpeech);
+            etMeaning.setText(existingVocab.meaning);
+            etExample.setText(existingVocab.example);
+        }
+
         String[] partsOfSpeech = {"Noun", "Verb", "Adjective", "Adverb"};
         ArrayAdapter<String> posAdapter = new ArrayAdapter<>(this, R.layout.item_dropdown_divider, R.id.tvDropdownItem, partsOfSpeech);
         actvPartOfSpeech.setAdapter(posAdapter);
-        actvPartOfSpeech.setOnClickListener(v -> actvPartOfSpeech.showDropDown());
+        actvPartOfSpeech.setOnClickListener(v -> {
+            hideKeyboard(v);
+            actvPartOfSpeech.showDropDown();
+        });
+        actvPartOfSpeech.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                hideKeyboard(v);
+                actvPartOfSpeech.showDropDown();
+            }
+        });
 
         AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle("Add New Word")
+                .setTitle(existingVocab == null ? "Add New Word" : "Edit Word")
                 .setView(dialogView)
                 .setPositiveButton("Save", (d, which) -> {
-                    String word = etWord.getText().toString().trim();
+                    String word = etWord.getText().toString().trim().toLowerCase();
                     String pos = actvPartOfSpeech.getText().toString().trim();
                     String meaning = etMeaning.getText().toString().trim();
                     String example = etExample.getText().toString().trim();
@@ -93,8 +112,17 @@ public class VocabularyActivity extends AppCompatActivity {
                         return;
                     }
 
-                    viewModel.addVocabulary(word, meaning, example, pos);
-                    Toast.makeText(this, "Word added", Toast.LENGTH_SHORT).show();
+                    if (existingVocab == null) {
+                        viewModel.addVocabulary(word, meaning, example, pos);
+                        Toast.makeText(this, "Word added", Toast.LENGTH_SHORT).show();
+                    } else {
+                        existingVocab.setWord(word);
+                        existingVocab.setPartOfSpeech(pos);
+                        existingVocab.setMeaning(meaning);
+                        existingVocab.setExample(example);
+                        viewModel.updateVocabulary(existingVocab);
+                        Toast.makeText(this, "Word updated", Toast.LENGTH_SHORT).show();
+                    }
                 })
                 .setNegativeButton("Cancel", null)
                 .create();
@@ -102,6 +130,13 @@ public class VocabularyActivity extends AppCompatActivity {
         dialog.show();
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(R.color.card_background);
+        }
+    }
+
+    private void hideKeyboard(View view) {
+        InputMethodManager imm = (InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
         }
     }
 }

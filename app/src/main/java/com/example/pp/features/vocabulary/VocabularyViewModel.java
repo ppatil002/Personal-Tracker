@@ -95,6 +95,11 @@ public class VocabularyViewModel extends AndroidViewModel {
         refresh();
     }
 
+    public void updateVocabulary(Vocabulary vocabulary) {
+        repository.updateVocabulary(vocabulary);
+        refresh();
+    }
+
     public void refresh() {
         currentOffset = 0;
         isLastPage = false;

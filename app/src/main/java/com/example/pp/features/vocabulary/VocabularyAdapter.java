@@ -21,6 +21,16 @@ public class VocabularyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
 
     public interface ListItem {}
 
+    public interface OnItemClickListener {
+        void onItemClick(Vocabulary vocabulary);
+    }
+
+    private OnItemClickListener listener;
+
+    public void setOnItemClickListener(OnItemClickListener listener) {
+        this.listener = listener;
+    }
+
     public static class HeaderItem implements ListItem {
         public String date;
         public HeaderItem(String date) { this.date = date; }
@@ -67,7 +77,13 @@ public class VocabularyAdapter extends RecyclerView.Adapter<RecyclerView.ViewHol
         if (holder instanceof HeaderViewHolder) {
             ((HeaderViewHolder) holder).bind((HeaderItem) items.get(position));
         } else {
-            ((WordViewHolder) holder).bind((WordItem) items.get(position));
+            WordItem item = (WordItem) items.get(position);
+            ((WordViewHolder) holder).bind(item);
+            holder.itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onItemClick(item.vocabulary);
+                }
+            });
         }
     }
 

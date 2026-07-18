@@ -24,6 +24,12 @@ public class VocabularyRepository {
         });
     }
 
+    public void updateVocabulary(Vocabulary vocabulary) {
+        executors.diskIO().execute(() -> {
+            vocabularyDao.insert(vocabulary);
+        });
+    }
+
     public interface LoadCallback {
         void onLoaded(List<Vocabulary> vocabList);
     }
