@@ -34,18 +34,28 @@ public class SleepScheduler {
      */
     public static void schedule(Context context, TaskDefinition def) {
         AppExecutors.getInstance().diskIO().execute(() -> {
-            Log.i(TAG, "Scheduling Sleep Monitor task.");
-            
             TaskDefinition taskDef = def;
             if (taskDef == null) {
                 TaskRepository taskRepo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
                 taskDef = taskRepo.getDefinitionByType(TaskType.SLEEP_REMINDER);
             }
 
+            // Skip if task is disabled to save battery and avoid unrequested alarms
+            if (taskDef == null || !taskDef.isEnabled()) {
+                Log.i(TAG, "Sleep monitoring is disabled. Skipping schedule.");
+                return;
+            }
+
+            Log.i(TAG, "Scheduling Sleep Monitor task.");
+
             // Always start with a clean slate
             cancelAllAlarms(context);
             calculateAndSetNextAlarm(context, taskDef.getTaskId());
         });
+    }
+
+    public static void cancel(Context context) {
+        cancelAllAlarms(context);
     }
 
     public static void cancelAllAlarms(Context context) {

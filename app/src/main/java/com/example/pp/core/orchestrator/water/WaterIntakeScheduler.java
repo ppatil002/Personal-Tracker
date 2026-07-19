@@ -34,13 +34,19 @@ public class WaterIntakeScheduler {
      */
     public static void schedule(Context context, TaskDefinition def) {
         AppExecutors.getInstance().diskIO().execute(() -> {
-            Log.i(TAG, "Scheduling water intake alarm.");
-            
             TaskDefinition taskDef = def;
             if (taskDef == null) {
                 TaskRepository taskRepository = ((PPApplication) context.getApplicationContext()).getTaskRepository();
                 taskDef = taskRepository.getDefinitionByType(TaskType.WATER_REMINDER);
             }
+
+            // Skip if task is disabled to prevent ghost notifications/alarms
+            if (taskDef == null || !taskDef.isEnabled()) {
+                Log.i(TAG, "Water intake is disabled. Skipping schedule.");
+                return;
+            }
+
+            Log.i(TAG, "Scheduling water intake alarm.");
 
             long nextAlarmTime = calculateNextAlarmTime(context);
             
@@ -72,6 +78,23 @@ public class WaterIntakeScheduler {
                 updateTaskState(context, taskDef.getTaskId(), nextAlarmTime);
             }
         });
+    }
+
+    public static void cancel(Context context) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, WaterIntakeReceiver.class);
+        intent.setAction(AppConstants.ACTION_WATER_ALARM);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context,
+                ALARM_REQUEST_CODE,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        if (alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
+            Log.i(TAG, "Water intake alarm cancelled.");
+            logOperation(context, "CANCEL", "Water Alarm", "Water alarm cancelled manually.");
+        }
     }
 
     /**

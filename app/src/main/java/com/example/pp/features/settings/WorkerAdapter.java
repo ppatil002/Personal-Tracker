@@ -10,9 +10,11 @@ import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.pp.R;
+import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.data.local.dao.TaskDao;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
+import com.google.android.material.button.MaterialButton;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,6 +31,8 @@ public class WorkerAdapter extends RecyclerView.Adapter<WorkerAdapter.WorkerView
 
     public interface OnTaskActionListener {
         void onRunNow(String taskId);
+        void onPauseTask(String taskId);
+        void onResumeTask(String taskId);
     }
 
     public void setOnTaskActionListener(OnTaskActionListener listener) {
@@ -60,7 +64,7 @@ public class WorkerAdapter extends RecyclerView.Adapter<WorkerAdapter.WorkerView
     class WorkerViewHolder extends RecyclerView.ViewHolder {
         TextView tvTaskType, tvStatus, tvTaskId, tvLastRun, tvNextRun, tvInterval, tvConstraints, tvProgress, tvFailureReason;
         ProgressBar pbProgress;
-        View layoutFailure, btnRunNow;
+        View layoutFailure, btnRunNow, btnPauseResume;
 
         WorkerViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -76,6 +80,7 @@ public class WorkerAdapter extends RecyclerView.Adapter<WorkerAdapter.WorkerView
             layoutFailure = itemView.findViewById(R.id.layoutFailure);
             tvFailureReason = itemView.findViewById(R.id.tvFailureReason);
             btnRunNow = itemView.findViewById(R.id.btnRunNow);
+            btnPauseResume = itemView.findViewById(R.id.btnPauseResume);
         }
 
         void bind(TaskDao.TaskWithState task) {
@@ -91,6 +96,22 @@ public class WorkerAdapter extends RecyclerView.Adapter<WorkerAdapter.WorkerView
                     actionListener.onRunNow(def.getTaskId());
                 }
             });
+
+            if (state.getCurrentState() == TaskStatus.PAUSED || !def.isEnabled()) {
+                ((MaterialButton) btnPauseResume).setText("Resume");
+                btnPauseResume.setOnClickListener(v -> {
+                    if (actionListener != null) {
+                        actionListener.onResumeTask(def.getTaskId());
+                    }
+                });
+            } else {
+                ((MaterialButton) btnPauseResume).setText("Pause");
+                btnPauseResume.setOnClickListener(v -> {
+                    if (actionListener != null) {
+                        actionListener.onPauseTask(def.getTaskId());
+                    }
+                });
+            }
 
             tvLastRun.setText(state.getLastRunTime() > 0 ? sdf.format(new Date(state.getLastRunTime())) : "Never");
             
