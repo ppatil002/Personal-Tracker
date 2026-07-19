@@ -4,6 +4,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import androidx.work.Data;
+import androidx.work.OneTimeWorkRequest;
 import androidx.work.WorkManager;
 
 import com.example.pp.core.enums.TaskStatus;
@@ -319,16 +321,53 @@ public class TaskRepository {
                 } else if (def.getTaskType() == TaskType.SCREEN_TIME_SYNC) {
                     ScreenTimeScheduler.runNow(context, taskId);
                 } else if (def.getTaskType() == TaskType.QUOTES) {
-                    androidx.work.OneTimeWorkRequest work = new androidx.work.OneTimeWorkRequest.Builder(com.example.pp.core.orchestrator.quotes.QuoteWorker.class)
-                            .setInputData(new androidx.work.Data.Builder().putString("TASK_ID", taskId).build())
+                    OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(com.example.pp.core.orchestrator.quotes.QuoteWorker.class)
+                            .setInputData(new Data.Builder().putString("TASK_ID", taskId).build())
                             .build();
                     WorkManager.getInstance(context).enqueue(work);
                 } else if (def.getTaskType() == TaskType.HISTORY) {
-                    androidx.work.OneTimeWorkRequest work = new androidx.work.OneTimeWorkRequest.Builder(com.example.pp.core.orchestrator.history.HistoryWorker.class)
-                            .setInputData(new androidx.work.Data.Builder().putString("TASK_ID", taskId).build())
+                    OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(com.example.pp.core.orchestrator.history.HistoryWorker.class)
+                            .setInputData(new Data.Builder().putString("TASK_ID", taskId).build())
                             .build();
                     WorkManager.getInstance(context).enqueue(work);
                 }
+            }
+        });
+    }
+
+    public void pauseTask(String taskId) {
+        executors.diskIO().execute(() -> {
+            TaskDefinition def = taskDao.getDefinitionById(taskId);
+            if (def != null) {
+                def.setEnabled(false);
+                taskDao.updateDefinition(def);
+
+                TaskState state = taskDao.getStateForTask(taskId);
+                if (state != null) {
+                    state.setCurrentState(TaskStatus.PAUSED);
+                    state.setNextRunTime(0);
+                    taskDao.updateState(state);
+                }
+
+                SystemTaskScheduler.pauseTask(context, def);
+            }
+        });
+    }
+
+    public void resumeTask(String taskId) {
+        executors.diskIO().execute(() -> {
+            TaskDefinition def = taskDao.getDefinitionById(taskId);
+            if (def != null) {
+                def.setEnabled(true);
+                taskDao.updateDefinition(def);
+
+                TaskState state = taskDao.getStateForTask(taskId);
+                if (state != null) {
+                    state.setCurrentState(TaskStatus.IDLE);
+                    taskDao.updateState(state);
+                }
+
+                SystemTaskScheduler.resumeTask(context, def);
             }
         });
     }

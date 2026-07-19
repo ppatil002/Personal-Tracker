@@ -1,5 +1,6 @@
 package com.example.pp.data.local.dao;
 
+import androidx.lifecycle.LiveData;
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
@@ -8,13 +9,12 @@ import androidx.room.Relation;
 import androidx.room.Transaction;
 import androidx.room.Update;
 
+import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
-import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.data.local.model.SyncStats;
 
-import androidx.lifecycle.LiveData;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +25,9 @@ public interface TaskDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     void insertDefinition(TaskDefinition definition);
+
+    @Update
+    void updateDefinition(TaskDefinition definition);
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     void insertState(TaskState state);

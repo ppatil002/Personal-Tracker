@@ -30,6 +30,35 @@ public class SystemTaskScheduler {
         }
     }
 
+    public static void pauseTask(Context context, TaskDefinition def) {
+        Log.d(TAG, "Pausing task: " + def.getTaskType());
+        switch (def.getTaskType()) {
+            case WATER_REMINDER:
+                WaterIntakeScheduler.cancel(context);
+                break;
+            case SLEEP_REMINDER:
+                SleepScheduler.cancel(context);
+                break;
+            case SCREEN_TIME_SYNC:
+                ScreenTimeScheduler.cancel(context);
+                break;
+            case BACKUP:
+                BackupScheduler.cancel(context);
+                break;
+            case QUOTES:
+                QuoteScheduler.cancel(context);
+                break;
+            case HISTORY:
+                HistoryScheduler.cancel(context);
+                break;
+        }
+    }
+
+    public static void resumeTask(Context context, TaskDefinition def) {
+        Log.d(TAG, "Resuming task: " + def.getTaskType());
+        routeToNativeScheduler(context, def);
+    }
+
     private static void routeToNativeScheduler(Context context, TaskDefinition def) {
         Log.d(TAG, "Configuring scheduling pipeline for task type: " + def.getTaskType());
         switch (def.getTaskType()) {
