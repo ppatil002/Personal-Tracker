@@ -40,7 +40,7 @@ public class CategoryRepository {
     public void refreshCategoryTree() {
         executors.diskIO().execute(() -> {
             if (cacheManager.isDirty() || categoryTreeLiveData.getValue() == null) {
-                List<CategoryEntity> entities = categoryDao.getAllCategories();
+                List<CategoryEntity> entities = getAllCategories();
                 List<CategoryTreeNode> tree = CategoryMapper.buildTree(entities);
                 cacheManager.updateCache(tree);
                 categoryTreeLiveData.postValue(tree);
@@ -49,6 +49,10 @@ public class CategoryRepository {
                 EventBus.getInstance().publish(AppEvent.CATEGORIES_LOADED_FROM_DB);
             }
         });
+    }
+
+    public List<CategoryEntity> getAllCategories() {
+        return categoryDao.getAllCategories();
     }
 
     public void addCategory(String parentId, String name, String icon, String colour, Runnable onComplete) {

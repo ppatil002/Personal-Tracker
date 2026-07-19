@@ -8,6 +8,7 @@ import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.TransactionDao;
 import com.example.pp.data.local.entity.TransactionEntity;
+import com.example.pp.data.local.entity.TransactionTagCrossRef;
 import com.example.pp.data.local.query.TableQueryBuilder;
 import com.example.pp.features.analytics.model.MonthlyExpense;
 import com.example.pp.ui.components.table.model.TableQuery;
@@ -252,8 +253,30 @@ public class TransactionRepository {
         });
     }
 
+    public void getTagIdsForTransaction(String transactionId, TagIdsCallback callback) {
+        executors.diskIO().execute(() -> {
+            List<String> tagIds = transactionDao.getTagIdsForTransaction(transactionId);
+            executors.mainThread().execute(() -> callback.onTagIdsLoaded(tagIds));
+        });
+    }
+
+    public interface TagIdsCallback {
+        void onTagIdsLoaded(List<String> tagIds);
+    }
+
+    public void getTransactionsBetween(long start, long end, TransactionsCallback callback) {
+        executors.diskIO().execute(() -> {
+            List<TransactionEntity> transactions = getTransactionsBetween(start, end);
+            executors.mainThread().execute(() -> callback.onTransactionsLoaded(transactions));
+        });
+    }
+
     public List<TransactionEntity> getTransactionsBetween(long start, long end) {
         return transactionDao.getTransactionsBetween(start, end);
+    }
+
+    public interface TransactionsCallback {
+        void onTransactionsLoaded(List<TransactionEntity> transactions);
     }
 
     public List<MonthlyExpense> getMonthlyExpensesBetween(long start, long end) {
@@ -266,6 +289,10 @@ public class TransactionRepository {
 
     public double getTotalAmountBetween(long start, long end) {
         return transactionDao.getTotalAmountBetween(start, end);
+    }
+
+    public List<TransactionTagCrossRef> getTagCrossRefsBetween(long start, long end) {
+        return transactionDao.getTagCrossRefsBetween(start, end);
     }
 
     private long getTimestamp(int year, int month, int day) {

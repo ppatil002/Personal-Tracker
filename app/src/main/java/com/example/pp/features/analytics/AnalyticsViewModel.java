@@ -19,7 +19,6 @@ import com.example.pp.data.local.entity.TransactionTagCrossRef;
 import com.example.pp.data.repository.CategoryRepository;
 import com.example.pp.data.repository.TagRepository;
 import com.example.pp.data.repository.TransactionRepository;
-import com.example.pp.utils.DateUtils;
 import com.example.pp.domain.model.CategoryTreeNode;
 import com.example.pp.features.analytics.model.AnalyticsSummary;
 import com.example.pp.features.analytics.model.CategoryExpense;
@@ -30,6 +29,7 @@ import com.example.pp.features.category.model.Tag;
 import com.example.pp.ui.components.table.model.TableCell;
 import com.example.pp.ui.components.table.model.TableColumn;
 import com.example.pp.ui.components.table.model.TableRow;
+import com.example.pp.utils.DateUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -193,7 +193,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
         executors.diskIO().execute(() -> {
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = transactionRepository.getTagCrossRefsBetween(start, end);
             
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
             
@@ -288,7 +288,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
             long end = cal.getTimeInMillis();
 
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = transactionRepository.getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
             List<CategoryTreeNode> tree = categoryRepository.getCategoryTree().getValue();
@@ -385,7 +385,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
         executors.diskIO().execute(() -> {
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = transactionRepository.getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
             List<CategoryTreeNode> categoryTree = fetchCategoryTreeSync();
@@ -570,7 +570,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
             }
 
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = transactionRepository.getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
             List<CategoryTreeNode> categoryTree = fetchCategoryTreeSync();
@@ -670,8 +670,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
     }
 
     private List<CategoryTreeNode> fetchCategoryTreeSync() {
-        List<CategoryEntity> entities = com.example.pp.data.local.AppDatabase.getInstance(getApplication())
-                .categoryDao().getAllCategories();
+        List<CategoryEntity> entities = categoryRepository.getAllCategories();
         return com.example.pp.domain.mapper.CategoryMapper.buildTree(entities);
     }
 
@@ -808,7 +807,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
         executors.diskIO().execute(() -> {
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = transactionRepository.getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
             
             List<CategoryTreeNode> tree = fetchCategoryTreeSync();
@@ -840,7 +839,7 @@ public class AnalyticsViewModel extends AndroidViewModel {
 
         executors.diskIO().execute(() -> {
             List<TransactionEntity> allTransactions = transactionRepository.getTransactionsBetween(start, end);
-            List<TransactionTagCrossRef> refs = com.example.pp.data.local.AppDatabase.getInstance(getApplication()).transactionDao().getTagCrossRefsBetween(start, end);
+            List<TransactionTagCrossRef> refs = transactionRepository.getTagCrossRefsBetween(start, end);
             List<TransactionEntity> transactions = filterByTags(allTransactions, refs, tags);
 
             List<CategoryTreeNode> categoryTree = fetchCategoryTreeSync();

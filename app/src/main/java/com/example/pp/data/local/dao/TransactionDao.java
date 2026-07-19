@@ -27,7 +27,7 @@ public interface TransactionDao {
     @RawQuery
     List<TransactionEntity> getTableData(SupportSQLiteQuery query);
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     long insert(TransactionEntity transaction);
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
@@ -62,6 +62,9 @@ public interface TransactionDao {
         deleteTagCrossRefsForTransaction(transaction.getTransactionId());
         delete(transaction);
     }
+
+    @Query("SELECT tag_id FROM transaction_tag_cross_ref WHERE transaction_id = :transactionId")
+    List<String> getTagIdsForTransaction(String transactionId);
 
     @Query("SELECT * FROM transactions ORDER BY transaction_date DESC, created_timestamp DESC")
     LiveData<List<TransactionEntity>> getAllTransactions();

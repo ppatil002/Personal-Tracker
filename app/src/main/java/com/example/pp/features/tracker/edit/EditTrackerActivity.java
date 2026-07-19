@@ -17,7 +17,6 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
-
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -25,8 +24,10 @@ import com.example.pp.PPApplication;
 import com.example.pp.R;
 import com.example.pp.core.enums.AppEvent;
 import com.example.pp.core.event.EventBus;
-import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.entity.TransactionEntity;
+import com.example.pp.data.repository.CategoryRepository;
+import com.example.pp.data.repository.TagRepository;
+import com.example.pp.data.repository.TransactionRepository;
 import com.example.pp.domain.model.CategoryTreeNode;
 import com.example.pp.features.analytics.AnalyticsActivity;
 import com.example.pp.features.category.CategoryBottomSheetFragment;
@@ -73,17 +74,29 @@ public class EditTrackerActivity extends AppCompatActivity {
     private View containerDayTransactions;
     private RecyclerView rvDayTransactions;
     private SmallTransactionAdapter dayTransactionsAdapter;
+    private View btnSave;
+    private View btnCancel;
+
+    private TransactionRepository transactionRepository;
+    private TagRepository tagRepository;
+    private CategoryRepository categoryRepository;
 
     private CategoryTreeNode selectedCategory;
     private List<Tag> allTags = new ArrayList<>();
     private List<Tag> selectedTags = new ArrayList<>();
     private List<CategoryTreeNode> categories = new ArrayList<>();
     private String currentTransactionType = "EXPENSE";
+    private TransactionEntity editingTransaction;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_tracker);
+
+        PPApplication app = (PPApplication) getApplication();
+        transactionRepository = app.getTransactionRepository();
+        tagRepository = app.getTagRepository();
+        categoryRepository = app.getCategoryRepository();
 
         calendarView = findViewById(R.id.calendarView);
         progressBar = findViewById(R.id.progressBar);
@@ -97,13 +110,11 @@ public class EditTrackerActivity extends AppCompatActivity {
     }
 
     private void observeData() {
-        PPApplication app = (PPApplication) getApplication();
-
-        app.getCategoryRepository().getCategoryTree().observe(this, newCategories -> {
+        categoryRepository.getCategoryTree().observe(this, newCategories -> {
             this.categories = newCategories;
         });
 
-        app.getTagRepository().getTags().observe(this, newTags -> {
+        tagRepository.getTags().observe(this, newTags -> {
             this.allTags = newTags;
         });
 
@@ -136,6 +147,7 @@ public class EditTrackerActivity extends AppCompatActivity {
         if (rvDayTransactions != null) {
             rvDayTransactions.setLayoutManager(new LinearLayoutManager(this));
             dayTransactionsAdapter = new SmallTransactionAdapter();
+            dayTransactionsAdapter.setOnItemClickListener(this::editTransaction);
             rvDayTransactions.setAdapter(dayTransactionsAdapter);
         }
 
@@ -186,6 +198,64 @@ public class EditTrackerActivity extends AppCompatActivity {
 
         if (tvSelectedCategory != null) tvSelectedCategory.setText(path.toString());
         if (tvSelectedCategoryIcon != null) tvSelectedCategoryIcon.setText(selectedCategory.getIcon());
+    }
+
+    private void editTransaction(TransactionEntity transaction) {
+        this.editingTransaction = transaction;
+
+        // Prepopulate fields
+        if (etParticular != null) etParticular.setText(transaction.getItem());
+        if (etAmount != null) etAmount.setText(String.valueOf(Math.abs(transaction.getAmount())));
+        if (etNote != null) etNote.setText(transaction.getNotes());
+
+        // Set category
+        selectedCategory = findCategoryById(transaction.getCategoryId());
+        updateSelectedCategoryUI();
+
+        // Set date
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(transaction.getTransactionDate());
+        CalendarDay date = CalendarDay.from(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1, calendar.get(Calendar.DAY_OF_MONTH));
+        calendarView.setSelectedDate(date);
+        updateDateDisplay(date);
+
+        // Set transaction type
+        setTransactionType(transaction.getTransactionType());
+
+        // Set payment method
+        selectedPayment = transaction.getPaymentMethod();
+        View paymentView = findViewById(R.id.paymentDropdown);
+        if (paymentView != null) {
+            ((TextView) paymentView.findViewById(R.id.dropdownText)).setText(selectedPayment);
+        }
+
+        // Load and set tags
+        transactionRepository.getTagIdsForTransaction(transaction.getTransactionId(), tagIds -> {
+            selectedTags.clear();
+            for (Tag tag : allTags) {
+                if (tagIds.contains(tag.getId())) {
+                    tag.setSelected(true);
+                    selectedTags.add(tag);
+                } else {
+                    tag.setSelected(false);
+                }
+            }
+            updateSelectedTagsUI(selectedTags);
+        });
+
+        // Update button texts
+        if (btnSave instanceof TextView) ((TextView) btnSave).setText("Update");
+        if (btnCancel instanceof TextView) ((TextView) btnCancel).setText("Delete");
+    }
+
+    private CategoryTreeNode findCategoryById(String categoryId) {
+        for (CategoryTreeNode root : categories) {
+            if (root.getCategoryId().equals(categoryId)) return root;
+            for (CategoryTreeNode child : root.getChildren()) {
+                if (child.getCategoryId().equals(categoryId)) return child;
+            }
+        }
+        return null;
     }
 
     private CategoryTreeNode findParentNode(CategoryTreeNode child) {
@@ -317,19 +387,24 @@ public class EditTrackerActivity extends AppCompatActivity {
         long startOfDay = DateUtils.getStartOfDay(getSelectedDateTimestamp());
         long endOfDay = startOfDay + (24 * 60 * 60 * 1000) - 1;
 
-        PPApplication app = (PPApplication) getApplication();
-        AppExecutors.getInstance().diskIO().execute(() -> {
-            List<TransactionEntity> transactions = app.getTransactionRepository().getTransactionsBetween(startOfDay, endOfDay);
-            AppExecutors.getInstance().mainThread().execute(() -> {
-                if (dayTransactionsAdapter != null) {
-                    dayTransactionsAdapter.setTransactions(transactions);
-                }
-            });
+        transactionRepository.getTransactionsBetween(startOfDay, endOfDay, transactions -> {
+            if (dayTransactionsAdapter != null) {
+                dayTransactionsAdapter.setTransactions(transactions);
+            }
         });
     }
 
     private static class SmallTransactionAdapter extends RecyclerView.Adapter<SmallTransactionAdapter.ViewHolder> {
         private List<TransactionEntity> transactions = new ArrayList<>();
+        private OnItemClickListener listener;
+
+        public interface OnItemClickListener {
+            void onItemClick(TransactionEntity transaction);
+        }
+
+        public void setOnItemClickListener(OnItemClickListener listener) {
+            this.listener = listener;
+        }
 
         public void setTransactions(List<TransactionEntity> transactions) {
             this.transactions = transactions;
@@ -354,6 +429,12 @@ public class EditTrackerActivity extends AppCompatActivity {
             } else {
                 holder.tvAmount.setTextColor(ContextCompat.getColor(holder.itemView.getContext(), R.color.accent_pink));
             }
+
+            holder.itemView.setOnClickListener(v -> {
+                if (listener != null) {
+                    listener.onItemClick(transaction);
+                }
+            });
         }
 
         @Override
@@ -432,11 +513,17 @@ public class EditTrackerActivity extends AppCompatActivity {
 
     private void setupActions() {
         View done = findViewById(R.id.btnDoneForDay);
-        View cancel = findViewById(R.id.btnCancel);
-        View save = findViewById(R.id.btnSave);
+        btnCancel = findViewById(R.id.btnCancel);
+        btnSave = findViewById(R.id.btnSave);
         if (done != null) done.setOnClickListener(v -> Toast.makeText(this, "Marked done for the day", Toast.LENGTH_SHORT).show());
-        if (cancel != null) cancel.setOnClickListener(v -> clearUI());
-        if (save != null) save.setOnClickListener(v -> validateAndSave());
+        if (btnCancel != null) btnCancel.setOnClickListener(v -> {
+            if (editingTransaction != null) {
+                deleteCurrentTransaction();
+            } else {
+                clearUI();
+            }
+        });
+        if (btnSave != null) btnSave.setOnClickListener(v -> validateAndSave());
 
         tvTypeExpense = findViewById(R.id.tvTypeExpense);
         tvTypeRefund = findViewById(R.id.tvTypeRefund);
@@ -460,6 +547,16 @@ public class EditTrackerActivity extends AppCompatActivity {
             tvTypeExpense.setBackground(null);
             tvTypeExpense.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
         }
+    }
+
+    private void deleteCurrentTransaction() {
+        if (editingTransaction == null) return;
+        progressBar.setVisibility(View.VISIBLE);
+        transactionRepository.deleteTransaction(editingTransaction, () -> {
+            progressBar.setVisibility(View.GONE);
+            Toast.makeText(this, "Entry deleted successfully", Toast.LENGTH_SHORT).show();
+            clearUI();
+        });
     }
 
     private void validateAndSave() {
@@ -501,13 +598,13 @@ public class EditTrackerActivity extends AppCompatActivity {
         long now = System.currentTimeMillis();
 
         TransactionEntity transaction = new TransactionEntity(
-            UUID.randomUUID().toString(),
+            editingTransaction != null ? editingTransaction.getTransactionId() : UUID.randomUUID().toString(),
             selectedCategory.getCategoryId(),
             item,
             amount,
             TextUtils.isEmpty(notes) ? null : notes,
             transactionTimestamp,
-            now,
+            editingTransaction != null ? editingTransaction.getCreatedTimestamp() : now,
             now,
             selectedPayment,
             currentTransactionType
@@ -516,10 +613,9 @@ public class EditTrackerActivity extends AppCompatActivity {
         List<String> tagIds = new ArrayList<>();
         for (Tag tag : selectedTags) tagIds.add(tag.getId());
 
-        PPApplication app = (PPApplication) getApplication();
-        app.getTransactionRepository().saveTransaction(transaction, tagIds, () -> {
+        transactionRepository.saveTransaction(transaction, tagIds, () -> {
             progressBar.setVisibility(View.GONE);
-            Toast.makeText(this, "Entry saved successfully", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, editingTransaction != null ? "Entry updated successfully" : "Entry saved successfully", Toast.LENGTH_SHORT).show();
             clearUI();
         }, () -> {
             progressBar.setVisibility(View.GONE);
@@ -528,6 +624,7 @@ public class EditTrackerActivity extends AppCompatActivity {
     }
 
     private void clearUI() {
+        editingTransaction = null;
         if (etParticular != null) etParticular.setText("");
         if (etAmount != null) etAmount.setText("");
         if (etNote != null) etNote.setText("");
@@ -537,6 +634,10 @@ public class EditTrackerActivity extends AppCompatActivity {
         for (Tag t : allTags) t.setSelected(false);
         updateSelectedTagsUI(new ArrayList<>());
         setTransactionType("EXPENSE");
+
+        // Reset button texts
+        if (btnSave instanceof TextView) ((TextView) btnSave).setText("Save Entry");
+        if (btnCancel instanceof TextView) ((TextView) btnCancel).setText("Clear");
 
         if (containerDayTransactions != null && containerDayTransactions.getVisibility() == View.VISIBLE) {
             loadDayTransactions();
