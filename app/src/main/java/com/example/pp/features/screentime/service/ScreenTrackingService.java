@@ -49,21 +49,46 @@ public class ScreenTrackingService extends AccessibilityService {
     protected void onServiceConnected() {
         super.onServiceConnected();
         Log.i(TAG, "Accessibility Service Connected. Starting Foreground.");
-        startForeground(AppConstants.NOTIFY_ID_SCREEN_TIME,
-                ScreenTimeNotificationHelper.getServiceNotification(this));
 
-        // Ensure the sync worker is scheduled whenever the service starts/reconnects
-        ScreenTimeScheduler.schedule(this, null);
+        boolean isEnabled = prefManager.getBoolean(AppConstants.KEY_SCREEN_TIME_ENABLED, true);
+        if (isEnabled) {
+            startForeground(AppConstants.NOTIFY_ID_SCREEN_TIME,
+                    ScreenTimeNotificationHelper.getServiceNotification(this));
+            // Ensure the sync worker is scheduled whenever the service starts/reconnects
+            ScreenTimeScheduler.schedule(this, null);
+        } else {
+            startForeground(AppConstants.NOTIFY_ID_SCREEN_TIME,
+                    ScreenTimeNotificationHelper.getPausedServiceNotification(this));
+        }
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (intent != null && "UPDATE_STATE".equals(intent.getAction())) {
+            boolean isEnabled = prefManager.getBoolean(AppConstants.KEY_SCREEN_TIME_ENABLED, true);
+            if (isEnabled) {
+                startForeground(AppConstants.NOTIFY_ID_SCREEN_TIME,
+                        ScreenTimeNotificationHelper.getServiceNotification(this));
+            } else {
+                startForeground(AppConstants.NOTIFY_ID_SCREEN_TIME,
+                        ScreenTimeNotificationHelper.getPausedServiceNotification(this));
+                cancelBreakAlarm();
+                prefManager.putLong(AppConstants.KEY_SCREEN_SESSION_START, 0);
+            }
+        }
         return START_STICKY;
     }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (event == null) return;
+
+        boolean isEnabled = prefManager.getBoolean(AppConstants.KEY_SCREEN_TIME_ENABLED, true);
+        if (!isEnabled) {
+            cancelBreakAlarm();
+            prefManager.putLong(AppConstants.KEY_SCREEN_SESSION_START, 0);
+            return;
+        }
         
         if (event.getEventType() == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
             CharSequence pkg = event.getPackageName();
@@ -156,6 +181,9 @@ public class ScreenTrackingService extends AccessibilityService {
         super.onDestroy();
     }
     private void addJobLog(String status, String step, String message) {
+        boolean isEnabled = prefManager.getBoolean(AppConstants.KEY_SCREEN_TIME_ENABLED, true);
+        if (!isEnabled) return;
+
         try {
             BackgroundJobLog log = new BackgroundJobLog(
                     TAG + "_" + DateUtils.convertTimestampintoHH_MM_SS_String(System.currentTimeMillis()),

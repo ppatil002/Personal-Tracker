@@ -66,6 +66,27 @@ public class ScreenTimeNotificationHelper {
                 .build();
     }
 
+    public static Notification getPausedServiceNotification(Context context) {
+        createNotificationChannel(context);
+
+        Intent dashboardIntent = new Intent(context, DashboardActivity.class);
+        PendingIntent contentIntent = PendingIntent.getActivity(
+                context,
+                0,
+                dashboardIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+
+        return new NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(R.drawable.ic_smartphone)
+                .setContentTitle("Screen Monitoring Paused")
+                .setContentText("Monitoring is temporarily disabled")
+                .setPriority(NotificationCompat.PRIORITY_LOW)
+                .setOngoing(true)
+                .setContentIntent(contentIntent)
+                .build();
+    }
+
     private static void createNotificationChannel(Context context) {
         NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID,

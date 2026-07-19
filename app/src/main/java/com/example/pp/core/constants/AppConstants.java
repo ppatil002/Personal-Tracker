@@ -37,6 +37,7 @@ public class AppConstants {
     // Shared Preferences
     public static final String PREF_NAME_COMMON = "PP_COMMON_PREFS";
     public static final String KEY_SCREEN_SESSION_START = "screen_session_start_time";
+    public static final String KEY_SCREEN_TIME_ENABLED = "screen_time_enabled";
 
     // Workers
     public static final String SCREEN_WORKER = "ScreenWorker";
