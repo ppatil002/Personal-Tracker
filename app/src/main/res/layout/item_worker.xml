@@ -151,40 +151,62 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="16dp">
+            android:gravity="center_vertical"
+            android:layout_marginTop="12dp">
 
             <ProgressBar
                 android:id="@+id/pbProgress"
                 style="@android:style/Widget.ProgressBar.Horizontal"
                 android:layout_width="0dp"
-                android:layout_height="4dp"
+                android:layout_height="6dp"
                 android:layout_weight="1"
-                android:layout_gravity="center_vertical"
                 android:progress="45"
                 android:progressDrawable="@drawable/bg_progress_horizontal" />
+
+            <TextView
+                android:id="@+id/tvProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="45%"
+                android:textColor="@color/accent_purple"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnRunNow"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_weight="1"
                 android:text="Run Now"
                 android:textColor="@color/accent_purple"
                 android:textSize="12sp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 app:rippleColor="@color/accent_purple_low_alpha" />
-        </LinearLayout>
 
-        <TextView
-            android:id="@+id/tvProgress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="end"
-            android:layout_marginTop="-8dp"
-            android:text="45%"
-            android:textColor="@color/accent_purple"
-            android:textSize="11sp"
-            android:textStyle="bold" />
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPauseResume"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Pause"
+                android:textColor="@color/accent_pink"
+                android:textSize="12sp"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                app:rippleColor="@color/accent_pink_low_alpha" />
+        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/layoutFailure"

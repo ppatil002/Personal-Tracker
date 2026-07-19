@@ -56,9 +56,24 @@ public class WorkerListActivity extends AppCompatActivity {
         RecyclerView rvWorkers = findViewById(R.id.rvWorkers);
         rvWorkers.setLayoutManager(new LinearLayoutManager(this));
         adapter = new WorkerAdapter();
-        adapter.setOnTaskActionListener(taskId -> {
-            taskRepository.runTaskNow(taskId);
-            Toast.makeText(this, taskId + " triggered manually", Toast.LENGTH_SHORT).show();
+        adapter.setOnTaskActionListener(new WorkerAdapter.OnTaskActionListener() {
+            @Override
+            public void onRunNow(String taskId) {
+                taskRepository.runTaskNow(taskId);
+                Toast.makeText(WorkerListActivity.this, taskId + " triggered manually", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onPauseTask(String taskId) {
+                taskRepository.pauseTask(taskId);
+                Toast.makeText(WorkerListActivity.this, taskId + " paused", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onResumeTask(String taskId) {
+                taskRepository.resumeTask(taskId);
+                Toast.makeText(WorkerListActivity.this, taskId + " resumed", Toast.LENGTH_SHORT).show();
+            }
         });
         rvWorkers.setAdapter(adapter);
 
