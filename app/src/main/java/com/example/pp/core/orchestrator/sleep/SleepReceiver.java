@@ -60,7 +60,7 @@ public class SleepReceiver extends BroadcastReceiver {
             sleepRepo.startSleep(now, targetWakeTime);
             SleepNotificationHelper.cancelNotification(context);
 
-            // Update Task State for the Wake up trigger
+            // Update Task State for the Wake-up trigger
             long bedtime = targetWakeTime - TimeUnit.HOURS.toMillis(SLEEP_TARGET_HOUR);
             long nextRunTime = calculateNextRunTime("GOOD_NIGHT", bedtime, now);
             updateTaskState(context, nextRunTime);
@@ -117,7 +117,8 @@ public class SleepReceiver extends BroadcastReceiver {
                     long diff = bedtime - now;
                     long minutes = TimeUnit.MILLISECONDS.toMinutes(diff);
                     String msg = "Only " + minutes + "m left until bedtime.";
-                    SleepNotificationHelper.showBedtimeReminder(context, msg, minutes <= 30);
+//                    If it's 2 hours before bedtime, minutes <= 30 is false, so the "Good Night" button is hidden. We only want to show it when it's actually close to bedtime.
+                    SleepNotificationHelper.showBedtimeReminder(context, msg, minutes <= 30, true);
                     
                     long nextRunTime = calculateNextRunTime(reason, bedtime, now);
                     updateTaskState(context, nextRunTime);
@@ -132,7 +133,7 @@ public class SleepReceiver extends BroadcastReceiver {
                     } else {
                         msg = "Still awake? Time's slipping! Current potential: " + potentialPercent + "%";
                     }
-                    SleepNotificationHelper.showBedtimeReminder(context, msg, true);
+                    SleepNotificationHelper.showBedtimeReminder(context, msg, true, true);
                     
                     long nextRunTime = calculateNextRunTime(reason, bedtime, now);
                     updateTaskState(context, nextRunTime);
@@ -165,7 +166,7 @@ public class SleepReceiver extends BroadcastReceiver {
                 sleepRepo.updateDelayReason(System.currentTimeMillis(), reasonStr);
                 
                 // Update notification to show success
-                SleepNotificationHelper.showBedtimeReminder(context, "Reason saved: " + reasonStr, false);
+                SleepNotificationHelper.showBedtimeReminder(context, "Reason saved: " + reasonStr, true, false);
             }
         }
     }
@@ -208,7 +209,7 @@ public class SleepReceiver extends BroadcastReceiver {
             // After waking up, the next expected run is the start of the next cycle (2H reminder)
             return bedtime - TimeUnit.HOURS.toMillis(2);
         } else if (reason.contains("GOOD_NIGHT")) {
-            // After starting sleep, the next expected run is the wake up trigger (TargetWake - 1H)
+            // After starting sleep, the next expected run is the wake-up trigger (TargetWake - 1H)
             // Note: targetWake = bedtime + SLEEP_TARGET_HOUR
             return bedtime + TimeUnit.HOURS.toMillis(SLEEP_TARGET_HOUR - 1);
         }

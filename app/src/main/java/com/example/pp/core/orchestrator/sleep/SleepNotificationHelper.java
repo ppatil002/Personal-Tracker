@@ -24,7 +24,7 @@ public class SleepNotificationHelper {
     public static final String ACTION_DELAY_REASON = "com.example.pp.ACTION_DELAY_REASON";
     public static final String KEY_TEXT_REPLY = "key_text_reply";
 
-    public static void showBedtimeReminder(Context context, String message, boolean showBedButton) {
+    public static void showBedtimeReminder(Context context, String message, boolean showBedButton, boolean showDelayButton) {
         createChannel(context);
 
         Intent intent = new Intent(context, DashboardActivity.class);
@@ -47,21 +47,23 @@ public class SleepNotificationHelper {
             builder.addAction(R.drawable.ic_sleep, "Good Night", bedPI);
         }
 
-        // Add Delay Reason action
-        RemoteInput remoteInput = new RemoteInput.Builder(KEY_TEXT_REPLY)
-                .setLabel("Why the delay?")
-                .build();
+        if (showDelayButton) {
+            // Add Delay Reason action
+            RemoteInput remoteInput = new RemoteInput.Builder(KEY_TEXT_REPLY)
+                    .setLabel("Why the delay?")
+                    .build();
 
-        Intent replyIntent = new Intent(context, SleepReceiver.class);
-        replyIntent.setAction(ACTION_DELAY_REASON);
-        PendingIntent replyPI = PendingIntent.getBroadcast(context, 3, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+            Intent replyIntent = new Intent(context, SleepReceiver.class);
+            replyIntent.setAction(ACTION_DELAY_REASON);
+            PendingIntent replyPI = PendingIntent.getBroadcast(context, 3, replyIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
 
-        NotificationCompat.Action action = new NotificationCompat.Action.Builder(
-                R.drawable.ic_note, "Delay Reason", replyPI)
-                .addRemoteInput(remoteInput)
-                .build();
+            NotificationCompat.Action action = new NotificationCompat.Action.Builder(
+                    R.drawable.ic_note, "Delay Reason", replyPI)
+                    .addRemoteInput(remoteInput)
+                    .build();
 
-        builder.addAction(action);
+            builder.addAction(action);
+        }
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {
