@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.example.pp.PPApplication;
 import com.example.pp.data.local.entity.TaskDefinition;
 
 import java.util.Calendar;
@@ -15,11 +16,21 @@ public class BackupScheduler {
     public static final int ALARM_REQUEST_CODE = 8000;
 
     public static void schedule(Context context, TaskDefinition def) {
+        TaskDefinition taskDef = def;
+        if (taskDef == null) {
+            taskDef = ((PPApplication) context.getApplicationContext()).getTaskRepository().getDefinitionByType(com.example.pp.core.enums.TaskType.BACKUP);
+        }
+
+        if (taskDef == null || !taskDef.isEnabled()) {
+            Log.i(TAG, "Backup is disabled. Skipping schedule.");
+            return;
+        }
+
         Log.i(TAG, "Scheduling 24H backup alarm at 9:00 AM.");
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         Intent intent = new Intent(context, BackupAlarmReceiver.class);
-        intent.putExtra("TASK_ID", def.getTaskId());
+        intent.putExtra("TASK_ID", taskDef.getTaskId());
         
         PendingIntent pendingIntent = PendingIntent.getBroadcast(
                 context, 
@@ -48,6 +59,21 @@ public class BackupScheduler {
                     calendar.getTimeInMillis(),
                     pendingIntent
             );
+        }
+    }
+
+    public static void cancel(Context context) {
+        AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+        Intent intent = new Intent(context, BackupAlarmReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                context,
+                ALARM_REQUEST_CODE,
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        if (alarmManager != null) {
+            alarmManager.cancel(pendingIntent);
+            Log.i(TAG, "Backup alarm cancelled.");
         }
     }
 }
