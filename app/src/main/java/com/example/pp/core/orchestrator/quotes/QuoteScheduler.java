@@ -9,6 +9,7 @@ import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import com.example.pp.PPApplication;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.data.local.entity.TaskDefinition;
 
@@ -19,6 +20,16 @@ public class QuoteScheduler {
     private static final String TAG = "QuoteScheduler";
 
     public static void schedule(Context context, TaskDefinition def) {
+        TaskDefinition taskDef = def;
+        if (taskDef == null) {
+            taskDef = ((PPApplication) context.getApplicationContext()).getTaskRepository().getDefinitionByType(com.example.pp.core.enums.TaskType.QUOTES);
+        }
+
+        if (taskDef != null && !taskDef.isEnabled()) {
+            Log.i(TAG, "Quote sync is disabled. Skipping schedule.");
+            return;
+        }
+
         Log.i(TAG, "Scheduling Daily Quotes via WorkManager (Target: 6:15 AM)");
 
         Constraints constraints = new Constraints.Builder()
@@ -42,6 +53,11 @@ public class QuoteScheduler {
                 ExistingPeriodicWorkPolicy.KEEP,
                 request
         );
+    }
+
+    public static void cancel(Context context) {
+        Log.d(TAG, "Cancelling Quote Sync");
+        WorkManager.getInstance(context).cancelUniqueWork("DAILY_QUOTE_SYNC");
     }
 
     private static long calculateInitialDelay(int hour, int minute) {

@@ -19,6 +19,16 @@ public class HistoryScheduler {
     private static final String TAG = "HistoryScheduler";
 
     public static void schedule(Context context, TaskDefinition def) {
+        TaskDefinition taskDef = def;
+        if (taskDef == null) {
+            taskDef = ((com.example.pp.PPApplication) context.getApplicationContext()).getTaskRepository().getDefinitionByType(com.example.pp.core.enums.TaskType.HISTORY);
+        }
+
+        if (taskDef != null && !taskDef.isEnabled()) {
+            Log.i(TAG, "History sync is disabled. Skipping schedule.");
+            return;
+        }
+
         Log.i(TAG, "Scheduling Daily History via WorkManager (Target: 6:30 AM)");
 
         Constraints constraints = new Constraints.Builder()
@@ -42,6 +52,11 @@ public class HistoryScheduler {
                 ExistingPeriodicWorkPolicy.KEEP,
                 request
         );
+    }
+
+    public static void cancel(Context context) {
+        Log.d(TAG, "Cancelling History Sync");
+        WorkManager.getInstance(context).cancelUniqueWork("DAILY_HISTORY_SYNC");
     }
 
     private static long calculateInitialDelay(int hour, int minute) {
