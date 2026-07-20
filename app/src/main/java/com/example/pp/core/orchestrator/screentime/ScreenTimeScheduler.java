@@ -17,6 +17,7 @@ import com.example.pp.PPApplication;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.core.preferences.PreferenceManager;
+import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.features.screentime.service.ScreenTrackingService;
 
@@ -26,48 +27,50 @@ public class ScreenTimeScheduler {
     private static final String TAG = "ScreenTimeScheduler";
 
     public static void schedule(Context context, @Nullable TaskDefinition def) {
-        TaskDefinition taskDef = def;
-        if (taskDef == null) {
-            taskDef = ((PPApplication) context.getApplicationContext()).getTaskRepository().getDefinitionByType(com.example.pp.core.enums.TaskType.SCREEN_TIME_SYNC);
-        }
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            TaskDefinition taskDef = def;
+            if (taskDef == null) {
+                taskDef = ((PPApplication) context.getApplicationContext()).getTaskRepository().getDefinitionByType(com.example.pp.core.enums.TaskType.SCREEN_TIME_SYNC);
+            }
 
-        if (taskDef != null && !taskDef.isEnabled()) {
-            Log.i(TAG, "Screen time tracking is disabled. Skipping schedule.");
-            return;
-        }
+            if (taskDef != null && !taskDef.isEnabled()) {
+                Log.i(TAG, "Screen time tracking is disabled. Skipping schedule.");
+                return;
+            }
 
-        Log.d(TAG, "Scheduling Screen Time Sync Fallback");
+            Log.d(TAG, "Scheduling Screen Time Sync Fallback");
 
-        // Enable tracking in preferences
-        PreferenceManager.getInstance(context).putBoolean(AppConstants.KEY_SCREEN_TIME_ENABLED, true);
-        
-        // Notify the running service to update its state and resume activities
-        notifyService(context);
+            // Enable tracking in preferences
+            PreferenceManager.getInstance(context).putBoolean(AppConstants.KEY_SCREEN_TIME_ENABLED, true);
 
-        Constraints constraints = new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
-                .setRequiresBatteryNotLow(false)
-                .build();
+            // Notify the running service to update its state and resume activities
+            notifyService(context);
 
-        long interval = (def != null && def.getRepeatInterval() > 0) ? def.getRepeatInterval() : 15;
-        String taskId = (def != null) ? def.getTaskId() : "SCREENTIME_TASK_001";
+            Constraints constraints = new Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+                    .setRequiresBatteryNotLow(false)
+                    .build();
 
-        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
-                ScreenTimeSyncWorker.class,
-                interval,
-                TimeUnit.MINUTES
-        )
-                .setConstraints(constraints)
-                .addTag(TaskType.SCREEN_TIME_SYNC.name())
-                .addTag(taskId)
-                .build();
+            long interval = (taskDef != null && taskDef.getRepeatInterval() > 0) ? taskDef.getRepeatInterval() : 15;
+            String taskId = (taskDef != null) ? taskDef.getTaskId() : "SCREENTIME_TASK_001";
 
-        // Unique Periodic Work ensures only one fallback loop exists
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                "SCREEN_TIME_SYNC_PERIODIC",
-                ExistingPeriodicWorkPolicy.KEEP,
-                request
-        );
+            PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
+                    ScreenTimeSyncWorker.class,
+                    interval,
+                    TimeUnit.MINUTES
+            )
+                    .setConstraints(constraints)
+                    .addTag(TaskType.SCREEN_TIME_SYNC.name())
+                    .addTag(taskId)
+                    .build();
+
+            // Unique Periodic Work ensures only one fallback loop exists
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                    "SCREEN_TIME_SYNC_PERIODIC",
+                    ExistingPeriodicWorkPolicy.KEEP,
+                    request
+            );
+        });
     }
 
     public static void cancel(Context context) {

@@ -9,7 +9,9 @@ import androidx.work.NetworkType;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 
+import com.example.pp.PPApplication;
 import com.example.pp.core.constants.AppConstants;
+import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.entity.TaskDefinition;
 
 import java.util.Calendar;
@@ -19,39 +21,41 @@ public class HistoryScheduler {
     private static final String TAG = "HistoryScheduler";
 
     public static void schedule(Context context, TaskDefinition def) {
-        TaskDefinition taskDef = def;
-        if (taskDef == null) {
-            taskDef = ((com.example.pp.PPApplication) context.getApplicationContext()).getTaskRepository().getDefinitionByType(com.example.pp.core.enums.TaskType.HISTORY);
-        }
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            TaskDefinition taskDef = def;
+            if (taskDef == null) {
+                taskDef = ((PPApplication) context.getApplicationContext()).getTaskRepository().getDefinitionByType(com.example.pp.core.enums.TaskType.HISTORY);
+            }
 
-        if (taskDef != null && !taskDef.isEnabled()) {
-            Log.i(TAG, "History sync is disabled. Skipping schedule.");
-            return;
-        }
+            if (taskDef != null && !taskDef.isEnabled()) {
+                Log.i(TAG, "History sync is disabled. Skipping schedule.");
+                return;
+            }
 
-        Log.i(TAG, "Scheduling Daily History via WorkManager (Target: 6:30 AM)");
+            Log.i(TAG, "Scheduling Daily History via WorkManager (Target: 6:30 AM)");
 
-        Constraints constraints = new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build();
+            Constraints constraints = new Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build();
 
-        // Calculate initial delay to 6:30 AM
-        long initialDelay = calculateInitialDelay(6, 30);
+            // Calculate initial delay to 6:30 AM
+            long initialDelay = calculateInitialDelay(6, 30);
 
-        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
-                HistoryWorker.class,
-                24, TimeUnit.HOURS
-        )
-                .setConstraints(constraints)
-                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-                .addTag(AppConstants.HISTORY_WORKER)
-                .build();
+            PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
+                    HistoryWorker.class,
+                    24, TimeUnit.HOURS
+            )
+                    .setConstraints(constraints)
+                    .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+                    .addTag(AppConstants.HISTORY_WORKER)
+                    .build();
 
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                "DAILY_HISTORY_SYNC",
-                ExistingPeriodicWorkPolicy.KEEP,
-                request
-        );
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                    "DAILY_HISTORY_SYNC",
+                    ExistingPeriodicWorkPolicy.KEEP,
+                    request
+            );
+        });
     }
 
     public static void cancel(Context context) {

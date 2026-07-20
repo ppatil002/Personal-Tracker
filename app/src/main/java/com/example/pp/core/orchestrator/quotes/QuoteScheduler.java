@@ -11,6 +11,7 @@ import androidx.work.WorkManager;
 
 import com.example.pp.PPApplication;
 import com.example.pp.core.constants.AppConstants;
+import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.entity.TaskDefinition;
 
 import java.util.Calendar;
@@ -20,39 +21,41 @@ public class QuoteScheduler {
     private static final String TAG = "QuoteScheduler";
 
     public static void schedule(Context context, TaskDefinition def) {
-        TaskDefinition taskDef = def;
-        if (taskDef == null) {
-            taskDef = ((PPApplication) context.getApplicationContext()).getTaskRepository().getDefinitionByType(com.example.pp.core.enums.TaskType.QUOTES);
-        }
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            TaskDefinition taskDef = def;
+            if (taskDef == null) {
+                taskDef = ((PPApplication) context.getApplicationContext()).getTaskRepository().getDefinitionByType(com.example.pp.core.enums.TaskType.QUOTES);
+            }
 
-        if (taskDef != null && !taskDef.isEnabled()) {
-            Log.i(TAG, "Quote sync is disabled. Skipping schedule.");
-            return;
-        }
+            if (taskDef != null && !taskDef.isEnabled()) {
+                Log.i(TAG, "Quote sync is disabled. Skipping schedule.");
+                return;
+            }
 
-        Log.i(TAG, "Scheduling Daily Quotes via WorkManager (Target: 6:15 AM)");
+            Log.i(TAG, "Scheduling Daily Quotes via WorkManager (Target: 6:15 AM)");
 
-        Constraints constraints = new Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build();
+            Constraints constraints = new Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build();
 
-        // Calculate initial delay to 6:15 AM
-        long initialDelay = calculateInitialDelay(6, 15);
+            // Calculate initial delay to 6:15 AM
+            long initialDelay = calculateInitialDelay(6, 15);
 
-        PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
-                QuoteWorker.class,
-                24, TimeUnit.HOURS
-        )
-                .setConstraints(constraints)
-                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-                .addTag(AppConstants.QUOTES_WORKER)
-                .build();
+            PeriodicWorkRequest request = new PeriodicWorkRequest.Builder(
+                    QuoteWorker.class,
+                    24, TimeUnit.HOURS
+            )
+                    .setConstraints(constraints)
+                    .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+                    .addTag(AppConstants.QUOTES_WORKER)
+                    .build();
 
-        WorkManager.getInstance(context).enqueueUniquePeriodicWork(
-                "DAILY_QUOTE_SYNC",
-                ExistingPeriodicWorkPolicy.KEEP,
-                request
-        );
+            WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+                    "DAILY_QUOTE_SYNC",
+                    ExistingPeriodicWorkPolicy.KEEP,
+                    request
+            );
+        });
     }
 
     public static void cancel(Context context) {
