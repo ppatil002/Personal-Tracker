@@ -5,6 +5,7 @@ public class AppConstants {
     public static final String CHANNEL_BACKUP = "BACKUP_SERVICE_CHANNEL";
     public static final String CHANNEL_WATER = "WATER_REMINDER_CHANNEL";
     public static final String CHANNEL_SCREEN_TIME = "SCREEN_TIME_ALERTS";
+    public static final String CHANNEL_SCREEN_TIME_SERVICE = "SCREEN_TIME_SERVICE";
     public static final String CHANNEL_SLEEP = "SLEEP_MONITOR_CHANNEL";
     public static final String CHANNEL_TASK_ENGINE = "BG_SYNC_CHANNEL";
 
@@ -12,6 +13,7 @@ public class AppConstants {
     public static final int NOTIFY_ID_BACKUP = 5001;
     public static final int NOTIFY_ID_WATER = 5002;
     public static final int NOTIFY_ID_SCREEN_TIME = 3001;
+    public static final int NOTIFY_ID_SCREEN_BREAK = 3002;
     public static final int NOTIFY_ID_SLEEP = 9001;
     public static final int NOTIFY_ID_TASK_ENGINE = 2001;
 

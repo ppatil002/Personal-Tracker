@@ -31,6 +31,7 @@ public class ScreenTrackingService extends AccessibilityService {
     private AlarmManager alarmManager;
     private PreferenceManager prefManager;
     private final Set<String> excludedPackages = new HashSet<>();
+    private Boolean lastEnabledState = null;
 
     @Override
     public void onCreate() {
@@ -51,14 +52,11 @@ public class ScreenTrackingService extends AccessibilityService {
         Log.i(TAG, "Accessibility Service Connected. Starting Foreground.");
 
         boolean isEnabled = prefManager.getBoolean(AppConstants.KEY_SCREEN_TIME_ENABLED, true);
+        updateForegroundState(isEnabled);
+        
         if (isEnabled) {
-            startForeground(AppConstants.NOTIFY_ID_SCREEN_TIME,
-                    ScreenTimeNotificationHelper.getServiceNotification(this));
             // Ensure the sync worker is scheduled whenever the service starts/reconnects
             ScreenTimeScheduler.schedule(this, null);
-        } else {
-            startForeground(AppConstants.NOTIFY_ID_SCREEN_TIME,
-                    ScreenTimeNotificationHelper.getPausedServiceNotification(this));
         }
     }
 
@@ -66,6 +64,14 @@ public class ScreenTrackingService extends AccessibilityService {
     public int onStartCommand(Intent intent, int flags, int startId) {
         if (intent != null && "UPDATE_STATE".equals(intent.getAction())) {
             boolean isEnabled = prefManager.getBoolean(AppConstants.KEY_SCREEN_TIME_ENABLED, true);
+            updateForegroundState(isEnabled);
+        }
+        return START_STICKY;
+    }
+
+    private void updateForegroundState(boolean isEnabled) {
+        if (lastEnabledState == null || lastEnabledState != isEnabled) {
+            lastEnabledState = isEnabled;
             if (isEnabled) {
                 startForeground(AppConstants.NOTIFY_ID_SCREEN_TIME,
                         ScreenTimeNotificationHelper.getServiceNotification(this));
@@ -76,7 +82,6 @@ public class ScreenTrackingService extends AccessibilityService {
                 prefManager.putLong(AppConstants.KEY_SCREEN_SESSION_START, 0);
             }
         }
-        return START_STICKY;
     }
 
     @Override
