@@ -155,19 +155,6 @@ public class EditTrackerActivity extends AppCompatActivity {
             btnInfoTransactions.setOnClickListener(v -> toggleDayTransactions());
         }
 
-        ImageView btnClearParticular = findViewById(R.id.btnClearParticular);
-        if (btnClearParticular != null && etParticular != null) {
-            btnClearParticular.setOnClickListener(v -> etParticular.setText(""));
-            etParticular.addTextChangedListener(new android.text.TextWatcher() {
-                @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-                @Override
-                public void onTextChanged(CharSequence s, int start, int before, int count) {
-                    btnClearParticular.setVisibility(s.length() > 0 ? View.VISIBLE : View.GONE);
-                }
-                @Override public void afterTextChanged(android.text.Editable s) {}
-            });
-        }
-
         if (btnOpenCategorySelector != null) btnOpenCategorySelector.setOnClickListener(v -> showCategoryBottomSheet());
         if (btnAddTags != null) btnAddTags.setOnClickListener(v -> showTagBottomSheet());
         if (containerSelectedCategory != null) containerSelectedCategory.setOnClickListener(v -> showCategoryBottomSheet());
