@@ -2,7 +2,9 @@ package com.example.pp.features.tracker.edit;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
 import android.text.TextUtils;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -44,9 +46,12 @@ import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.UUID;
 
 public class EditTrackerActivity extends AppCompatActivity {
@@ -87,6 +92,7 @@ public class EditTrackerActivity extends AppCompatActivity {
     private List<CategoryTreeNode> categories = new ArrayList<>();
     private String currentTransactionType = "EXPENSE";
     private TransactionEntity editingTransaction;
+    private Map<String, List<String>> autoTagMap = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -101,6 +107,7 @@ public class EditTrackerActivity extends AppCompatActivity {
         calendarView = findViewById(R.id.calendarView);
         progressBar = findViewById(R.id.progressBar);
 
+        initAutoTagMap();
         setupNewFlow();
         setupCalendar();
         setupDropdowns();
@@ -129,6 +136,22 @@ public class EditTrackerActivity extends AppCompatActivity {
         etParticular = findViewById(R.id.etParticular);
         etAmount = findViewById(R.id.etAmount);
         etNote = findViewById(R.id.etNote);
+
+        if (etParticular != null) {
+            etParticular.addTextChangedListener(new TextWatcher() {
+                @Override
+                public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                @Override
+                public void onTextChanged(CharSequence s, int start, int before, int count) {
+                    applyAutoTags(s.toString());
+                }
+
+                @Override
+                public void afterTextChanged(Editable s) {}
+            });
+        }
+
         btnOpenCategorySelector = findViewById(R.id.btnOpenCategorySelector);
         tvNoCategorySelected = findViewById(R.id.tvNoCategorySelected);
         containerSelectedCategory = findViewById(R.id.containerSelectedCategory);
@@ -459,11 +482,13 @@ public class EditTrackerActivity extends AppCompatActivity {
         };
         View upi = dialog.findViewById(R.id.optionUPI);
         View cash = dialog.findViewById(R.id.optionCASH);
+        View pluxee = dialog.findViewById(R.id.optionPLUXEE);
         View icici = dialog.findViewById(R.id.optionICICI);
         View ama = dialog.findViewById(R.id.optionICICIAMA);
         View axis = dialog.findViewById(R.id.optionAXIS);
         if (upi != null) upi.setOnClickListener(optionClick);
         if (cash != null) cash.setOnClickListener(optionClick);
+        if (pluxee != null) pluxee.setOnClickListener(optionClick);
         if (icici != null) icici.setOnClickListener(optionClick);
         if (ama != null) ama.setOnClickListener(optionClick);
         if (axis != null) axis.setOnClickListener(optionClick);
@@ -637,5 +662,71 @@ public class EditTrackerActivity extends AppCompatActivity {
             TextView tvPayment = paymentView.findViewById(R.id.dropdownText);
             if (tvPayment != null) tvPayment.setText(selectedPayment);
         }
+    }
+
+    private void initAutoTagMap() {
+        autoTagMap.put("egg", Arrays.asList("Eggs", "Gym"));
+        autoTagMap.put("banana", Arrays.asList("Fruits", "Gym"));
+        autoTagMap.put("sweet potato", Arrays.asList("Gym"));
+        autoTagMap.put("curd", Arrays.asList("Gym"));
+        autoTagMap.put("geek", Arrays.asList("Country Delight", "Gym"));
+        autoTagMap.put("bus", Arrays.asList("Bus"));
+        autoTagMap.put("auto", Arrays.asList("Auto"));
+        autoTagMap.put("metro", Arrays.asList("Train"));
+        autoTagMap.put("train", Arrays.asList("Train"));
+        autoTagMap.put("local", Arrays.asList("Train"));
+        autoTagMap.put("choix", Arrays.asList("Office"));
+        autoTagMap.put("thali", Arrays.asList("Office"));
+        autoTagMap.put("desi deli", Arrays.asList("Office"));
+        autoTagMap.put("xplore", Arrays.asList("Office"));
+        autoTagMap.put("smoothie", Arrays.asList("Office"));
+        autoTagMap.put("salad bowl", Arrays.asList("Office"));
+        autoTagMap.put("dosa", Arrays.asList("Office"));
+    }
+
+    private void applyAutoTags(String text) {
+        if (TextUtils.isEmpty(text) || allTags == null || allTags.isEmpty()) return;
+
+        String lowerText = text.toLowerCase();
+        boolean changed = false;
+
+        for (Map.Entry<String, List<String>> entry : autoTagMap.entrySet()) {
+            if (lowerText.contains(entry.getKey())) {
+                for (String tagName : entry.getValue()) {
+                    Tag matchingTag = findTagByName(tagName);
+                    if (matchingTag != null && !selectedTags.contains(matchingTag)) {
+                        matchingTag.setSelected(true);
+                        selectedTags.add(matchingTag);
+                        changed = true;
+                    }
+                }
+            }
+        }
+
+        if (changed) {
+            updateSelectedTagsUI(selectedTags);
+
+            // If "Office" tag is selected, set payment to PLUXEE
+            for (Tag tag : selectedTags) {
+                if ("Office".equalsIgnoreCase(tag.getName())) {
+                    selectedPayment = "PLUXEE";
+                    View paymentView = findViewById(R.id.paymentDropdown);
+                    if (paymentView != null) {
+                        TextView tvPayment = paymentView.findViewById(R.id.dropdownText);
+                        if (tvPayment != null) tvPayment.setText(selectedPayment);
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    private Tag findTagByName(String name) {
+        for (Tag tag : allTags) {
+            if (tag.getName().equalsIgnoreCase(name)) {
+                return tag;
+            }
+        }
+        return null;
     }
 }

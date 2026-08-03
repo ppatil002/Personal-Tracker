@@ -51,6 +51,20 @@
         android:background="@color/border_color" />
 
     <TextView
+        android:id="@+id/optionPLUXEE"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingVertical="14dp"
+        android:text="PLUXEE"
+        android:textColor="@color/text_primary"
+        android:textSize="15sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/border_color" />
+
+    <TextView
         android:id="@+id/optionICICI"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
