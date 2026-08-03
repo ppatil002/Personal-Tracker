@@ -80,8 +80,8 @@ public class WaterIntakeReceiver extends BroadcastReceiver {
             TaskDefinition def = taskRepo.getDefinitionByType(TaskType.WATER_REMINDER);
             if (def == null) return;
 
-            if (WaterNotificationHelper.ACTION_100ML.equals(action)) {
-                hydrationRepo.addIntakeSync(100, System.currentTimeMillis());
+            if (WaterNotificationHelper.ACTION_300ML.equals(action)) {
+                hydrationRepo.addIntakeSync(300, System.currentTimeMillis());
                 WaterNotificationHelper.cancelNotification(context);
                 WaterIntakeScheduler.schedule(context, def);
             } else if (WaterNotificationHelper.ACTION_250ML.equals(action)) {

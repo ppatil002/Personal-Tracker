@@ -18,7 +18,7 @@ public class WaterNotificationHelper {
     public static final String CHANNEL_ID = AppConstants.CHANNEL_WATER;
     public static final int NOTIFICATION_ID = AppConstants.NOTIFY_ID_WATER;
     
-    public static final String ACTION_100ML = "com.example.pp.ACTION_100ML";
+    public static final String ACTION_300ML = "com.example.pp.ACTION_300ML";
     public static final String ACTION_250ML = "com.example.pp.ACTION_250ML";
     public static final String ACTION_SNOOZE = "com.example.pp.ACTION_SNOOZE";
 
@@ -41,16 +41,16 @@ public class WaterNotificationHelper {
 
     public static void showNotification(Context context, String taskId) {
         createNotificationChannel(context);
-        
-        Intent intent100 = new Intent(context, WaterIntakeReceiver.class);
-        intent100.setAction(ACTION_100ML);
-        intent100.putExtra("TASK_ID", taskId);
-        PendingIntent pi100 = PendingIntent.getBroadcast(context, 1, intent100, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Intent intent250 = new Intent(context, WaterIntakeReceiver.class);
         intent250.setAction(ACTION_250ML);
         intent250.putExtra("TASK_ID", taskId);
-        PendingIntent pi250 = PendingIntent.getBroadcast(context, 2, intent250, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        PendingIntent pi250 = PendingIntent.getBroadcast(context, 1, intent250, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+        Intent intent100 = new Intent(context, WaterIntakeReceiver.class);
+        intent100.setAction(ACTION_300ML);
+        intent100.putExtra("TASK_ID", taskId);
+        PendingIntent pi100 = PendingIntent.getBroadcast(context, 2, intent100, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Intent intentSnooze = new Intent(context, WaterIntakeReceiver.class);
         intentSnooze.setAction(ACTION_SNOOZE);

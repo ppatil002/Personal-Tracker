@@ -165,8 +165,8 @@
             android:enabled="true"
             android:exported="false">
             <intent-filter>
-                <action android:name="com.example.pp.ACTION_100ML" />
                 <action android:name="com.example.pp.ACTION_250ML" />
+                <action android:name="com.example.pp.ACTION_300ML" />
                 <action android:name="com.example.pp.ACTION_SNOOZE" />
             </intent-filter>
         </receiver>
