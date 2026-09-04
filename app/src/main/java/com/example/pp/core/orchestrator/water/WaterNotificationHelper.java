@@ -47,10 +47,10 @@ public class WaterNotificationHelper {
         intent250.putExtra("TASK_ID", taskId);
         PendingIntent pi250 = PendingIntent.getBroadcast(context, 1, intent250, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        Intent intent100 = new Intent(context, WaterIntakeReceiver.class);
-        intent100.setAction(ACTION_300ML);
-        intent100.putExtra("TASK_ID", taskId);
-        PendingIntent pi100 = PendingIntent.getBroadcast(context, 2, intent100, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Intent intent300 = new Intent(context, WaterIntakeReceiver.class);
+        intent300.setAction(ACTION_300ML);
+        intent300.putExtra("TASK_ID", taskId);
+        PendingIntent pi300 = PendingIntent.getBroadcast(context, 2, intent300, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         Intent intentSnooze = new Intent(context, WaterIntakeReceiver.class);
         intentSnooze.setAction(ACTION_SNOOZE);
@@ -70,7 +70,7 @@ public class WaterNotificationHelper {
                 .setSound(Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.water_notofication_drop))
                 .setAutoCancel(true)
                 .setContentIntent(contentIntent)
-                .addAction(0, "100ml", pi100)
+                .addAction(0, "300ml", pi300)
                 .addAction(0, "250ml", pi250)
                 .addAction(0, "Snooze", piSnooze);
 
