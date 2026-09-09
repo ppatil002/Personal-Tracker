@@ -51,7 +51,8 @@ public class DataExportWorker extends BaseFeatureWorker {
                 db.quotesDao().getAllSavedQuotesList(),
                 db.gymDao().getAllWeightsSync(),
                 db.gymDao().getAllGymLogsSync(),
-                db.vocabularyDao().getAllVocabList()
+                db.vocabularyDao().getAllVocabList(),
+                db.registryDao().getAllItemsList()
             );
 
             Gson gson = new Gson();

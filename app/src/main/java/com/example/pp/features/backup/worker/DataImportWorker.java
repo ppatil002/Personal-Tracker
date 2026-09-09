@@ -71,6 +71,7 @@ public class DataImportWorker extends BaseFeatureWorker {
                 allStats.add(db.gymDao().upsertAllWeights(backupData.bodyWeight));
                 allStats.add(db.gymDao().upsertAllGymLogs(backupData.gymTracking));
                 allStats.add(db.vocabularyDao().upsertAll(backupData.vocabulary));
+                allStats.add(db.registryDao().upsertAll(backupData.registry));
             });
 
             StringBuilder summary = new StringBuilder("Restore Summary:\n");

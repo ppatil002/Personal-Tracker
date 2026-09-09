@@ -9,6 +9,7 @@ import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.local.entity.QuotesApiTrack;
+import com.example.pp.data.local.entity.RegistryEntity;
 import com.example.pp.data.local.entity.SavedQuote;
 import com.example.pp.data.local.entity.ScreenTime;
 import com.example.pp.data.local.entity.SleepEntity;
@@ -40,6 +41,7 @@ public class BackupData {
     public List<BodyWeight> bodyWeight;
     public List<GymTracking> gymTracking;
     public List<Vocabulary> vocabulary;
+    public List<RegistryEntity> registry;
 
     public BackupData(List<CategoryEntity> categories, List<TagEntity> tags, 
                       List<TransactionEntity> transactions, List<TransactionTagCrossRef> transactionTags,
@@ -55,7 +57,8 @@ public class BackupData {
                       List<SavedQuote> savedQuotes,
                       List<BodyWeight> bodyWeight,
                       List<GymTracking> gymTracking,
-                      List<Vocabulary> vocabulary) {
+                      List<Vocabulary> vocabulary,
+                      List<RegistryEntity> registry) {
         this.categories = categories;
         this.tags = tags;
         this.transactions = transactions;
@@ -74,5 +77,6 @@ public class BackupData {
         this.bodyWeight = bodyWeight;
         this.gymTracking = gymTracking;
         this.vocabulary = vocabulary;
+        this.registry = registry;
     }
 }

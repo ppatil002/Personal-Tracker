@@ -18,6 +18,7 @@ import com.example.pp.data.local.dao.HydrationDao;
 import com.example.pp.data.local.dao.NutrientEntityDao;
 import com.example.pp.data.local.dao.NutritionIntakeDao;
 import com.example.pp.data.local.dao.QuotesDao;
+import com.example.pp.data.local.dao.RegistryDao;
 import com.example.pp.data.local.dao.ScreenTimeDao;
 import com.example.pp.data.local.dao.SleepDao;
 import com.example.pp.data.local.dao.TagDao;
@@ -33,6 +34,7 @@ import com.example.pp.data.local.entity.HydrationIntake;
 import com.example.pp.data.local.entity.NutrientEntity;
 import com.example.pp.data.local.entity.NutritionIntake;
 import com.example.pp.data.local.entity.QuotesApiTrack;
+import com.example.pp.data.local.entity.RegistryEntity;
 import com.example.pp.data.local.entity.SavedQuote;
 import com.example.pp.data.local.entity.ScreenTime;
 import com.example.pp.data.local.entity.SleepEntity;
@@ -62,8 +64,9 @@ import com.example.pp.utils.TaskTypeConverters;
     SavedQuote.class,
     BodyWeight.class,
     GymTracking.class,
-    Vocabulary.class
-}, version = 25, exportSchema = false)
+    Vocabulary.class,
+    RegistryEntity.class
+}, version = 26, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -84,6 +87,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract QuotesDao quotesDao();
     public abstract GymDao gymDao();
     public abstract VocabularyDao vocabularyDao();
+    public abstract RegistryDao registryDao();
 
     public static AppDatabase getInstance(Context context) {
         if (instance == null) {
