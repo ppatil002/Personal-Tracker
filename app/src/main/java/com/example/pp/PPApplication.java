@@ -9,6 +9,7 @@ import com.example.pp.data.repository.HydrationRepository;
 import com.example.pp.data.repository.NutrientRepository;
 import com.example.pp.data.repository.NutritionRepository;
 import com.example.pp.data.repository.QuoteRepository;
+import com.example.pp.data.repository.RegistryRepository;
 import com.example.pp.data.repository.HistoryRepository;
 import com.example.pp.data.repository.ScreenTimeRepository;
 import com.example.pp.data.repository.SleepRepository;
@@ -33,6 +34,7 @@ public class PPApplication extends Application {
     private QuoteRepository quoteRepository;
     private HistoryRepository historyRepository;
     private VocabularyRepository vocabularyRepository;
+    private RegistryRepository registryRepository;
 
     @Override
     public void onCreate() {
@@ -52,6 +54,7 @@ public class PPApplication extends Application {
         quoteRepository = new QuoteRepository(this);
         historyRepository = new HistoryRepository(this);
         vocabularyRepository = new VocabularyRepository(this);
+        registryRepository = new RegistryRepository(this);
     }
 
     public CategoryRepository getCategoryRepository() {
@@ -108,5 +111,9 @@ public class PPApplication extends Application {
 
     public VocabularyRepository getVocabularyRepository() {
         return vocabularyRepository;
+    }
+
+    public RegistryRepository getRegistryRepository() {
+        return registryRepository;
     }
 }

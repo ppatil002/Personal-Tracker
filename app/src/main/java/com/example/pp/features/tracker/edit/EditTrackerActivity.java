@@ -28,6 +28,7 @@ import com.example.pp.core.enums.AppEvent;
 import com.example.pp.core.event.EventBus;
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.repository.CategoryRepository;
+import com.example.pp.data.repository.RegistryRepository;
 import com.example.pp.data.repository.TagRepository;
 import com.example.pp.data.repository.TransactionRepository;
 import com.example.pp.domain.model.CategoryTreeNode;
@@ -44,6 +45,7 @@ import com.google.android.material.chip.ChipGroup;
 import com.prolificinteractive.materialcalendarview.CalendarDay;
 import com.prolificinteractive.materialcalendarview.MaterialCalendarView;
 
+import com.google.gson.Gson;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,6 +71,7 @@ public class EditTrackerActivity extends AppCompatActivity {
     private TextView tvSelectedCategoryIcon;
     private TextView tvSelectedDate;
     private TextView tvSelectedDay;
+    private TextView tvSyncStatus;
     private View btnAddTags;
     private TextView tvNoTagsSelected;
     private ChipGroup chipGroupSelectedTags;
@@ -85,6 +88,7 @@ public class EditTrackerActivity extends AppCompatActivity {
     private TransactionRepository transactionRepository;
     private TagRepository tagRepository;
     private CategoryRepository categoryRepository;
+    private RegistryRepository registryRepository;
 
     private CategoryTreeNode selectedCategory;
     private List<Tag> allTags = new ArrayList<>();
@@ -103,6 +107,7 @@ public class EditTrackerActivity extends AppCompatActivity {
         transactionRepository = app.getTransactionRepository();
         tagRepository = app.getTagRepository();
         categoryRepository = app.getCategoryRepository();
+        registryRepository = app.getRegistryRepository();
 
         calendarView = findViewById(R.id.calendarView);
         progressBar = findViewById(R.id.progressBar);
@@ -128,6 +133,18 @@ public class EditTrackerActivity extends AppCompatActivity {
         EventBus.getInstance().observe().observe(this, event -> {
             if (event == AppEvent.CATEGORIES_LOADED_FROM_DB) {
                 Toast.makeText(this, "Categories loaded from Database", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        registryRepository.getRegistryItemLive("expense_sync_date").observe(this, entity -> {
+            if (entity != null && tvSyncStatus != null) {
+                try {
+                    SyncStatus syncStatus = new Gson().fromJson(entity.value, SyncStatus.class);
+                    String dateStr = syncStatus != null ? syncStatus.date : "--";
+                    tvSyncStatus.setText("Sync: " + dateStr);
+                } catch (Exception e) {
+                    tvSyncStatus.setText("Sync: --");
+                }
             }
         });
     }
@@ -159,6 +176,7 @@ public class EditTrackerActivity extends AppCompatActivity {
         tvSelectedCategoryIcon = findViewById(R.id.tvSelectedCategoryIcon);
         tvSelectedDate = findViewById(R.id.tvSelectedDate);
         tvSelectedDay = findViewById(R.id.tvSelectedDay);
+        tvSyncStatus = findViewById(R.id.tvSyncStatus);
         btnAddTags = findViewById(R.id.btnAddTags);
         tvNoTagsSelected = findViewById(R.id.tvNoTagsSelected);
         chipGroupSelectedTags = findViewById(R.id.chipGroupSelectedTags);
@@ -527,7 +545,7 @@ public class EditTrackerActivity extends AppCompatActivity {
         View done = findViewById(R.id.btnDoneForDay);
         btnCancel = findViewById(R.id.btnCancel);
         btnSave = findViewById(R.id.btnSave);
-        if (done != null) done.setOnClickListener(v -> Toast.makeText(this, "Marked done for the day", Toast.LENGTH_SHORT).show());
+        if (done != null) done.setOnClickListener(v -> markDoneForDay());
         if (btnCancel != null) btnCancel.setOnClickListener(v -> {
             if (editingTransaction != null) {
                 deleteCurrentTransaction();
@@ -559,6 +577,35 @@ public class EditTrackerActivity extends AppCompatActivity {
             tvTypeExpense.setBackground(null);
             tvTypeExpense.setTextColor(ContextCompat.getColor(this, R.color.text_muted));
         }
+    }
+
+    private void markDoneForDay() {
+        CalendarDay date = calendarView.getSelectedDate();
+        if (date == null) date = CalendarDay.today();
+        
+        Calendar cal = Calendar.getInstance();
+        cal.set(date.getYear(), date.getMonth() - 1, date.getDay());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd MMM, yyyy", Locale.getDefault());
+        String dateStr = dateFormat.format(cal.getTime());
+
+        try {
+            SyncStatus syncStatus = new SyncStatus();
+            syncStatus.date = dateStr;
+            syncStatus.timestamp = System.currentTimeMillis();
+            
+            String json = new Gson().toJson(syncStatus);
+            
+            registryRepository.saveRegistryItem("expense_sync_date", json, () -> {
+                Toast.makeText(this, "Marked done for " + dateStr, Toast.LENGTH_SHORT).show();
+            });
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to mark sync", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private static class SyncStatus {
+        String date;
+        long timestamp;
     }
 
     private void deleteCurrentTransaction() {
