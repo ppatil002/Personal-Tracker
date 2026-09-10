@@ -125,28 +125,28 @@ public class WaterIntakeScheduler {
 
     private static long calculateNextAlarmTime(Context context) {
         HydrationRepository repo = new HydrationRepository(context);
-        
+
         Calendar now = Calendar.getInstance();
         long currentMillis = now.getTimeInMillis();
-        
+
         // Start of today
         Calendar startOfDay = (Calendar) now.clone();
         startOfDay.set(Calendar.HOUR_OF_DAY, 0);
         startOfDay.set(Calendar.MINUTE, 0);
         startOfDay.set(Calendar.SECOND, 0);
         startOfDay.set(Calendar.MILLISECOND, 0);
-        
+
         // 11 AM today
         Calendar elevenAM = (Calendar) startOfDay.clone();
         elevenAM.set(Calendar.HOUR_OF_DAY, 11);
-        
+
         // 11 PM today
         Calendar elevenPM = (Calendar) startOfDay.clone();
         elevenPM.set(Calendar.HOUR_OF_DAY, 23);
-        
+
         // Get absolute last intake instead of just today
         HydrationIntake lastIntake = repo.findLatestIntake();
-        
+
         long baseTime;
         if (lastIntake == null) {
             baseTime = elevenAM.getTimeInMillis();
@@ -154,7 +154,7 @@ public class WaterIntakeScheduler {
             // Next run is at least 2 hours after the last drink, but not before 11 AM
             baseTime = Math.max(lastIntake.getTimestamp() + TimeUnit.HOURS.toMillis(2), elevenAM.getTimeInMillis());
         }
-        
+
         // If it's already past 11 PM today, schedule for tomorrow 11 AM
         if (currentMillis >= elevenPM.getTimeInMillis()) {
             return getNextDayStart();
@@ -164,7 +164,7 @@ public class WaterIntakeScheduler {
         if (baseTime > elevenPM.getTimeInMillis()) {
             return getNextDayStart();
         }
-        
+
         // If calculated baseTime is in the past, and it's currently between 11 AM and 11 PM
         if (baseTime <= currentMillis) {
             if (currentMillis < elevenAM.getTimeInMillis()) {
@@ -173,7 +173,7 @@ public class WaterIntakeScheduler {
                 return currentMillis + 1000; // Trigger almost immediately
             }
         }
-        
+
         return baseTime;
     }
 
@@ -186,12 +186,12 @@ public class WaterIntakeScheduler {
         calendar.set(Calendar.MILLISECOND, 0);
         return calendar.getTimeInMillis();
     }
-    
+
     public static void snooze(Context context, TaskDefinition def) {
         AppExecutors.getInstance().diskIO().execute(() -> {
-            Log.i(TAG, "Snoozing water intake alarm for 20 minutes.");
-            
-            long snoozeTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(20);
+            Log.i(TAG, "Snoozing water intake alarm for 1 hour.");
+
+            long snoozeTime = System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1);
 
             // Respect 11 PM limit
             Calendar elevenPM = Calendar.getInstance();
@@ -209,15 +209,18 @@ public class WaterIntakeScheduler {
             Intent intent = new Intent(context, WaterIntakeReceiver.class);
             intent.setAction(AppConstants.ACTION_WATER_ALARM);
             intent.putExtra("TASK_ID", def.getTaskId());
-            
+
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
-                    context, 
-                    ALARM_REQUEST_CODE, 
-                    intent, 
+                    context,
+                    ALARM_REQUEST_CODE,
+                    intent,
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
             );
 
             if (alarmManager != null) {
+                // Cancel any existing alarm before scheduling a new one
+                alarmManager.cancel(pendingIntent);
+
                 alarmManager.setExactAndAllowWhileIdle(
                         AlarmManager.RTC_WAKEUP,
                         snoozeTime,
@@ -228,6 +231,62 @@ public class WaterIntakeScheduler {
 
                 // Update TaskState
                 updateTaskState(context, def.getTaskId(), snoozeTime);
+            }
+        });
+    }
+
+    /**
+     * Schedules a repeat reminder 20 minutes from now if the user hasn't responded to the notification.
+     */
+    public static void scheduleReminderRepeat(Context context, String taskId) {
+        AppExecutors.getInstance().diskIO().execute(() -> {
+            TaskRepository repo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
+            TaskDefinition taskDef = repo.getDefinitionByType(TaskType.WATER_REMINDER);
+
+            if (taskDef == null || !taskDef.isEnabled()) {
+                Log.i(TAG, "Water intake is disabled. Skipping repeat schedule.");
+                return;
+            }
+
+            long nextAlarmTime = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(20);
+
+            // Respect 11 PM limit
+            Calendar elevenPM = Calendar.getInstance();
+            elevenPM.set(Calendar.HOUR_OF_DAY, 23);
+            elevenPM.set(Calendar.MINUTE, 0);
+            elevenPM.set(Calendar.SECOND, 0);
+            elevenPM.set(Calendar.MILLISECOND, 0);
+
+            if (nextAlarmTime > elevenPM.getTimeInMillis()) {
+                Log.i(TAG, "Repeat alarm past 11 PM. Scheduling for tomorrow 11 AM.");
+                nextAlarmTime = getNextDayStart();
+            }
+
+            AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
+            Intent intent = new Intent(context, WaterIntakeReceiver.class);
+            intent.setAction(AppConstants.ACTION_WATER_ALARM);
+            intent.putExtra("TASK_ID", taskId);
+
+            PendingIntent pendingIntent = PendingIntent.getBroadcast(
+                    context,
+                    ALARM_REQUEST_CODE,
+                    intent,
+                    PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+            );
+
+            if (alarmManager != null) {
+                // Cancel any existing alarm (like the one that just fired)
+                alarmManager.cancel(pendingIntent);
+
+                alarmManager.setExactAndAllowWhileIdle(
+                        AlarmManager.RTC_WAKEUP,
+                        nextAlarmTime,
+                        pendingIntent
+                );
+                Log.i(TAG, "Water repeat alarm (20m) set for: " + new Date(nextAlarmTime));
+                logOperation(context, "SCHEDULE", "Water Alarm (20m)", "Repeat reminder set for " + new Date(nextAlarmTime));
+
+                updateTaskState(context, taskId, nextAlarmTime);
             }
         });
     }

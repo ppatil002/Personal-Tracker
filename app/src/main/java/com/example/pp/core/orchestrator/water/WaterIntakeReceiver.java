@@ -58,6 +58,9 @@ public class WaterIntakeReceiver extends BroadcastReceiver {
 
             WaterNotificationHelper.showNotification(context, taskId);
             updateTaskLastRun(context, taskId);
+
+            // Schedule a repeat reminder after 20 minutes if no action taken
+            WaterIntakeScheduler.scheduleReminderRepeat(context, taskId);
         });
     }
 
