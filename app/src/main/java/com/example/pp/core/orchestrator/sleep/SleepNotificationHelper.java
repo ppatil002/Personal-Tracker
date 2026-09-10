@@ -24,7 +24,7 @@ public class SleepNotificationHelper {
     public static final String ACTION_DELAY_REASON = "com.example.pp.ACTION_DELAY_REASON";
     public static final String KEY_TEXT_REPLY = "key_text_reply";
 
-    public static void showBedtimeReminder(Context context, String message, boolean showBedButton, boolean showDelayButton) {
+    public static void showBedtimeReminder(Context context, String message, boolean showBedButton, boolean showDelayButton, boolean isOngoing) {
         createChannel(context);
 
         Intent intent = new Intent(context, DashboardActivity.class);
@@ -37,7 +37,8 @@ public class SleepNotificationHelper {
                 .setContentText(message)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setSound(Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.sleep_notification))
-                .setAutoCancel(true)
+                .setAutoCancel(!isOngoing)
+                .setOngoing(isOngoing)
                 .setContentIntent(contentIntent);
 
         if (showBedButton) {

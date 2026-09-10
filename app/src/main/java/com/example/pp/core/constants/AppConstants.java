@@ -6,7 +6,7 @@ public class AppConstants {
     public static final String CHANNEL_WATER = "WATER_REMINDER_CHANNEL_V1";
     public static final String CHANNEL_SCREEN_TIME = "SCREEN_TIME_ALERTS";
     public static final String CHANNEL_SCREEN_TIME_SERVICE = "SCREEN_TIME_SERVICE";
-    public static final String CHANNEL_SLEEP = "SLEEP_MONITOR_CHANNEL_V1";
+    public static final String CHANNEL_SLEEP = "SLEEP_MONITOR_CHANNEL_V2";
     public static final String CHANNEL_TASK_ENGINE = "BG_SYNC_CHANNEL";
 
     // Notification IDs

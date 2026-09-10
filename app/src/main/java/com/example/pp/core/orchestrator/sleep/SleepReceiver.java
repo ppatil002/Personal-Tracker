@@ -118,7 +118,8 @@ public class SleepReceiver extends BroadcastReceiver {
                     long minutes = TimeUnit.MILLISECONDS.toMinutes(diff);
                     String msg = "Only " + minutes + "m left until bedtime.";
 //                    If it's 2 hours before bedtime, minutes <= 30 is false, so the "Good Night" button is hidden. We only want to show it when it's actually close to bedtime.
-                    SleepNotificationHelper.showBedtimeReminder(context, msg, minutes <= 30, true);
+//                    Reminders: isOngoing = false, meaning they can be dismissed (swiped away) by the user.
+                    SleepNotificationHelper.showBedtimeReminder(context, msg, minutes <= 30, true, false);
                     
                     long nextRunTime = calculateNextRunTime(reason, bedtime, now);
                     updateTaskState(context, nextRunTime);
@@ -133,7 +134,8 @@ public class SleepReceiver extends BroadcastReceiver {
                     } else {
                         msg = "Still awake? Time's slipping! Current potential: " + potentialPercent + "%";
                     }
-                    SleepNotificationHelper.showBedtimeReminder(context, msg, true, true);
+//                   isOngoing = true, making the notification persistent. It will remain in the notification drawer until the "Good Night" button is pressed (which calls cancelNotification)
+                    SleepNotificationHelper.showBedtimeReminder(context, msg, true, true, true);
                     
                     long nextRunTime = calculateNextRunTime(reason, bedtime, now);
                     updateTaskState(context, nextRunTime);
@@ -166,7 +168,7 @@ public class SleepReceiver extends BroadcastReceiver {
                 sleepRepo.updateDelayReason(System.currentTimeMillis(), reasonStr);
                 
                 // Update notification to show success
-                SleepNotificationHelper.showBedtimeReminder(context, "Reason saved: " + reasonStr, true, false);
+                SleepNotificationHelper.showBedtimeReminder(context, "Reason saved: " + reasonStr, true, false, true);
             }
         }
     }
