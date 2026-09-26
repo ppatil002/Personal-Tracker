@@ -350,7 +350,10 @@ public class DashboardActivity extends AppCompatActivity {
         }
 
         View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_save_quote, null);
+        ImageView btnEditQuote = dialogView.findViewById(R.id.btnEditQuote);
         TextView tvQuotePreview = dialogView.findViewById(R.id.tvQuotePreview);
+        EditText etCustomQuote = dialogView.findViewById(R.id.etCustomQuote);
+        EditText etCustomAuthor = dialogView.findViewById(R.id.etCustomAuthor);
         ChipGroup cgSelectedCategories = dialogView.findViewById(R.id.cgSelectedCategories);
         AutoCompleteTextView actvCategory = dialogView.findViewById(R.id.actvCategoryFilter);
         EditText etNotes = dialogView.findViewById(R.id.etQuoteNotes);
@@ -363,6 +366,19 @@ public class DashboardActivity extends AppCompatActivity {
                 addCategoryChip(cat, cgSelectedCategories, selectedCategories);
             }
         }
+
+        btnEditQuote.setOnClickListener(v -> {
+            tvQuotePreview.setVisibility(View.GONE);
+            etCustomQuote.setVisibility(View.VISIBLE);
+            etCustomAuthor.setVisibility(View.VISIBLE);
+            etCustomQuote.setText("");
+            etCustomAuthor.setText("Pratik Patil");
+            etCustomQuote.requestFocus();
+
+            cgSelectedCategories.removeAllViews();
+            selectedCategories.clear();
+            addCategoryChip("PP-Life", cgSelectedCategories, selectedCategories);
+        });
 
         viewModel.getAvailableCategories().observe(this, categories -> {
             ArrayAdapter<String> adapter = new ArrayAdapter<>(this, R.layout.item_dropdown_divider, R.id.tvDropdownItem, categories);
@@ -394,12 +410,31 @@ public class DashboardActivity extends AppCompatActivity {
                 .setTitle("Save Quote")
                 .setView(dialogView)
                 .setPositiveButton("Save", (d, which) -> {
-                    viewModel.isQuoteSaved(currentQuote.quote).observe(this, saved -> {
+                    String quoteToSave;
+                    String authorToSave;
+
+                    if (etCustomQuote.getVisibility() == View.VISIBLE) {
+                        quoteToSave = etCustomQuote.getText().toString().trim();
+                        authorToSave = etCustomAuthor.getText().toString().trim();
+                    } else {
+                        quoteToSave = currentQuote.quote;
+                        authorToSave = currentQuote.author;
+                    }
+
+                    if (quoteToSave.isEmpty()) {
+                        Toast.makeText(this, "Quote cannot be empty", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    String finalQuote = quoteToSave;
+                    String finalAuthor = authorToSave;
+
+                    viewModel.isQuoteSaved(finalQuote).observe(this, saved -> {
                         if (saved != null && saved) {
                             Toast.makeText(this, "Quote already saved!", Toast.LENGTH_SHORT).show();
                         } else {
                             String notes = etNotes.getText().toString().trim();
-                            viewModel.saveQuote(currentQuote.quote, currentQuote.author, selectedCategories, notes);
+                            viewModel.saveQuote(finalQuote, finalAuthor, selectedCategories, notes);
                             Toast.makeText(this, "Quote saved!", Toast.LENGTH_SHORT).show();
                             btnSaveQuote.setColorFilter(getColor(R.color.accent_purple));
                         }
