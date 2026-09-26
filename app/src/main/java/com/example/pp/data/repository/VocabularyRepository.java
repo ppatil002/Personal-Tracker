@@ -31,6 +31,12 @@ public class VocabularyRepository {
         });
     }
 
+    public void deleteVocabulary(Vocabulary vocabulary) {
+        executors.diskIO().execute(() -> {
+            vocabularyDao.delete(vocabulary);
+        });
+    }
+
     public interface WordCheckCallback {
         void onResult(int status, String word);
     }
@@ -98,10 +104,15 @@ public class VocabularyRepository {
         void onLoaded(List<Vocabulary> vocabList);
     }
 
-    public void getLatestVocab(int limit, int offset, LoadCallback callback) {
+    public interface ChunkLoadCallback {
+        void onLoaded(List<Vocabulary> vocabList, int totalWords);
+    }
+
+    public void getVocabChunk(int limit, int offset, ChunkLoadCallback callback) {
         executors.diskIO().execute(() -> {
             List<Vocabulary> list = vocabularyDao.getLatestVocab(limit, offset);
-            executors.mainThread().execute(() -> callback.onLoaded(list));
+            int totalWords = vocabularyDao.getCount();
+            executors.mainThread().execute(() -> callback.onLoaded(list, totalWords));
         });
     }
 }

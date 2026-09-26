@@ -1,6 +1,7 @@
 package com.example.pp.data.local.dao;
 
 import androidx.room.Dao;
+import androidx.room.Delete;
 import androidx.room.Insert;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
@@ -18,6 +19,9 @@ public interface VocabularyDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertBatch(List<Vocabulary> vocabularies);
+
+    @Delete
+    void delete(Vocabulary vocabulary);
 
     @Query("SELECT * FROM vocabulary ORDER BY created_timestamp DESC LIMIT :limit OFFSET :offset")
     List<Vocabulary> getLatestVocab(int limit, int offset);

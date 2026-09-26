@@ -7,6 +7,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -20,10 +21,13 @@ import com.example.pp.R;
 import com.example.pp.data.local.entity.Vocabulary;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
+import java.util.Locale;
+
 public class VocabularyActivity extends AppCompatActivity {
 
     private VocabularyViewModel viewModel;
     private VocabularyAdapter adapter;
+    private TextView tvAnalytics;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +42,7 @@ public class VocabularyActivity extends AppCompatActivity {
 
     private void initViews() {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+        tvAnalytics = findViewById(R.id.tvAnalytics);
         
         RecyclerView rvVocabulary = findViewById(R.id.rvVocabulary);
         rvVocabulary.setLayoutManager(new LinearLayoutManager(this));
@@ -50,12 +55,14 @@ public class VocabularyActivity extends AppCompatActivity {
             public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
                 if (dy > 0) {
                     LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
-                    int visibleItemCount = layoutManager.getChildCount();
-                    int totalItemCount = layoutManager.getItemCount();
-                    int pastVisibleItems = layoutManager.findFirstVisibleItemPosition();
+                    if (layoutManager != null) {
+                        int visibleItemCount = layoutManager.getChildCount();
+                        int totalItemCount = layoutManager.getItemCount();
+                        int pastVisibleItems = layoutManager.findFirstVisibleItemPosition();
 
-                    if ((visibleItemCount + pastVisibleItems) >= totalItemCount) {
-                        viewModel.loadNextPage();
+                        if ((visibleItemCount + pastVisibleItems) >= totalItemCount - 3) {
+                            viewModel.loadNextPage();
+                        }
                     }
                 }
             }
@@ -67,6 +74,11 @@ public class VocabularyActivity extends AppCompatActivity {
     private void observeViewModel() {
         viewModel.getVocabItems().observe(this, items -> {
             adapter.setItems(items);
+        });
+
+        viewModel.getAnalyticsState().observe(this, state -> {
+            if (state == null) return;
+            tvAnalytics.setText(String.format(Locale.getDefault(), "Words: %d/%d", state.loadedWords, state.totalWords));
         });
     }
 
@@ -98,7 +110,7 @@ public class VocabularyActivity extends AppCompatActivity {
             }
         });
 
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+        MaterialAlertDialogBuilder builder = new MaterialAlertDialogBuilder(this)
                 .setTitle(existingVocab == null ? "Add New Word" : "Edit Word")
                 .setView(dialogView)
                 .setPositiveButton("Save", (d, which) -> {
@@ -124,8 +136,23 @@ public class VocabularyActivity extends AppCompatActivity {
                         Toast.makeText(this, "Word updated", Toast.LENGTH_SHORT).show();
                     }
                 })
-                .setNegativeButton("Cancel", null)
-                .create();
+                .setNegativeButton("Cancel", null);
+
+        if (existingVocab != null) {
+            builder.setNeutralButton("Delete", (d, which) -> {
+                new MaterialAlertDialogBuilder(this)
+                        .setTitle("Delete Word")
+                        .setMessage("Are you sure you want to delete '" + existingVocab.word + "'?")
+                        .setPositiveButton("Delete", (dialog, which1) -> {
+                            viewModel.deleteVocabulary(existingVocab);
+                            Toast.makeText(this, "Word deleted", Toast.LENGTH_SHORT).show();
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+        }
+
+        AlertDialog dialog = builder.create();
 
         dialog.show();
         if (dialog.getWindow() != null) {

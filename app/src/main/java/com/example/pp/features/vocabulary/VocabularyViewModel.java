@@ -19,13 +19,25 @@ import java.util.Locale;
 
 public class VocabularyViewModel extends AndroidViewModel {
 
+    public static class AnalyticsState {
+        public final int loadedWords;
+        public final int totalWords;
+
+        public AnalyticsState(int loadedWords, int totalWords) {
+            this.loadedWords = loadedWords;
+            this.totalWords = totalWords;
+        }
+    }
+
     private final VocabularyRepository repository;
-    private final MutableLiveData<List<VocabularyAdapter.ListItem>> vocabItems = new MutableLiveData<>();
+    private final MutableLiveData<List<VocabularyAdapter.ListItem>> vocabItems = new MutableLiveData<>(new ArrayList<>());
+    private final MutableLiveData<AnalyticsState> analyticsState = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
-    
+
     private int currentOffset = 0;
     private final int PAGE_SIZE = 20;
     private boolean isLastPage = false;
+    private int totalLoadedWordsCount = 0;
     private String lastDate = "";
 
     public VocabularyViewModel(@NonNull Application application) {
@@ -38,6 +50,10 @@ public class VocabularyViewModel extends AndroidViewModel {
         return vocabItems;
     }
 
+    public LiveData<AnalyticsState> getAnalyticsState() {
+        return analyticsState;
+    }
+
     public LiveData<Boolean> getIsLoading() {
         return isLoading;
     }
@@ -46,25 +62,27 @@ public class VocabularyViewModel extends AndroidViewModel {
         if (Boolean.TRUE.equals(isLoading.getValue()) || isLastPage) return;
 
         isLoading.setValue(true);
-        repository.getLatestVocab(PAGE_SIZE, currentOffset, vocabList -> {
+        repository.getVocabChunk(PAGE_SIZE, currentOffset, (vocabList, totalWords) -> {
             if (vocabList == null || vocabList.isEmpty()) {
                 isLastPage = true;
                 isLoading.setValue(false);
+                analyticsState.setValue(new AnalyticsState(totalLoadedWordsCount, totalWords));
                 return;
             }
 
+            totalLoadedWordsCount += vocabList.size();
             List<VocabularyAdapter.ListItem> newItems = processVocabList(vocabList);
             List<VocabularyAdapter.ListItem> currentItems = vocabItems.getValue();
-            if (currentItems == null) {
-                vocabItems.setValue(newItems);
-            } else {
-                List<VocabularyAdapter.ListItem> updated = new ArrayList<>(currentItems);
-                updated.addAll(newItems);
-                vocabItems.setValue(updated);
-            }
+            List<VocabularyAdapter.ListItem> updated = new ArrayList<>(currentItems != null ? currentItems : new ArrayList<>());
+            updated.addAll(newItems);
+            vocabItems.setValue(updated);
 
             currentOffset += PAGE_SIZE;
-            if (vocabList.size() < PAGE_SIZE) isLastPage = true;
+            if (vocabList.size() < PAGE_SIZE) {
+                isLastPage = true;
+            }
+
+            analyticsState.setValue(new AnalyticsState(totalLoadedWordsCount, totalWords));
             isLoading.setValue(false);
         });
     }
@@ -91,7 +109,6 @@ public class VocabularyViewModel extends AndroidViewModel {
 
     public void addVocabulary(String word, String meaning, String example, String partOfSpeech) {
         repository.addVocabulary(word, meaning, example, partOfSpeech, System.currentTimeMillis());
-        // Simple refresh for now - clear everything and reload
         refresh();
     }
 
@@ -100,9 +117,15 @@ public class VocabularyViewModel extends AndroidViewModel {
         refresh();
     }
 
+    public void deleteVocabulary(Vocabulary vocabulary) {
+        repository.deleteVocabulary(vocabulary);
+        refresh();
+    }
+
     public void refresh() {
         currentOffset = 0;
         isLastPage = false;
+        totalLoadedWordsCount = 0;
         lastDate = "";
         vocabItems.setValue(new ArrayList<>());
         loadNextPage();
