@@ -102,15 +102,15 @@ public class VocabularyActivity extends AppCompatActivity {
                 .setTitle(existingVocab == null ? "Add New Word" : "Edit Word")
                 .setView(dialogView)
                 .setPositiveButton("Save", (d, which) -> {
-                    String word = etWord.getText().toString().trim().toLowerCase();
-                    String pos = actvPartOfSpeech.getText().toString().trim();
-                    String meaning = etMeaning.getText().toString().trim();
-                    String example = etExample.getText().toString().trim();
-
-                    if (word.isEmpty()) {
+                    String rawWord = etWord.getText().toString().trim();
+                    if (rawWord.isEmpty()) {
                         Toast.makeText(this, "Word is required", Toast.LENGTH_SHORT).show();
                         return;
                     }
+                    String word = rawWord.substring(0, 1).toUpperCase() + rawWord.substring(1).toLowerCase();
+                    String pos = actvPartOfSpeech.getText().toString().trim();
+                    String meaning = etMeaning.getText().toString().trim();
+                    String example = etExample.getText().toString().trim();
 
                     if (existingVocab == null) {
                         viewModel.addVocabulary(word, meaning, example, pos);

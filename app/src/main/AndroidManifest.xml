@@ -155,6 +155,18 @@
             android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.PP" />
 
+        <activity
+            android:name=".features.vocabulary.VocabularyShareActivity"
+            android:exported="true"
+            android:label="Vocabulary"
+            android:theme="@style/Theme.PP.Translucent">
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <receiver
             android:name=".core.orchestrator.backup.BackupAlarmReceiver"
             android:enabled="true"

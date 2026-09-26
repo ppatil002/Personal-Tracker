@@ -83,4 +83,12 @@
         <item name="android:textSize">12sp</item>
         <item name="android:fontFamily">sans-serif-medium</item>
     </style>
+
+    <style name="Theme.PP.Translucent" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <item name="android:windowIsFloating">true</item>
+    </style>
 </resources>

@@ -2,9 +2,10 @@ package com.example.pp.data.local.entity;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
-@Entity(tableName = "vocabulary")
+@Entity(tableName = "vocabulary", indices = {@Index(value = {"word"}, unique = true)})
 public class Vocabulary {
 
     @PrimaryKey(autoGenerate = true)

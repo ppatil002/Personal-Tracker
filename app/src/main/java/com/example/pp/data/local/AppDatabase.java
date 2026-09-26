@@ -66,7 +66,7 @@ import com.example.pp.utils.TaskTypeConverters;
     GymTracking.class,
     Vocabulary.class,
     RegistryEntity.class
-}, version = 26, exportSchema = false)
+}, version = 27, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 

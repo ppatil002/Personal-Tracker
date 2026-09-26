@@ -58,4 +58,15 @@ public class AppConstants {
     public static final double TARGET_PROTEIN = 90;
     public static final double TARGET_FATS = 65.0;
     public static final double TARGET_WATER_ML = 3000.0;
+    
+    
+    // Vocabulary Shared Status Code
+    public static final int VOCABULARY_STATUS_ADDED = 1;
+    public static final int VOCABULARY_STATUS_ALREADY_EXISTS = 2;
+    public static final int VOCABULARY_STATUS_MEANING_ADDED = 3;
+    public static final int VOCABULARY_STATUS_MEANING_SKIPPED = 4;
+    public static final int VOCABULARY_STATUS_POS_ADDED = 5;
+    public static final int VOCABULARY_STATUS_POS_SKIPPED = 6;
+    public static final int VOCABULARY_STATUS_NO_LAST_WORD = 7;
+    public static final int VOCABULARY_STATUS_WORD_LENGTH_EXCEED = 8;
 }
