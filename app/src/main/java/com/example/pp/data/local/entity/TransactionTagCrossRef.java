@@ -6,6 +6,11 @@ import androidx.room.Entity;
 import androidx.room.ForeignKey;
 import androidx.room.Index;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity(
     tableName = "transaction_tag_cross_ref",
     primaryKeys = {"transaction_id", "tag_id"},
@@ -46,14 +51,4 @@ public class TransactionTagCrossRef {
         this.tagId = tagId;
         this.lastUpdatedTimestamp = lastUpdatedTimestamp;
     }
-
-    @NonNull
-    public String getTransactionId() { return transactionId; }
-    @NonNull
-    public String getTagId() { return tagId; }
-    public long getLastUpdatedTimestamp() { return lastUpdatedTimestamp; }
-
-    public void setTransactionId(@NonNull String transactionId) { this.transactionId = transactionId; }
-    public void setTagId(@NonNull String tagId) { this.tagId = tagId; }
-    public void setLastUpdatedTimestamp(long lastUpdatedTimestamp) { this.lastUpdatedTimestamp = lastUpdatedTimestamp; }
 }

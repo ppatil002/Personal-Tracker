@@ -7,6 +7,11 @@ import androidx.room.PrimaryKey;
 
 import com.example.pp.core.enums.TaskStatus;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity(tableName = "task_states")
 public class TaskState {
 
@@ -61,29 +66,4 @@ public class TaskState {
         this.isRunning = isRunning;
         this.progress = progress;
     }
-
-    @NonNull
-    public String getTaskId() { return taskId; }
-    @NonNull
-    public TaskStatus getCurrentState() { return currentState; }
-    public long getLastRunTime() { return lastRunTime; }
-    public long getNextRunTime() { return nextRunTime; }
-    public long getPausedAt() { return pausedAt; }
-    public long getSnoozedUntil() { return snoozedUntil; }
-    public int getRetryCount() { return retryCount; }
-    public String getLastFailureReason() { return lastFailureReason; }
-    public boolean isAwaitingUserAction() { return awaitingUserAction; }
-    public boolean isRunning() { return isRunning; }
-    public int getProgress() { return progress; }
-
-    public void setCurrentState(@NonNull TaskStatus currentState) { this.currentState = currentState; }
-    public void setLastRunTime(long lastRunTime) { this.lastRunTime = lastRunTime; }
-    public void setNextRunTime(long nextRunTime) { this.nextRunTime = nextRunTime; }
-    public void setPausedAt(long pausedAt) { this.pausedAt = pausedAt; }
-    public void setSnoozedUntil(long snoozedUntil) { this.snoozedUntil = snoozedUntil; }
-    public void setRetryCount(int retryCount) { this.retryCount = retryCount; }
-    public void setLastFailureReason(String lastFailureReason) { this.lastFailureReason = lastFailureReason; }
-    public void setAwaitingUserAction(boolean awaitingUserAction) { this.awaitingUserAction = awaitingUserAction; }
-    public void setRunning(boolean running) { isRunning = running; }
-    public void setProgress(int progress) { this.progress = progress; }
 }

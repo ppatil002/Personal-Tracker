@@ -7,6 +7,11 @@ import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity(
     tableName = "categories",
     foreignKeys = @ForeignKey(
@@ -48,19 +53,4 @@ public class CategoryEntity {
         this.colour = colour;
         this.lastUpdatedTimestamp = lastUpdatedTimestamp;
     }
-
-    @NonNull
-    public String getCategoryId() { return categoryId; }
-    public String getParentCategoryId() { return parentCategoryId; }
-    public String getName() { return name; }
-    public String getIcon() { return icon; }
-    public String getColour() { return colour; }
-    public long getLastUpdatedTimestamp() { return lastUpdatedTimestamp; }
-
-    public void setCategoryId(@NonNull String categoryId) { this.categoryId = categoryId; }
-    public void setParentCategoryId(String parentCategoryId) { this.parentCategoryId = parentCategoryId; }
-    public void setName(String name) { this.name = name; }
-    public void setIcon(String icon) { this.icon = icon; }
-    public void setColour(String colour) { this.colour = colour; }
-    public void setLastUpdatedTimestamp(long lastUpdatedTimestamp) { this.lastUpdatedTimestamp = lastUpdatedTimestamp; }
 }

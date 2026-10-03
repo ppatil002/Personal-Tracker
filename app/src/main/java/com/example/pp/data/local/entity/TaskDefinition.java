@@ -7,6 +7,11 @@ import androidx.room.PrimaryKey;
 
 import com.example.pp.core.enums.TaskType;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity(tableName = "task_definitions")
 public class TaskDefinition {
     @PrimaryKey
@@ -61,21 +66,4 @@ public class TaskDefinition {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
-
-    @NonNull
-    public String getTaskId() { return taskId; }
-    @NonNull
-    public TaskType getTaskType() { return taskType; }
-    public boolean isEnabled() { return enabled; }
-    public long getRepeatInterval() { return repeatInterval; }
-    public int getPriority() { return priority; }
-    public boolean isRequiresInternet() { return requiresInternet; }
-    public int getMinimumBattery() { return minimumBattery; }
-    public boolean isForegroundRequired() { return foregroundRequired; }
-    public int getSnoozeIntervalMinutes() { return snoozeIntervalMinutes; }
-    public long getCreatedAt() { return createdAt; }
-    public long getUpdatedAt() { return updatedAt; }
-
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public void setUpdatedAt(long updatedAt) { this.updatedAt = updatedAt; }
 }

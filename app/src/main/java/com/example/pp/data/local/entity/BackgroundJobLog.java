@@ -5,6 +5,11 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity(tableName = "background_job_log")
 public class BackgroundJobLog {
 
@@ -39,21 +44,4 @@ public class BackgroundJobLog {
         this.logMessage = logMessage;
         this.lastUpdatedTimestamp = lastUpdatedTimestamp;
     }
-
-    @NonNull
-    public String getJobId() { return jobId; }
-    @NonNull
-    public String getWorkerName() { return workerName; }
-    @NonNull
-    public String getStatus() { return status; }
-    public String getCurrentStep() { return currentStep; }
-    public String getLogMessage() { return logMessage; }
-    public long getLastUpdatedTimestamp() { return lastUpdatedTimestamp; }
-
-    public void setJobId(@NonNull String jobId) { this.jobId = jobId; }
-    public void setWorkerName(@NonNull String workerName) { this.workerName = workerName; }
-    public void setStatus(@NonNull String status) { this.status = status; }
-    public void setCurrentStep(String currentStep) { this.currentStep = currentStep; }
-    public void setLogMessage(String logMessage) { this.logMessage = logMessage; }
-    public void setLastUpdatedTimestamp(long lastUpdatedTimestamp) { this.lastUpdatedTimestamp = lastUpdatedTimestamp; }
 }

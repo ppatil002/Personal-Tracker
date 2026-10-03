@@ -7,6 +7,11 @@ import androidx.room.ForeignKey;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity(
     tableName = "transactions",
     foreignKeys = @ForeignKey(
@@ -71,31 +76,4 @@ public class TransactionEntity {
         this.paymentMethod = paymentMethod;
         this.transactionType = transactionType;
     }
-
-    @NonNull
-    public String getTransactionId() { return transactionId; }
-    @NonNull
-    public String getCategoryId() { return categoryId; }
-    @NonNull
-    public String getItem() { return item; }
-    public double getAmount() { return amount; }
-    public String getNotes() { return notes; }
-
-    public long getTransactionDate() { return transactionDate; }
-    public long getCreatedTimestamp() { return createdTimestamp; }
-    public long getLastUpdatedTimestamp() { return lastUpdatedTimestamp; }
-    public String getPaymentMethod() { return paymentMethod; }
-    @NonNull
-    public String getTransactionType() { return transactionType; }
-
-    public void setTransactionId(@NonNull String transactionId) { this.transactionId = transactionId; }
-    public void setCategoryId(@NonNull String categoryId) { this.categoryId = categoryId; }
-    public void setItem(@NonNull String item) { this.item = item; }
-    public void setAmount(double amount) { this.amount = amount; }
-    public void setNotes(String notes) { this.notes = notes; }
-    public void setTransactionDate(long transactionDate) { this.transactionDate = transactionDate; }
-    public void setCreatedTimestamp(long createdTimestamp) { this.createdTimestamp = createdTimestamp; }
-    public void setLastUpdatedTimestamp(long lastUpdatedTimestamp) { this.lastUpdatedTimestamp = lastUpdatedTimestamp; }
-    public void setPaymentMethod(String paymentMethod) { this.paymentMethod = paymentMethod; }
-    public void setTransactionType(@NonNull String transactionType) { this.transactionType = transactionType; }
 }

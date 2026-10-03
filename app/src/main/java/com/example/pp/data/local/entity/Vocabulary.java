@@ -2,9 +2,15 @@ package com.example.pp.data.local.entity;
 
 import androidx.room.ColumnInfo;
 import androidx.room.Entity;
+import androidx.room.Ignore;
 import androidx.room.Index;
 import androidx.room.PrimaryKey;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity(tableName = "vocabulary", indices = {@Index(value = {"word"}, unique = true)})
 public class Vocabulary {
 
@@ -27,59 +33,56 @@ public class Vocabulary {
     @ColumnInfo(name = "created_timestamp")
     public long createdTimestamp;
 
+    @ColumnInfo(name = "last_reviewed_timestamp")
+    public long lastReviewedTimestamp;
+
+    @ColumnInfo(name = "correct_attempts")
+    public int correctAttempts;
+
+    @ColumnInfo(name = "incorrect_attempts")
+    public int incorrectAttempts;
+
+    @ColumnInfo(name = "hints_used_count")
+    public int hintsUsedCount;
+
+    @ColumnInfo(name = "half_life")
+    public double halfLife;
+
+    @ColumnInfo(name = "next_revision_timestamp")
+    public long nextRevisionTimestamp;
+
+    public Vocabulary() {
+    }
+
+    @Ignore
     public Vocabulary(String word, String meaning, String example, String partOfSpeech, long createdTimestamp) {
         this.word = word;
         this.meaning = meaning;
         this.example = example;
         this.partOfSpeech = partOfSpeech;
         this.createdTimestamp = createdTimestamp;
+        this.lastReviewedTimestamp = 0;
+        this.correctAttempts = 0;
+        this.incorrectAttempts = 0;
+        this.hintsUsedCount = 0;
+        this.halfLife = 0.0;
+        this.nextRevisionTimestamp = 0;
     }
 
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getWord() {
-        return word;
-    }
-
-    public void setWord(String word) {
+    @Ignore
+    public Vocabulary(String word, String meaning, String example, String partOfSpeech, long createdTimestamp,
+                      long lastReviewedTimestamp, int correctAttempts, int incorrectAttempts,
+                      int hintsUsedCount, double halfLife, long nextRevisionTimestamp) {
         this.word = word;
-    }
-
-    public String getMeaning() {
-        return meaning;
-    }
-
-    public void setMeaning(String meaning) {
         this.meaning = meaning;
-    }
-
-    public String getExample() {
-        return example;
-    }
-
-    public void setExample(String example) {
         this.example = example;
-    }
-
-    public String getPartOfSpeech() {
-        return partOfSpeech;
-    }
-
-    public void setPartOfSpeech(String partOfSpeech) {
         this.partOfSpeech = partOfSpeech;
-    }
-
-    public long getCreatedTimestamp() {
-        return createdTimestamp;
-    }
-
-    public void setCreatedTimestamp(long createdTimestamp) {
         this.createdTimestamp = createdTimestamp;
+        this.lastReviewedTimestamp = lastReviewedTimestamp;
+        this.correctAttempts = correctAttempts;
+        this.incorrectAttempts = incorrectAttempts;
+        this.hintsUsedCount = hintsUsedCount;
+        this.halfLife = halfLife;
+        this.nextRevisionTimestamp = nextRevisionTimestamp;
     }
 }

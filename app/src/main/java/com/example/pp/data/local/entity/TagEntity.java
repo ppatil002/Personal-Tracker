@@ -5,6 +5,11 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity(tableName = "tags")
 public class TagEntity {
 
@@ -30,17 +35,4 @@ public class TagEntity {
         this.name = name;
         this.lastUpdatedTimestamp = lastUpdatedTimestamp;
     }
-
-    @NonNull
-    public String getTagId() { return tagId; }
-    public String getName() { return name; }
-    public long getLastUpdatedTimestamp() { return lastUpdatedTimestamp; }
-    public Long getValidFrom() { return validFrom; }
-    public Long getValidTill() { return validTill; }
-
-    public void setTagId(@NonNull String tagId) { this.tagId = tagId; }
-    public void setName(String name) { this.name = name; }
-    public void setLastUpdatedTimestamp(long lastUpdatedTimestamp) { this.lastUpdatedTimestamp = lastUpdatedTimestamp; }
-    public void setValidFrom(Long validFrom) { this.validFrom = validFrom; }
-    public void setValidTill(Long validTill) { this.validTill = validTill; }
 }

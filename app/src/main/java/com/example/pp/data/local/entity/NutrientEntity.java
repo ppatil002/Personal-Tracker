@@ -5,6 +5,11 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity(tableName = "nutrient_data")
 public class NutrientEntity {
     @PrimaryKey(autoGenerate = true)
@@ -49,34 +54,4 @@ public class NutrientEntity {
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
     }
-
-    public long getNutrientId() { return nutrientId; }
-    public void setNutrientId(long nutrientId) { this.nutrientId = nutrientId; }
-
-    public String getFoodItem() { return foodItem; }
-    public void setFoodItem(String foodItem) { this.foodItem = foodItem; }
-
-    public double getCalories() { return calories; }
-    public void setCalories(double calories) { this.calories = calories; }
-
-    public double getProtein() { return protein; }
-    public void setProtein(double protein) { this.protein = protein; }
-
-    public double getCarbs() { return carbs; }
-    public void setCarbs(double carbs) { this.carbs = carbs; }
-
-    public double getFats() { return fats; }
-    public void setFats(double fats) { this.fats = fats; }
-
-    public double getPerUnit() { return perUnit; }
-    public void setPerUnit(double perUnit) { this.perUnit = perUnit; }
-
-    public String getUnit() { return unit; }
-    public void setUnit(String unit) { this.unit = unit; }
-
-    public long getCreatedDate() { return createdDate; }
-    public void setCreatedDate(long createdDate) { this.createdDate = createdDate; }
-
-    public long getUpdatedDate() { return updatedDate; }
-    public void setUpdatedDate(long updatedDate) { this.updatedDate = updatedDate; }
 }

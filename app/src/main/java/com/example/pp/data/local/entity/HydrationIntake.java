@@ -4,6 +4,11 @@ import androidx.room.ColumnInfo;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 @Entity(tableName = "hydration_intakes")
 public class HydrationIntake {
 
@@ -19,30 +24,6 @@ public class HydrationIntake {
 
     public HydrationIntake(int amountMl, long timestamp) {
         this.amountMl = amountMl;
-        this.timestamp = timestamp;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public int getAmountMl() {
-        return amountMl;
-    }
-
-    public void setAmountMl(int amountMl) {
-        this.amountMl = amountMl;
-    }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public void setTimestamp(long timestamp) {
         this.timestamp = timestamp;
     }
 }
