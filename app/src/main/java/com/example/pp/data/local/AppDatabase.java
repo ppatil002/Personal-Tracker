@@ -25,6 +25,7 @@ import com.example.pp.data.local.dao.TagDao;
 import com.example.pp.data.local.dao.TaskDao;
 import com.example.pp.data.local.dao.TransactionDao;
 import com.example.pp.data.local.dao.VocabularyDao;
+import com.example.pp.data.local.dao.VocabularyRevisionLogDao;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.BodyWeight;
 import com.example.pp.data.local.entity.CategoryEntity;
@@ -44,6 +45,7 @@ import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.data.local.entity.TransactionEntity;
 import com.example.pp.data.local.entity.TransactionTagCrossRef;
 import com.example.pp.data.local.entity.Vocabulary;
+import com.example.pp.data.local.entity.VocabularyRevisionLog;
 import com.example.pp.utils.TaskTypeConverters;
 
 @Database(entities = {
@@ -65,8 +67,9 @@ import com.example.pp.utils.TaskTypeConverters;
     BodyWeight.class,
     GymTracking.class,
     Vocabulary.class,
+    VocabularyRevisionLog.class,
     RegistryEntity.class
-}, version = 27, exportSchema = false)
+}, version = 28, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 
@@ -87,6 +90,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract QuotesDao quotesDao();
     public abstract GymDao gymDao();
     public abstract VocabularyDao vocabularyDao();
+    public abstract VocabularyRevisionLogDao vocabularyRevisionLogDao();
     public abstract RegistryDao registryDao();
 
     public static AppDatabase getInstance(Context context) {

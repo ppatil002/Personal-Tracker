@@ -29,6 +29,9 @@ public interface VocabularyDao {
     @Query("SELECT * FROM vocabulary ORDER BY created_timestamp DESC")
     List<Vocabulary> getAllVocabList();
 
+    @Query("SELECT * FROM vocabulary WHERE id = :id LIMIT 1")
+    Vocabulary getVocabById(long id);
+
     @Query("SELECT * FROM vocabulary WHERE LOWER(word) = LOWER(:word) LIMIT 1")
     Vocabulary getVocabByWord(String word);
 

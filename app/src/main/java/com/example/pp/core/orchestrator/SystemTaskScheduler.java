@@ -9,6 +9,7 @@ import com.example.pp.core.orchestrator.history.HistoryScheduler;
 import com.example.pp.core.orchestrator.quotes.QuoteScheduler;
 import com.example.pp.core.orchestrator.screentime.ScreenTimeScheduler;
 import com.example.pp.core.orchestrator.sleep.SleepScheduler;
+import com.example.pp.core.orchestrator.vocabulary.VocabularyScheduler;
 import com.example.pp.core.orchestrator.water.WaterIntakeScheduler;
 import com.example.pp.data.local.dao.TaskDao;
 import com.example.pp.data.local.entity.TaskDefinition;
@@ -51,6 +52,9 @@ public class SystemTaskScheduler {
             case HISTORY:
                 HistoryScheduler.cancel(context);
                 break;
+            case VOCABULARY_REVISION:
+                VocabularyScheduler.cancel(context);
+                break;
         }
     }
 
@@ -79,6 +83,9 @@ public class SystemTaskScheduler {
                 break;
             case HISTORY:
                 HistoryScheduler.schedule(context, def);
+                break;
+            case VOCABULARY_REVISION:
+                VocabularyScheduler.schedule(context, def);
                 break;
             default:
                 Log.w(TAG, "No native scheduler found for task type: " + def.getTaskType());

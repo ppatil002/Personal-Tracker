@@ -12,7 +12,10 @@ import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.core.enums.TaskType;
 import com.example.pp.core.orchestrator.SystemTaskScheduler;
 import com.example.pp.core.orchestrator.backup.BackupForegroundService;
+import com.example.pp.core.orchestrator.history.HistoryWorker;
+import com.example.pp.core.orchestrator.quotes.QuoteWorker;
 import com.example.pp.core.orchestrator.screentime.ScreenTimeScheduler;
+import com.example.pp.core.orchestrator.vocabulary.VocabularyScheduler;
 import com.example.pp.core.orchestrator.water.WaterNotificationHelper;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
@@ -69,6 +72,40 @@ public class TaskRepository {
         seedSleepTask();
         seedQuotesTask();
         seedHistoryTask();
+        seedVocabularyRevision();
+    }
+
+    private void seedVocabularyRevision() {
+        TaskDefinition vocabDef = new TaskDefinition(
+                "VOCAB_REVISION_TASK_001",
+                TaskType.VOCABULARY_REVISION,
+                true,
+                TimeUnit.HOURS.toMillis(4),
+                1,
+                false,
+                0,
+                false,
+                30,
+                System.currentTimeMillis(),
+                System.currentTimeMillis()
+        );
+
+        TaskState vocabState = new TaskState(
+                "VOCAB_REVISION_TASK_001",
+                TaskStatus.SCHEDULED,
+                0,
+                0,
+                0,
+                0,
+                0,
+                null,
+                false,
+                false,
+                0
+        );
+
+        taskDao.insertDefinition(vocabDef);
+        taskDao.insertState(vocabState);
     }
 
     private void seedQuotesTask() {
@@ -321,15 +358,17 @@ public class TaskRepository {
                 } else if (def.getTaskType() == TaskType.SCREEN_TIME_SYNC) {
                     ScreenTimeScheduler.runNow(context, taskId);
                 } else if (def.getTaskType() == TaskType.QUOTES) {
-                    OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(com.example.pp.core.orchestrator.quotes.QuoteWorker.class)
+                    OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(QuoteWorker.class)
                             .setInputData(new Data.Builder().putString("TASK_ID", taskId).build())
                             .build();
                     WorkManager.getInstance(context).enqueue(work);
                 } else if (def.getTaskType() == TaskType.HISTORY) {
-                    OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(com.example.pp.core.orchestrator.history.HistoryWorker.class)
+                    OneTimeWorkRequest work = new OneTimeWorkRequest.Builder(HistoryWorker.class)
                             .setInputData(new Data.Builder().putString("TASK_ID", taskId).build())
                             .build();
                     WorkManager.getInstance(context).enqueue(work);
+                } else if (def.getTaskType() == TaskType.VOCABULARY_REVISION) {
+                    VocabularyScheduler.triggerNow(context, taskId);
                 }
             }
         });

@@ -183,6 +183,18 @@
             </intent-filter>
         </receiver>
 
+        <receiver
+            android:name=".core.orchestrator.vocabulary.VocabularyReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.pp.ACTION_VOCAB_HINT" />
+                <action android:name="com.example.pp.ACTION_VOCAB_REMEMBER" />
+                <action android:name="com.example.pp.ACTION_VOCAB_FORGET" />
+                <action android:name="com.example.pp.ACTION_VOCAB_RATE" />
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".core.orchestrator.backup.BackupForegroundService"
             android:foregroundServiceType="dataSync"

@@ -6,5 +6,6 @@ public enum TaskType {
     SCREEN_TIME_SYNC,
     SLEEP_REMINDER,
     QUOTES,
-    HISTORY
+    HISTORY,
+    VOCABULARY_REVISION
 }

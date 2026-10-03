@@ -52,6 +52,7 @@ public class DataExportWorker extends BaseFeatureWorker {
                 db.gymDao().getAllWeightsSync(),
                 db.gymDao().getAllGymLogsSync(),
                 db.vocabularyDao().getAllVocabList(),
+                db.vocabularyRevisionLogDao().getAllLogs(),
                 db.registryDao().getAllItemsList()
             );
 
