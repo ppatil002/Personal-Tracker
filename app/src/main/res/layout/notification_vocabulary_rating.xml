@@ -42,8 +42,10 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
         android:layout_marginBottom="8dp"
-        android:text="Select how well you recalled this word:"
-        android:textColor="#94A3B8"
+        android:ellipsize="end"
+        android:maxLines="3"
+        android:text="Meaning: ..."
+        android:textColor="#E2E8F0"
         android:textSize="12sp" />
 
     <!-- Interactive Star Rating Columns -->
@@ -71,8 +73,6 @@
                 android:layout_height="32dp"
                 android:contentDescription="@null"
                 android:src="@drawable/ic_star" />
-
-
 
             <TextView
                 android:layout_width="wrap_content"

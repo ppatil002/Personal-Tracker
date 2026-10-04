@@ -142,17 +142,22 @@ public class VocabularyNotificationHelper {
 
     /**
      * Stage 3: Rating Notification
-     * Prompts the user to rate recall efficiency using a 5-star layout in a custom view.
+     * Prompts the user to rate recall efficiency using a 5-star layout in a custom view,
+     * revealing the actual meaning of the word so the user can revalidate their recall.
      */
     public static void showRatingNotification(Context context, Vocabulary vocab, boolean remembered, boolean hintUsed, String taskId) {
         createNotificationChannel(context);
 
         String title = "Rate Recall: " + vocab.word;
+        String meaningText = (vocab.meaning != null && !vocab.meaning.trim().isEmpty())
+                ? "Meaning: " + vocab.meaning
+                : "Meaning: N/A";
 
         RemoteViews ratingViews = new RemoteViews(context.getPackageName(), R.layout.notification_vocabulary_rating);
         ratingViews.setTextViewText(R.id.tv_rating_title, title);
         ratingViews.setTextViewText(R.id.tv_rating_status, remembered ? "Remembered" : "Forgotten");
         ratingViews.setTextColor(R.id.tv_rating_status, remembered ? 0xFF22C55E : 0xFFF87171);
+        ratingViews.setTextViewText(R.id.tv_rating_subtitle, meaningText);
 
         int[] starIds = new int[]{
                 R.id.star_1, R.id.star_2, R.id.star_3, R.id.star_4, R.id.star_5
@@ -177,7 +182,7 @@ public class VocabularyNotificationHelper {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_book)
                 .setContentTitle(title)
-                .setContentText("Rate how effectively you recalled this word (1-5 stars)")
+                .setContentText(meaningText)
                 .setCustomContentView(ratingViews)
                 .setCustomBigContentView(ratingViews)
                 .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
