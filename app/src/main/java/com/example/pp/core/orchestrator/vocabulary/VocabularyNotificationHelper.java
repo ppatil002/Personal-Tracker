@@ -5,6 +5,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.widget.RemoteViews;
 
 import androidx.core.app.NotificationCompat;
 
@@ -76,20 +77,19 @@ public class VocabularyNotificationHelper {
         forgetIntent.putExtra(EXTRA_HINT_USED, false);
         PendingIntent piForget = PendingIntent.getBroadcast(context, 103, forgetIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_glass) // Reuse available drawable icon
-                .setContentTitle("Vocabulary: " + vocab.word)
+                .setSmallIcon(R.drawable.ic_book)
+                .setContentTitle("Lets Revise")
                 .setContentText("Do you recall the meaning of \"" + vocab.word + "\"?")
                 .setStyle(new NotificationCompat.BigTextStyle()
-                        .bigText("Word: " + vocab.word + "\nDo you recall its meaning?"))
+                        .bigText(vocab.word + "\nDo you recall its meaning?"))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setAutoCancel(true)
                 .setContentIntent(getContentIntent(context))
-                .addAction(0, "Hint", piHint)
-                .addAction(0, "Remember", piRemember)
-                .addAction(0, "Forget", piForget);
+                .addAction(R.drawable.ic_bulb, "Hint", piHint)
+                .addAction(R.drawable.ic_check, "Remember", piRemember)
+                .addAction(R.drawable.ic_delete, "Forget", piForget);
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {
@@ -123,7 +123,7 @@ public class VocabularyNotificationHelper {
                 : "Meaning: " + (vocab.meaning != null ? vocab.meaning : "N/A");
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_glass)
+                .setSmallIcon(R.drawable.ic_book)
                 .setContentTitle("Hint for: " + vocab.word)
                 .setContentText(usageText)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText("💡 " + usageText))
@@ -131,8 +131,8 @@ public class VocabularyNotificationHelper {
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setAutoCancel(true)
                 .setContentIntent(getContentIntent(context))
-                .addAction(0, "Remember", piRemember)
-                .addAction(0, "Forget", piForget);
+                .addAction(R.drawable.ic_check, "Remember", piRemember)
+                .addAction(R.drawable.ic_delete, "Forget", piForget);
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {
@@ -142,51 +142,49 @@ public class VocabularyNotificationHelper {
 
     /**
      * Stage 3: Rating Notification
-     * Prompts the user to quickly rate recall efficiency between 1-2, 3-4, 5 star rating.
+     * Prompts the user to rate recall efficiency using a 5-star layout in a custom view.
      */
     public static void showRatingNotification(Context context, Vocabulary vocab, boolean remembered, boolean hintUsed, String taskId) {
         createNotificationChannel(context);
 
-        Intent rate12 = new Intent(context, VocabularyReceiver.class);
-        rate12.setAction(ACTION_RATE);
-        rate12.putExtra(EXTRA_VOCAB_ID, vocab.id);
-        rate12.putExtra(EXTRA_TASK_ID, taskId);
-        rate12.putExtra(EXTRA_REMEMBERED, remembered);
-        rate12.putExtra(EXTRA_HINT_USED, hintUsed);
-        rate12.putExtra(EXTRA_RATING, 2); // 1-2 rating bucket
-        PendingIntent piRate12 = PendingIntent.getBroadcast(context, 301, rate12, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        String title = "Rate Recall: " + vocab.word;
 
-        Intent rate34 = new Intent(context, VocabularyReceiver.class);
-        rate34.setAction(ACTION_RATE);
-        rate34.putExtra(EXTRA_VOCAB_ID, vocab.id);
-        rate34.putExtra(EXTRA_TASK_ID, taskId);
-        rate34.putExtra(EXTRA_REMEMBERED, remembered);
-        rate34.putExtra(EXTRA_HINT_USED, hintUsed);
-        rate34.putExtra(EXTRA_RATING, 4); // 3-4 rating bucket
-        PendingIntent piRate34 = PendingIntent.getBroadcast(context, 302, rate34, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        RemoteViews ratingViews = new RemoteViews(context.getPackageName(), R.layout.notification_vocabulary_rating);
+        ratingViews.setTextViewText(R.id.tv_rating_title, title);
+        ratingViews.setTextViewText(R.id.tv_rating_status, remembered ? "Remembered" : "Forgotten");
+        ratingViews.setTextColor(R.id.tv_rating_status, remembered ? 0xFF22C55E : 0xFFF87171);
 
-        Intent rate5 = new Intent(context, VocabularyReceiver.class);
-        rate5.setAction(ACTION_RATE);
-        rate5.putExtra(EXTRA_VOCAB_ID, vocab.id);
-        rate5.putExtra(EXTRA_TASK_ID, taskId);
-        rate5.putExtra(EXTRA_REMEMBERED, remembered);
-        rate5.putExtra(EXTRA_HINT_USED, hintUsed);
-        rate5.putExtra(EXTRA_RATING, 5); // 5 rating bucket
-        PendingIntent piRate5 = PendingIntent.getBroadcast(context, 303, rate5, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        int[] starIds = new int[]{
+                R.id.star_1, R.id.star_2, R.id.star_3, R.id.star_4, R.id.star_5
+        };
 
-        String title = "Rate Recall: " + vocab.word + " (" + (remembered ? "Remembered" : "Forgotten") + ")";
+        for (int i = 0; i < starIds.length; i++) {
+            int starRating = i + 1;
+            Intent rateIntent = new Intent(context, VocabularyReceiver.class);
+            rateIntent.setAction(ACTION_RATE);
+            rateIntent.putExtra(EXTRA_VOCAB_ID, vocab.id);
+            rateIntent.putExtra(EXTRA_TASK_ID, taskId);
+            rateIntent.putExtra(EXTRA_REMEMBERED, remembered);
+            rateIntent.putExtra(EXTRA_HINT_USED, hintUsed);
+            rateIntent.putExtra(EXTRA_RATING, starRating);
+
+            PendingIntent piRate = PendingIntent.getBroadcast(
+                    context, 300 + starRating, rateIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+
+            ratingViews.setOnClickPendingIntent(starIds[i], piRate);
+        }
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
-                .setSmallIcon(R.drawable.ic_glass)
+                .setSmallIcon(R.drawable.ic_book)
                 .setContentTitle(title)
-                .setContentText("Rate how effectively you recalled this word:")
+                .setContentText("Rate how effectively you recalled this word (1-5 stars)")
+                .setCustomContentView(ratingViews)
+                .setCustomBigContentView(ratingViews)
+                .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setAutoCancel(true)
-                .setContentIntent(getContentIntent(context))
-                .addAction(0, "1-2 ⭐", piRate12)
-                .addAction(0, "3-4 ⭐", piRate34)
-                .addAction(0, "5 ⭐", piRate5);
+                .setContentIntent(getContentIntent(context));
 
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (manager != null) {
