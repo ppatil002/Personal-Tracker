@@ -45,6 +45,14 @@ public class PreferenceManager {
         return prefs.getBoolean(key, defaultValue);
     }
 
+    public void putFloat(String key, float value) {
+        prefs.edit().putFloat(key, value).apply();
+    }
+
+    public float getFloat(String key, float defaultValue) {
+        return prefs.getFloat(key, defaultValue);
+    }
+
     public void remove(String key) {
         prefs.edit().remove(key).apply();
     }

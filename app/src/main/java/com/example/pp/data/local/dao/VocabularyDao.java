@@ -38,6 +38,12 @@ public interface VocabularyDao {
     @Query("SELECT * FROM vocabulary ORDER BY created_timestamp DESC LIMIT 1")
     Vocabulary getLastAddedVocab();
 
+    @Query("SELECT * FROM vocabulary WHERE next_revision_timestamp <= :currentTimestamp ORDER BY next_revision_timestamp ASC LIMIT :limit")
+    List<Vocabulary> getOverdueVocabulary(long currentTimestamp, int limit);
+
+    @Query("SELECT * FROM vocabulary ORDER BY last_reviewed_timestamp ASC LIMIT :limit")
+    List<Vocabulary> getOldestReviewedVocabulary(int limit);
+
     @Query("SELECT COUNT(*) FROM vocabulary")
     int getCount();
 

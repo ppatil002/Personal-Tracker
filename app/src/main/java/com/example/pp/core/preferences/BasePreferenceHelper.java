@@ -38,6 +38,14 @@ public abstract class BasePreferenceHelper {
         return preferenceManager.getString(key, defaultValue);
     }
 
+    protected void putFloat(String key, float value) {
+        preferenceManager.putFloat(key, value);
+    }
+
+    protected float getFloat(String key, float defaultValue) {
+        return preferenceManager.getFloat(key, defaultValue);
+    }
+
     protected void clear() {
         preferenceManager.clear();
     }
