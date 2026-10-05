@@ -12,8 +12,8 @@ import com.example.pp.PPApplication;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.core.enums.TaskType;
+import com.example.pp.core.ml.HalfLifeEngine;
 import com.example.pp.core.task.AppExecutors;
-import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
@@ -147,29 +147,14 @@ public class VocabularyScheduler {
     }
 
     /**
-     * Mock function to select the next word to revise.
-     * Plug-and-play structure: In the next step, this function will be updated
-     * with the Half-Life Regression model to choose the optimal word.
+     * Uses HalfLifeEngine to fetch the highest priority overdue vocabulary item for revision.
      */
     public static Vocabulary getNextWordToRevise(Context context) {
-        AppDatabase db = AppDatabase.getInstance(context);
-        List<Vocabulary> list = db.vocabularyDao().getAllVocabList();
-        if (list != null && !list.isEmpty()) {
-            // Find word with lowest/oldest nextRevisionTimestamp or longest time since last review
-            Vocabulary selected = list.get(0);
-            for (Vocabulary v : list) {
-                if (v.lastReviewedTimestamp < selected.lastReviewedTimestamp) {
-                    selected = v;
-                }
-            }
-            return selected;
+        List<Vocabulary> dueList = HalfLifeEngine.getInstance(context).getDueWordsForNotification(1);
+        if (dueList != null && !dueList.isEmpty()) {
+            return dueList.get(0);
         }
-
-        // Mock fallback if DB is empty
-        Vocabulary mockVocab = new Vocabulary("ephemeral", "lasting for a very short time",
-                "Fame in the world of pop music can be ephemeral.", "Adjective", System.currentTimeMillis());
-        mockVocab.id = 1;
-        return mockVocab;
+        return null;
     }
 
     private static void updateTaskState(Context context, String taskId, long nextRunTime) {

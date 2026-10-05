@@ -14,8 +14,8 @@ import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.data.local.entity.Vocabulary;
-import com.example.pp.data.local.entity.VocabularyRevisionLog;
 import com.example.pp.data.repository.TaskRepository;
+import com.example.pp.data.repository.VocabularyRepository;
 
 public class VocabularyReceiver extends BroadcastReceiver {
     private static final String TAG = "VocabularyReceiver";
@@ -74,44 +74,16 @@ public class VocabularyReceiver extends BroadcastReceiver {
                 int rating = intent.getIntExtra(VocabularyNotificationHelper.EXTRA_RATING, 3);
 
                 if (vocab != null) {
-                    long now = System.currentTimeMillis();
-                    double halfLifeBefore = vocab.halfLife;
-                    double halfLifeAfter = halfLifeBefore; // Half-Life Regression model update
+                    // Process review via VocabularyRepository (updates half-life & saves to DB)
+                    new VocabularyRepository(context).processReview(vocab.id, rating, hintUsed, 0);
 
-                    // 1. Insert append-only revision log
-                    VocabularyRevisionLog revisionLog = new VocabularyRevisionLog(
-                            vocab.id,
-                            now,
-                            remembered ? "REMEMBER" : "FORGET",
-                            hintUsed,
-                            rating,
-                            halfLifeBefore,
-                            halfLifeAfter
-                    );
-                    db.vocabularyRevisionLogDao().insert(revisionLog);
-
-                    // 2. Update vocabulary record
-                    vocab.lastReviewedTimestamp = now;
-                    if (remembered) {
-                        vocab.correctAttempts++;
-                    } else {
-                        vocab.incorrectAttempts++;
-                    }
-                    if (hintUsed) {
-                        vocab.hintsUsedCount++;
-                    }
-                    vocab.nextRevisionTimestamp = VocabularyScheduler.calculateNextTriggerTime(now);
-
-                    db.vocabularyDao().insert(vocab);
-                    Log.i(TAG, "Recorded revision log and updated vocabulary for word: " + vocab.word);
-
-                    // 3. Log SUCCESS operation and update task state
+                    // Log SUCCESS operation and update task state
                     VocabularyScheduler.logOperation(context, "SUCCESS", "Vocab Revise",
                             "Feedback recorded for word: " + vocab.word + " (Rating: " + rating + "★, " + (remembered ? "Remembered" : "Forgotten") + ")");
                     updateTaskSuccessState(context, taskId);
                 }
 
-                // 4. Dismiss notification and schedule next reminder
+                // Dismiss notification and schedule next reminder
                 VocabularyNotificationHelper.cancelNotification(context);
                 VocabularyScheduler.schedule(context, null);
             }
