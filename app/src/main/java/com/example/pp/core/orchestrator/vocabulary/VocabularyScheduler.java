@@ -12,18 +12,17 @@ import com.example.pp.PPApplication;
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.enums.TaskStatus;
 import com.example.pp.core.enums.TaskType;
-import com.example.pp.core.ml.HalfLifeEngine;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.entity.BackgroundJobLog;
 import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.data.local.entity.Vocabulary;
 import com.example.pp.data.repository.TaskRepository;
+import com.example.pp.data.repository.VocabularyRepository;
 import com.example.pp.utils.DateUtils;
 
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 
 public class VocabularyScheduler {
     private static final String TAG = "VocabularyScheduler";
@@ -147,14 +146,10 @@ public class VocabularyScheduler {
     }
 
     /**
-     * Uses HalfLifeEngine to fetch the highest priority overdue vocabulary item for revision.
+     * Uses VocabularyRepository to fetch the highest priority overdue vocabulary item for revision.
      */
     public static Vocabulary getNextWordToRevise(Context context) {
-        List<Vocabulary> dueList = HalfLifeEngine.getInstance(context).getDueWordsForNotification(1);
-        if (dueList != null && !dueList.isEmpty()) {
-            return dueList.get(0);
-        }
-        return null;
+        return new VocabularyRepository(context).getNextWordToRevise();
     }
 
     private static void updateTaskState(Context context, String taskId, long nextRunTime) {

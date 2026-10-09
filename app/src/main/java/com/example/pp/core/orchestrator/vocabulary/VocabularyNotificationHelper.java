@@ -120,7 +120,7 @@ public class VocabularyNotificationHelper {
 
         String usageText = (vocab.example != null && !vocab.example.trim().isEmpty())
                 ? "Usage: " + vocab.example
-                : "Meaning: " + (vocab.meaning != null ? vocab.meaning : "N/A");
+                : "Usage: N/A";
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_book)

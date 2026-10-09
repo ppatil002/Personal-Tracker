@@ -4,28 +4,39 @@ import android.content.Context;
 
 import com.example.pp.core.constants.AppConstants;
 import com.example.pp.core.ml.HalfLifeEngine;
+import com.example.pp.core.preferences.HalfLifeSharedPreference;
 import com.example.pp.core.task.AppExecutors;
 import com.example.pp.data.local.AppDatabase;
 import com.example.pp.data.local.dao.VocabularyDao;
+import com.example.pp.data.local.dao.VocabularyRevisionLogDao;
 import com.example.pp.data.local.entity.Vocabulary;
+import com.example.pp.data.local.entity.VocabularyRevisionLog;
+import com.example.pp.domain.model.VocabularyReviewResult;
 
 import java.util.List;
 
 public class VocabularyRepository {
     private final Context context;
     private final VocabularyDao vocabularyDao;
+    private final VocabularyRevisionLogDao vocabularyRevisionLogDao;
+    private final HalfLifeSharedPreference halfLifePrefs;
+    private final HalfLifeEngine halfLifeEngine;
     private final AppExecutors executors;
 
     public VocabularyRepository(Context context) {
         this.context = context.getApplicationContext();
         this.vocabularyDao = AppDatabase.getInstance(this.context).vocabularyDao();
+        this.vocabularyRevisionLogDao = AppDatabase.getInstance(this.context).vocabularyRevisionLogDao();
+        this.halfLifePrefs = new HalfLifeSharedPreference(this.context);
+        this.halfLifeEngine = HalfLifeEngine.getInstance();
         this.executors = AppExecutors.getInstance();
     }
 
     public void addVocabulary(String word, String meaning, String example, String partOfSpeech, long timestamp) {
         executors.diskIO().execute(() -> {
             Vocabulary vocab = new Vocabulary(word, meaning, example, partOfSpeech, timestamp);
-            HalfLifeEngine.getInstance(context).processIngestion(vocab);
+            double[] weights = halfLifePrefs.getWeights();
+            halfLifeEngine.processIngestion(vocab, weights);
             vocabularyDao.insert(vocab);
         });
     }
@@ -51,7 +62,8 @@ public class VocabularyRepository {
             Vocabulary existing = vocabularyDao.getVocabByWord(word);
             if (existing == null) {
                 Vocabulary vocab = new Vocabulary(word, "", "", "", System.currentTimeMillis());
-                HalfLifeEngine.getInstance(context).processIngestion(vocab);
+                double[] weights = halfLifePrefs.getWeights();
+                halfLifeEngine.processIngestion(vocab, weights);
                 vocabularyDao.insert(vocab);
                 executors.mainThread().execute(() -> callback.onResult(AppConstants.VOCABULARY_STATUS_ADDED, word));
             } else {
@@ -112,9 +124,16 @@ public class VocabularyRepository {
      */
     public void processReview(long vocabularyId, int userRating, boolean hintUsed, long responseTimeMs) {
         executors.diskIO().execute(() -> {
-            Vocabulary vocab = HalfLifeEngine.getInstance(context).processReview(vocabularyId, userRating, hintUsed, responseTimeMs);
-            if (vocab != null) {
-                vocabularyDao.insert(vocab);
+            Vocabulary vocab = vocabularyDao.getVocabById(vocabularyId);
+            if (vocab == null) return;
+
+            double[] weights = halfLifePrefs.getWeights();
+            VocabularyReviewResult result = halfLifeEngine.processReview(vocab, userRating, hintUsed, weights);
+            if (result != null) {
+                vocabularyDao.insert(result.getVocabulary());
+                if (result.getRevisionLog() != null) {
+                    vocabularyRevisionLogDao.insert(result.getRevisionLog());
+                }
             }
         });
     }
@@ -124,14 +143,35 @@ public class VocabularyRepository {
      */
     public void rebuildAllHalfLife(Runnable onComplete) {
         executors.diskIO().execute(() -> {
-            List<Vocabulary> updatedList = HalfLifeEngine.getInstance(context).rebuildAllHalfLife();
-            if (updatedList != null && !updatedList.isEmpty()) {
-                vocabularyDao.insertBatch(updatedList);
+            List<Vocabulary> allVocab = vocabularyDao.getAllVocabList();
+            if (allVocab != null && !allVocab.isEmpty()) {
+                double[] weights = halfLifePrefs.getWeights();
+                for (Vocabulary vocab : allVocab) {
+                    List<VocabularyRevisionLog> logs = vocabularyRevisionLogDao.getLogsForVocabulary(vocab.id);
+                    halfLifeEngine.recalculateWordHalfLife(vocab, weights, logs);
+                }
+                vocabularyDao.insertBatch(allVocab);
             }
             if (onComplete != null) {
                 executors.mainThread().execute(onComplete);
             }
         });
+    }
+
+    /**
+     * Fetches overdue vocabulary items for notification scheduling.
+     * Falls back to least recently reviewed items if no items are currently overdue.
+     */
+    public Vocabulary getNextWordToRevise() {
+        long now = System.currentTimeMillis();
+        List<Vocabulary> dueWords = vocabularyDao.getOverdueVocabulary(now, 1);
+        if (dueWords == null || dueWords.isEmpty()) {
+            dueWords = vocabularyDao.getOldestReviewedVocabulary(1);
+        }
+        if (dueWords != null && !dueWords.isEmpty()) {
+            return dueWords.get(0);
+        }
+        return null;
     }
 
     public interface LoadCallback {
