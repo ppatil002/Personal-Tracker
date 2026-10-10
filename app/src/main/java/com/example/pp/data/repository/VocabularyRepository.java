@@ -139,10 +139,15 @@ public class VocabularyRepository {
     }
 
     /**
-     * Rebuilds/recalculates half-life and due dates for all words in vocabulary and saves them to DB.
+     * One-time cleanup activity: Resets corrupted half-life, attempt count, and timestamp fields
+     * for all entries in the vocabulary table to zero, then rebuilds them from historical revision logs.
      */
-    public void rebuildAllHalfLife(Runnable onComplete) {
+    public void resetAndRebuildAllVocabularyStats() {
         executors.diskIO().execute(() -> {
+            // 1. Reset all stats fields across the entire table
+            vocabularyDao.resetAllVocabularyStats();
+
+            // 2. Rebuild stats & half-life from logs to keep table in sync
             List<Vocabulary> allVocab = vocabularyDao.getAllVocabList();
             if (allVocab != null && !allVocab.isEmpty()) {
                 double[] weights = halfLifePrefs.getWeights();
@@ -151,9 +156,6 @@ public class VocabularyRepository {
                     halfLifeEngine.recalculateWordHalfLife(vocab, weights, logs);
                 }
                 vocabularyDao.insertBatch(allVocab);
-            }
-            if (onComplete != null) {
-                executors.mainThread().execute(onComplete);
             }
         });
     }

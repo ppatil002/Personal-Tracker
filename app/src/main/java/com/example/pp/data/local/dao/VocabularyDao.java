@@ -47,6 +47,9 @@ public interface VocabularyDao {
     @Query("SELECT COUNT(*) FROM vocabulary")
     int getCount();
 
+    @Query("UPDATE vocabulary SET last_reviewed_timestamp = 0, correct_attempts = 0, incorrect_attempts = 0, hints_used_count = 0, half_life = 0.0, next_revision_timestamp = 0")
+    void resetAllVocabularyStats();
+
     @Transaction
     default SyncStats upsertAll(List<Vocabulary> items) {
         SyncStats stats = new SyncStats("Vocabulary");

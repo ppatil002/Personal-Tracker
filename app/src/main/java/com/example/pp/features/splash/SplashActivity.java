@@ -45,6 +45,8 @@ public class SplashActivity extends AppCompatActivity {
         ((PPApplication) getApplication()).getSleepRepository().seedSleep();
         ((PPApplication) getApplication()).getTaskRepository().seedTasksIfEmpty();
 //        ((PPApplication) getApplication()).getNutrientRepository().seedNutrientData();
+//        Resets the Vocabulary with clean half life to initial stage
+//        ((PPApplication) getApplication()) .getVocabularyRepository().resetAndRebuildAllVocabularyStats();
 
         // Ensure all seeding tasks (which run on diskIO) are completed before proceeding
         AppExecutors.getInstance().diskIO().execute(() -> {
