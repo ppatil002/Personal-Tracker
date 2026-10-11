@@ -2,6 +2,8 @@ package com.example.pp.core.llm;
 
 import static com.example.pp.core.constants.AppConstants.GEMINI_MODEL_VOCABULARY;
 
+import android.util.Log;
+
 import com.example.pp.core.llm.prompts.PromptTemplateEngine;
 import com.example.pp.core.llm.prompts.VocabularyPrompts;
 import com.example.pp.data.local.entity.Vocabulary;
@@ -22,6 +24,7 @@ import java.util.Map;
  */
 public class VocabularyLlmManager {
 
+    private static final String TAG = "VocabularyLLM";
     private static VocabularyLlmManager instance;
     private final LlmClient llmClient;
     private final Gson gson;
@@ -54,25 +57,6 @@ public class VocabularyLlmManager {
     }
 
     /**
-     * Processes word details and returns a parsed VocabularyLlmResponse domain.
-     */
-    public VocabularyLlmResponse processWordIngestion(String word, String pos, String meaning, String usage) throws IOException {
-        try {
-            Map<String, Object> context = new HashMap<>();
-            context.put("word", word);
-            context.put("pos", pos);
-            context.put("meaning", meaning);
-            context.put("usage", usage);
-
-            String prompt = PromptTemplateEngine.render(VocabularyPrompts.VOCABULARY_ENRICHMENT_PROMPT, context);
-            String rawResponse = llmClient.sendPromptSync(prompt, GEMINI_MODEL_VOCABULARY);
-            return LlmUtils.parseStructuredResponse(rawResponse, VocabularyLlmResponse.class, gson);
-        } catch (Exception e) {
-            throw new IOException("Vocabulary LLM processing failed: " + e.getMessage(), e);
-        }
-    }
-
-    /**
      * Enriches an existing Vocabulary entity in-place with missing linguistic information.
      */
     public Vocabulary autoCompleteVocabulary(Vocabulary vocabulary) throws IOException {
@@ -84,12 +68,7 @@ public class VocabularyLlmManager {
             return vocabulary;
         }
 
-        VocabularyLlmResponse response = processWordIngestion(
-                vocabulary.word,
-                vocabulary.partOfSpeech,
-                vocabulary.meaning,
-                vocabulary.example
-        );
+        VocabularyLlmResponse response = enrichWordFromLLM(vocabulary);
 
         if (response != null) {
             if ((vocabulary.partOfSpeech == null || vocabulary.partOfSpeech.trim().isEmpty())
@@ -111,7 +90,26 @@ public class VocabularyLlmManager {
         return vocabulary;
     }
 
-    public static String sanitizeJsonResponse(String rawResponse) {
-        return LlmUtils.sanitizeJsonResponse(rawResponse);
+    /**
+     * Enriches word details using LLM and returns a parsed VocabularyLlmResponse domain.
+     */
+    public VocabularyLlmResponse enrichWordFromLLM(Vocabulary vocabulary) throws IOException {
+        try {
+            Map<String, Object> context = new HashMap<>();
+            context.put("word", vocabulary.getWord());
+            context.put("pos", vocabulary.getPartOfSpeech());
+            context.put("meaning", vocabulary.getMeaning());
+            context.put("usage", vocabulary.getExample());
+
+            String prompt = PromptTemplateEngine.render(VocabularyPrompts.VOCABULARY_ENRICHMENT_PROMPT, context);
+            String rawResponse = llmClient.sendPromptSync(prompt, GEMINI_MODEL_VOCABULARY);
+            VocabularyLlmResponse response = LlmUtils.parseStructuredResponse(rawResponse, VocabularyLlmResponse.class, gson);
+            Log.d(TAG, "Parsed response for word: '" + vocabulary.getWord() + "' - pos: '" + response.getPartOfSpeech() + "', meaning: '" + response.getMeaning() + "', example: '" + response.getExample() + "'");
+            return response;
+        } catch (Exception e) {
+            Log.e(TAG, "enrichWordFromLLM FAILED for word: '" + vocabulary.getWord() + "'", e);
+            throw new IOException("Vocabulary LLM processing failed: " + e.getMessage(), e);
+        }
     }
+
 }

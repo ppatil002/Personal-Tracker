@@ -74,6 +74,6 @@ public class AppConstants {
     public static final int VOCABULARY_STATUS_WORD_LENGTH_EXCEED = 8;
 
     // Gemini AI Model Names
-    public static final String GEMINI_MODEL_DEFAULT = "gemini-2.5-flash";
-    public static final String GEMINI_MODEL_VOCABULARY = "gemini-2.5-flash";
+    public static final String GEMINI_MODEL_DEFAULT = "gemini-3.8-flash";
+    public static final String GEMINI_MODEL_VOCABULARY = "gemini-3.8-flash";
 }

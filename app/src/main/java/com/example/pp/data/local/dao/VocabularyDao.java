@@ -44,6 +44,9 @@ public interface VocabularyDao {
     @Query("SELECT * FROM vocabulary ORDER BY last_reviewed_timestamp ASC LIMIT :limit")
     List<Vocabulary> getOldestReviewedVocabulary(int limit);
 
+    @Query("SELECT * FROM vocabulary WHERE (meaning IS NULL OR TRIM(meaning) = '') OR (example IS NULL OR TRIM(example) = '') OR (part_of_speach IS NULL OR TRIM(part_of_speach) = '') ORDER BY created_timestamp DESC LIMIT :limit")
+    List<Vocabulary> getIncompleteVocabularies(int limit);
+
     @Query("SELECT COUNT(*) FROM vocabulary")
     int getCount();
 
