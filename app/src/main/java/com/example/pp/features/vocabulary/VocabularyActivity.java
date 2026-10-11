@@ -1,5 +1,6 @@
 package com.example.pp.features.vocabulary;
 
+import android.app.ProgressDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -16,6 +17,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import com.example.pp.domain.model.VocabularyCompletionState;
 
 import com.example.pp.R;
 import com.example.pp.data.local.entity.Vocabulary;
@@ -28,6 +30,7 @@ public class VocabularyActivity extends AppCompatActivity {
     private VocabularyViewModel viewModel;
     private VocabularyAdapter adapter;
     private TextView tvAnalytics;
+    private ProgressDialog progressDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,7 +38,7 @@ public class VocabularyActivity extends AppCompatActivity {
         setContentView(R.layout.activity_vocabulary);
 
         viewModel = new ViewModelProvider(this).get(VocabularyViewModel.class);
-        
+
         initViews();
         observeViewModel();
     }
@@ -43,7 +46,7 @@ public class VocabularyActivity extends AppCompatActivity {
     private void initViews() {
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
         tvAnalytics = findViewById(R.id.tvAnalytics);
-        
+
         RecyclerView rvVocabulary = findViewById(R.id.rvVocabulary);
         rvVocabulary.setLayoutManager(new LinearLayoutManager(this));
         adapter = new VocabularyAdapter();
@@ -69,6 +72,7 @@ public class VocabularyActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.fabAddVocab).setOnClickListener(v -> showAddVocabDialog(null));
+        findViewById(R.id.btnAIEnrich).setOnClickListener(v -> viewModel.enrichIncompleteVocabularies());
     }
 
     private void observeViewModel() {
@@ -76,9 +80,48 @@ public class VocabularyActivity extends AppCompatActivity {
             adapter.setItems(items);
         });
 
-        viewModel.getAnalyticsState().observe(this, state -> {
+        viewModel.getVocabularyAnalyticsState().observe(this, state -> {
             if (state == null) return;
             tvAnalytics.setText(String.format(Locale.getDefault(), "Words: %d/%d", state.loadedWords, state.totalWords));
+        });
+
+        viewModel.getVocabularyEnrichmentProgress().observe(this, progress -> {
+            if (progress == null) return;
+
+            if (progress.isCompleting) {
+                if (progressDialog == null) {
+                    progressDialog = new ProgressDialog(this);
+                    progressDialog.setCancelable(false);
+                    progressDialog.setTitle("Enriching Vocabulary");
+                    progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+                    progressDialog.show();
+                }
+
+                int percentage = progress.totalWords > 0 ? (progress.currentWord * 100) / progress.totalWords : 0;
+                progressDialog.setMessage("Processing: " + progress.currentWordName);
+                progressDialog.setProgress(percentage);
+                progressDialog.setMax(100);
+            } else {
+                // Enrichment completed
+                if (progressDialog != null) {
+                    progressDialog.dismiss();
+                    progressDialog = null;
+                }
+
+                // Show completion summary
+                if (progress.successCount > 0 || progress.failureCount > 0) {
+                    String message = "Enrichment completed:\n" +
+                            "✓ Success: " + progress.successCount + "\n" +
+                            "✗ Failed: " + progress.failureCount;
+
+                    if (!progress.failedWords.isEmpty()) {
+                        message += "\n\nFailed words:\n" + String.join(", ", progress.failedWords);
+                    }
+                    Toast.makeText(this, message, Toast.LENGTH_LONG).show();
+                } else if (progress.totalWords == 0) {
+                    Toast.makeText(this, "All Words are Already Updated", Toast.LENGTH_LONG).show();
+                }
+            }
         });
     }
 
@@ -164,6 +207,14 @@ public class VocabularyActivity extends AppCompatActivity {
         InputMethodManager imm = (InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
         if (imm != null) {
             imm.hideSoftInputFromWindow(view.getWindowToken(), 0);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (progressDialog != null && progressDialog.isShowing()) {
+            progressDialog.dismiss();
         }
     }
 }

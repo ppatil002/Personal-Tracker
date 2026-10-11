@@ -29,6 +29,11 @@ public interface BatchWordCompletionProgressCallback {
     void onComplete(int successCount, int failureCount, List<String> failedWords);
 
     /**
+     * Called when there are no words to process.
+     */
+    void onEmpty();
+
+    /**`
      * Called if a critical error occurs during batch processing.
      * @param throwable The error that occurred
      */

@@ -44,4 +44,8 @@ public class VocabularyCompletionState {
     public static VocabularyCompletionState completed(int successCount, int failureCount, List<String> failedWords) {
         return new VocabularyCompletionState(false, 0, 0, null, successCount, failureCount, failedWords);
     }
+
+    public static VocabularyCompletionState onEmpty(){
+        return new VocabularyCompletionState(false, 0, 0, "Cancel...", 0, 0, new ArrayList<>());
+    }
 }

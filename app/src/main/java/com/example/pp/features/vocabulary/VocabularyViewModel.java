@@ -9,7 +9,10 @@ import androidx.lifecycle.MutableLiveData;
 
 import com.example.pp.PPApplication;
 import com.example.pp.data.local.entity.Vocabulary;
-import com.example.pp.data.repository.VocabularyRepository;
+import com.example.pp.data.repository.vocabulary.VocabularyRepository;
+import com.example.pp.data.repository.vocabulary.callback.BatchWordCompletionProgressCallback;
+import com.example.pp.domain.model.VocabularyAnalyticsState;
+import com.example.pp.domain.model.VocabularyCompletionState;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -18,21 +21,13 @@ import java.util.List;
 import java.util.Locale;
 
 public class VocabularyViewModel extends AndroidViewModel {
-
-    public static class AnalyticsState {
-        public final int loadedWords;
-        public final int totalWords;
-
-        public AnalyticsState(int loadedWords, int totalWords) {
-            this.loadedWords = loadedWords;
-            this.totalWords = totalWords;
-        }
-    }
+    private static final int MANUAL_VOCABULARY_BATCH_SIZE = 50;
 
     private final VocabularyRepository repository;
     private final MutableLiveData<List<VocabularyAdapter.ListItem>> vocabItems = new MutableLiveData<>(new ArrayList<>());
-    private final MutableLiveData<AnalyticsState> analyticsState = new MutableLiveData<>();
+    private final MutableLiveData<VocabularyAnalyticsState> vocabularyAnalyticsState = new MutableLiveData<>();
     private final MutableLiveData<Boolean> isLoading = new MutableLiveData<>(false);
+    private final MutableLiveData<VocabularyCompletionState> vocabularyEnrichmentProgress = new MutableLiveData<>(VocabularyCompletionState.idle());
 
     private int currentOffset = 0;
     private final int PAGE_SIZE = 20;
@@ -50,23 +45,27 @@ public class VocabularyViewModel extends AndroidViewModel {
         return vocabItems;
     }
 
-    public LiveData<AnalyticsState> getAnalyticsState() {
-        return analyticsState;
+    public LiveData<VocabularyAnalyticsState> getVocabularyAnalyticsState() {
+        return vocabularyAnalyticsState;
     }
 
     public LiveData<Boolean> getIsLoading() {
         return isLoading;
     }
 
+    public LiveData<VocabularyCompletionState> getVocabularyEnrichmentProgress() {
+        return vocabularyEnrichmentProgress;
+    }
+
     public void loadNextPage() {
         if (Boolean.TRUE.equals(isLoading.getValue()) || isLastPage) return;
 
         isLoading.setValue(true);
-        repository.getVocabChunk(PAGE_SIZE, currentOffset, (vocabList, totalWords) -> {
+        repository.loadVocabularyChunk(PAGE_SIZE, currentOffset, (vocabList, totalWords) -> {
             if (vocabList == null || vocabList.isEmpty()) {
                 isLastPage = true;
                 isLoading.setValue(false);
-                analyticsState.setValue(new AnalyticsState(totalLoadedWordsCount, totalWords));
+                vocabularyAnalyticsState.setValue(new VocabularyAnalyticsState(totalLoadedWordsCount, totalWords));
                 return;
             }
 
@@ -82,7 +81,7 @@ public class VocabularyViewModel extends AndroidViewModel {
                 isLastPage = true;
             }
 
-            analyticsState.setValue(new AnalyticsState(totalLoadedWordsCount, totalWords));
+            vocabularyAnalyticsState.setValue(new VocabularyAnalyticsState(totalLoadedWordsCount, totalWords));
             isLoading.setValue(false);
         });
     }
@@ -120,6 +119,35 @@ public class VocabularyViewModel extends AndroidViewModel {
     public void deleteVocabulary(Vocabulary vocabulary) {
         repository.deleteVocabulary(vocabulary);
         refresh();
+    }
+
+    public void enrichIncompleteVocabularies() {
+        vocabularyEnrichmentProgress.setValue(VocabularyCompletionState.started(MANUAL_VOCABULARY_BATCH_SIZE));
+
+        repository.completeIncompleteVocabulariesWithProgress(MANUAL_VOCABULARY_BATCH_SIZE,
+            new BatchWordCompletionProgressCallback() {
+                @Override
+                public void onProgress(int current, int total, String wordName, int successCount, int failureCount, List<String> failedWords) {
+                    vocabularyEnrichmentProgress.setValue(VocabularyCompletionState.processing(current, total, wordName, successCount, failureCount, failedWords));
+                }
+
+                @Override
+                public void onComplete(int successCount, int failureCount, List<String> failedWords) {
+                    vocabularyEnrichmentProgress.setValue(VocabularyCompletionState.completed(successCount, failureCount, failedWords));
+                    refresh();
+                }
+
+                @Override
+                public void onError(Throwable throwable) {
+                    vocabularyEnrichmentProgress.setValue(VocabularyCompletionState.completed(0, 0, new ArrayList<>()));
+                }
+
+                @Override
+                public void onEmpty() {
+                    vocabularyEnrichmentProgress.setValue(VocabularyCompletionState.onEmpty());
+                }
+
+            });
     }
 
     public void refresh() {

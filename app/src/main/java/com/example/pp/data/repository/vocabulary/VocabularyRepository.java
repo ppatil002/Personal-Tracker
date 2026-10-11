@@ -230,17 +230,13 @@ public class VocabularyRepository {
      * @param callback Callback for progress updates and final result
      */
     public void completeIncompleteVocabulariesWithProgress(int limit, BatchWordCompletionProgressCallback callback) {
-        Log.i(TAG, "completeIncompleteVocabulariesWithProgress START - limit: " + limit);
         executors.diskIO().execute(() -> {
             try {
-                Log.i(TAG, "Fetching incomplete vocabularies from database");
                 List<Vocabulary> incompleteList = vocabularyDao.getIncompleteVocabularies(limit);
-                Log.i(TAG, "Found " + (incompleteList != null ? incompleteList.size() : 0) + " incomplete vocabularies");
 
                 if (incompleteList == null || incompleteList.isEmpty()) {
-                    Log.i(TAG, "No incomplete vocabularies found, returning complete with 0 completed");
                     if (callback != null) {
-                        executors.mainThread().execute(() -> callback.onComplete(0, 0, new ArrayList<>()));
+                        executors.mainThread().execute(() -> callback.onEmpty());
                     }
                     return;
                 }
@@ -250,7 +246,6 @@ public class VocabularyRepository {
                 int failureCount = 0;
                 List<String> failedWords = new ArrayList<>();
                 int totalWords = incompleteList.size();
-
                 Log.i(TAG, "Starting completion for " + totalWords + " words");
                 if (callback != null) {
                     executors.mainThread().execute(() -> callback.onProgress(0, totalWords, "Starting...", 0, 0, new ArrayList<>()));
@@ -258,16 +253,11 @@ public class VocabularyRepository {
 
                 for (int i = 0; i < incompleteList.size(); i++) {
                     Vocabulary vocab = incompleteList.get(i);
-                    Log.i(TAG, "Processing word " + (i + 1) + "/" + totalWords + ": '" + vocab.word + "'");
                     try {
                         if (llmManager.hasMissingFields(vocab)) {
-                            Log.i(TAG, "Word '" + vocab.word + "' has missing fields, calling LLM");
                             llmManager.autoCompleteVocabulary(vocab);
                             vocabularyDao.insert(vocab);
                             completedCount++;
-                            Log.i(TAG, "Successfully completed word '" + vocab.word + "' (" + completedCount + "/" + totalWords + ")");
-                        } else {
-                            Log.i(TAG, "Word '" + vocab.word + "' has no missing fields, skipping");
                         }
 
                         // Report progress after each word
@@ -294,7 +284,7 @@ public class VocabularyRepository {
                     }
                 }
 
-                Log.i(TAG, "Batch completion completed. Completed " + completedCount + "/" + totalWords + " words, Failed: " + failureCount);
+                Log.d(TAG, "Batch completion completed. Completed " + completedCount + "/" + totalWords + " words, Failed: " + failureCount);
                 final int finalSuccessCount = completedCount;
                 final int finalFailureCount = failureCount;
                 final List<String> finalFailedWords = new ArrayList<>(failedWords);
