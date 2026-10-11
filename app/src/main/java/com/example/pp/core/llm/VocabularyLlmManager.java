@@ -73,22 +73,6 @@ public class VocabularyLlmManager {
     }
 
     /**
-     * Looks up full linguistic information for a given word string.
-     */
-    public VocabularyLlmResponse lookupWord(String word) throws IOException {
-        try {
-            Map<String, Object> context = new HashMap<>();
-            context.put("word", word);
-
-            String prompt = PromptTemplateEngine.render(VocabularyPrompts.VOCABULARY_LOOKUP_PROMPT, context);
-            String rawResponse = llmClient.sendPromptSync(prompt, GEMINI_MODEL_VOCABULARY);
-            return LlmUtils.parseStructuredResponse(rawResponse, VocabularyLlmResponse.class, gson);
-        } catch (Exception e) {
-            throw new IOException("Vocabulary LLM lookup failed: " + e.getMessage(), e);
-        }
-    }
-
-    /**
      * Enriches an existing Vocabulary entity in-place with missing linguistic information.
      */
     public Vocabulary autoCompleteVocabulary(Vocabulary vocabulary) throws IOException {
