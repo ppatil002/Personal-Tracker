@@ -29,7 +29,7 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            
+
             def props = new Properties()
             def propFile = project.rootProject.file('local.properties')
             if (propFile.exists()) {
@@ -39,11 +39,13 @@ android {
             def googleClientId = props.getProperty('GOOGLE_WEB_CLIENT_ID', '')
             def backupPath = props.getProperty('BACKUP_PATH', 'backups')
             def quotesApiKey = props.getProperty('QUOTES_API_KEY', '')
-            
+            def geminiApiKey = props.getProperty('GEMINI_API_KEY', '')
+
             buildConfigField "String", "BACKUP_SECRET_KEY", "\"${backupKey}\""
             buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleClientId}\""
             buildConfigField "String", "BACKUP_PATH", "\"${backupPath}\""
             buildConfigField "String", "QUOTES_API_KEY", "\"${quotesApiKey}\""
+            buildConfigField "String", "GEMINI_API_KEY", "\"${geminiApiKey}\""
         }
         debug {
             def props = new Properties()
@@ -55,11 +57,13 @@ android {
             def googleClientId = props.getProperty('GOOGLE_WEB_CLIENT_ID', '')
             def backupPath = props.getProperty('BACKUP_PATH', 'backups')
             def quotesApiKey = props.getProperty('QUOTES_API_KEY', '')
-            
+            def geminiApiKey = props.getProperty('GEMINI_API_KEY', '')
+
             buildConfigField "String", "BACKUP_SECRET_KEY", "\"${backupKey}\""
             buildConfigField "String", "GOOGLE_WEB_CLIENT_ID", "\"${googleClientId}\""
             buildConfigField "String", "BACKUP_PATH", "\"${backupPath}\""
             buildConfigField "String", "QUOTES_API_KEY", "\"${quotesApiKey}\""
+            buildConfigField "String", "GEMINI_API_KEY", "\"${geminiApiKey}\""
         }
     }
     compileOptions {
@@ -69,7 +73,10 @@ android {
 
     packaging {
         resources {
-            excludes += '/META-INF/DEPENDENCIES'
+            excludes += [
+                    '/META-INF/DEPENDENCIES',
+                    '/META-INF/INDEX.LIST'
+            ]
         }
         jniLibs {
             useLegacyPackaging = true
@@ -84,6 +91,7 @@ dependencies {
     implementation libs.google.api.client
     implementation libs.google.http.gson
     implementation libs.google.http.android
+    implementation libs.google.genai
     implementation libs.material
     implementation libs.constraintlayout
     implementation libs.recyclerview

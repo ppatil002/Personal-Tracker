@@ -1,5 +1,7 @@
 package com.example.pp.core.llm;
 
+import static com.example.pp.core.constants.AppConstants.GEMINI_MODEL_VOCABULARY;
+
 import com.example.pp.core.llm.prompts.PromptTemplateEngine;
 import com.example.pp.core.llm.prompts.VocabularyPrompts;
 import com.example.pp.data.local.entity.Vocabulary;
@@ -52,7 +54,7 @@ public class VocabularyLlmManager {
     }
 
     /**
-     * Processes word details and returns a parsed VocabularyLlmResponse domain model.
+     * Processes word details and returns a parsed VocabularyLlmResponse domain.
      */
     public VocabularyLlmResponse processWordIngestion(String word, String pos, String meaning, String usage) throws IOException {
         try {
@@ -63,7 +65,7 @@ public class VocabularyLlmManager {
             context.put("usage", usage);
 
             String prompt = PromptTemplateEngine.render(VocabularyPrompts.VOCABULARY_ENRICHMENT_PROMPT, context);
-            String rawResponse = llmClient.sendPromptSync(prompt);
+            String rawResponse = llmClient.sendPromptSync(prompt, GEMINI_MODEL_VOCABULARY);
             return LlmUtils.parseStructuredResponse(rawResponse, VocabularyLlmResponse.class, gson);
         } catch (Exception e) {
             throw new IOException("Vocabulary LLM processing failed: " + e.getMessage(), e);
@@ -79,7 +81,7 @@ public class VocabularyLlmManager {
             context.put("word", word);
 
             String prompt = PromptTemplateEngine.render(VocabularyPrompts.VOCABULARY_LOOKUP_PROMPT, context);
-            String rawResponse = llmClient.sendPromptSync(prompt);
+            String rawResponse = llmClient.sendPromptSync(prompt, GEMINI_MODEL_VOCABULARY);
             return LlmUtils.parseStructuredResponse(rawResponse, VocabularyLlmResponse.class, gson);
         } catch (Exception e) {
             throw new IOException("Vocabulary LLM lookup failed: " + e.getMessage(), e);
