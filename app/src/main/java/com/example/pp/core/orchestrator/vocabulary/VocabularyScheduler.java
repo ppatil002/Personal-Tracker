@@ -18,7 +18,7 @@ import com.example.pp.data.local.entity.TaskDefinition;
 import com.example.pp.data.local.entity.TaskState;
 import com.example.pp.data.local.entity.Vocabulary;
 import com.example.pp.data.repository.TaskRepository;
-import com.example.pp.data.repository.VocabularyRepository;
+import com.example.pp.data.repository.vocabulary.VocabularyRepository;
 import com.example.pp.utils.DateUtils;
 
 import java.util.Calendar;

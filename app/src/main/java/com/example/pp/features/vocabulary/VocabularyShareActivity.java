@@ -9,7 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.pp.PPApplication;
 import com.example.pp.core.constants.AppConstants;
-import com.example.pp.data.repository.VocabularyRepository;
+import com.example.pp.data.repository.vocabulary.VocabularyRepository;
 
 
 public class VocabularyShareActivity extends AppCompatActivity {

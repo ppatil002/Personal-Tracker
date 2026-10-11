@@ -1,0 +1,22 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Magic Wand -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M18.5,3.5L20.5,5.5L5.5,20.5L3.5,18.5L18.5,3.5Z"/>
+    <!-- Star above wand (with spacing) -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M16,2L16.8,4.2L19,4.2L17.2,5.6L18,7.8L16,6.4L14,7.8L14.8,5.6L13,4.2L15.2,4.2L16,2Z"/>
+    <!-- Small sparkle top right -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M21,9L21.3,9.7L22,10L21.3,10.3L21,11L20.7,10.3L20,10L20.7,9.7L21,9Z"/>
+    <!-- Small sparkle bottom left -->
+    <path
+        android:fillColor="#000000"
+        android:pathData="M6,17L6.3,17.7L7,18L6.3,18.3L6,19L5.7,18.3L5,18L5.7,17.7L6,17Z"/>
+</vector>

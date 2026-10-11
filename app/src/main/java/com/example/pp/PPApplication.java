@@ -16,7 +16,7 @@ import com.example.pp.data.repository.SleepRepository;
 import com.example.pp.data.repository.TagRepository;
 import com.example.pp.data.repository.TaskRepository;
 import com.example.pp.data.repository.TransactionRepository;
-import com.example.pp.data.repository.VocabularyRepository;
+import com.example.pp.data.repository.vocabulary.VocabularyRepository;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
 public class PPApplication extends Application {
