@@ -69,7 +69,7 @@ import com.example.pp.utils.TaskTypeConverters;
     Vocabulary.class,
     VocabularyRevisionLog.class,
     RegistryEntity.class
-}, version = 28, exportSchema = false)
+}, version = 29, exportSchema = false)
 @TypeConverters({TaskTypeConverters.class})
 public abstract class AppDatabase extends RoomDatabase {
 

@@ -43,8 +43,8 @@ public class HalfLifeEngine {
         }
 
         vocab.lastReviewedTimestamp = now;
-        vocab.correctAttempts = 0;
-        vocab.incorrectAttempts = 0;
+        vocab.correctAttempts = 0.0;
+        vocab.incorrectAttempts = 0.0;
         vocab.hintsUsedCount = 0;
 
         if (weights == null || weights.length < 3) {
@@ -67,16 +67,13 @@ public class HalfLifeEngine {
         if (vocab == null) return null;
 
         long now = System.currentTimeMillis();
-        double actualY = HalfLifeUtils.scaleRatingToBinary(userRating);
+        HalfLifeUtils.RatingWeight ratingWeight = HalfLifeUtils.mapRatingToWeights(userRating);
 
         double halfLifeBefore = vocab.halfLife;
-        boolean remembered = (actualY == 1.0);
+        boolean remembered = (userRating >= 3);
 
-        if (remembered) {
-            vocab.correctAttempts++;
-        } else {
-            vocab.incorrectAttempts++;
-        }
+        vocab.correctAttempts += ratingWeight.correctDelta;
+        vocab.incorrectAttempts += ratingWeight.incorrectDelta;
 
         if (hintUsed) {
             vocab.hintsUsedCount++;
@@ -109,7 +106,7 @@ public class HalfLifeEngine {
      * Performs a single Stochastic Gradient Descent (SGD) step given current weights,
      * predicted recall probability P(t), actual outcome y (1.0 or 0.0), and attempt features.
      */
-    public double[] updateWeightsWithSGD(double[] currentWeights, double predictedP, double actualY, int correctAttempts, int incorrectAttempts) {
+    public double[] updateWeightsWithSGD(double[] currentWeights, double predictedP, double actualY, double correctAttempts, double incorrectAttempts) {
         if (currentWeights == null || currentWeights.length < 3) {
             currentWeights = DEFAULT_WEIGHTS;
         }
@@ -153,16 +150,20 @@ public class HalfLifeEngine {
         }
 
         if (logs != null && !logs.isEmpty()) {
-            int correct = 0;
-            int incorrect = 0;
+            double correct = 0.0;
+            double incorrect = 0.0;
             int hints = 0;
             long maxLogTimestamp = 0;
 
             for (VocabularyRevisionLog log : logs) {
-                if ("REMEMBER".equalsIgnoreCase(log.action) || log.rating >= 3) {
-                    correct++;
+                if (log.rating >= 1 && log.rating <= 5) {
+                    HalfLifeUtils.RatingWeight rw = HalfLifeUtils.mapRatingToWeights(log.rating);
+                    correct += rw.correctDelta;
+                    incorrect += rw.incorrectDelta;
+                } else if ("REMEMBER".equalsIgnoreCase(log.action) || log.rating >= 3) {
+                    correct += 1.0;
                 } else {
-                    incorrect++;
+                    incorrect += 1.0;
                 }
                 if (log.hintUsed) {
                     hints++;

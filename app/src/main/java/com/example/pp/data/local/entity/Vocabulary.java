@@ -37,10 +37,10 @@ public class Vocabulary {
     public long lastReviewedTimestamp;
 
     @ColumnInfo(name = "correct_attempts")
-    public int correctAttempts;
+    public double correctAttempts;
 
     @ColumnInfo(name = "incorrect_attempts")
-    public int incorrectAttempts;
+    public double incorrectAttempts;
 
     @ColumnInfo(name = "hints_used_count")
     public int hintsUsedCount;
@@ -62,8 +62,8 @@ public class Vocabulary {
         this.partOfSpeech = partOfSpeech;
         this.createdTimestamp = createdTimestamp;
         this.lastReviewedTimestamp = 0;
-        this.correctAttempts = 0;
-        this.incorrectAttempts = 0;
+        this.correctAttempts = 0.0;
+        this.incorrectAttempts = 0.0;
         this.hintsUsedCount = 0;
         this.halfLife = 0.0;
         this.nextRevisionTimestamp = 0;
@@ -71,7 +71,7 @@ public class Vocabulary {
 
     @Ignore
     public Vocabulary(String word, String meaning, String example, String partOfSpeech, long createdTimestamp,
-                      long lastReviewedTimestamp, int correctAttempts, int incorrectAttempts,
+                      long lastReviewedTimestamp, double correctAttempts, double incorrectAttempts,
                       int hintsUsedCount, double halfLife, long nextRevisionTimestamp) {
         this.word = word;
         this.meaning = meaning;
