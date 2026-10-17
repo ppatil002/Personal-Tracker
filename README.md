@@ -1,21 +1,38 @@
-# Personal Tracker (PP)
+# 📱 Personal Tracker (PP)
 
-Personal Tracker is an Android application designed for personal productivity, habit tracking, health metrics, and intelligent learning.
+[![Android](https://img.shields.io/badge/Platform-Android-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/)
+[![Java](https://img.shields.io/badge/Language-Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.java.com/)
+[![Architecture](https://img.shields.io/badge/Architecture-MVVM%20%2B%20Clean-blue?style=for-the-badge)](https://developer.android.com/topic/architecture)
+[![AI Powered](https://img.shields.io/badge/AI-Google%20Gemini-8E75B2?style=for-the-badge&logo=google&logoColor=white)](https://deepmind.google/technologies/gemini/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-## High-Level Overview
-
-The application integrates core tracking modules built with modern Android architecture principles (Room DB, LiveData/ViewModel, Background Schedulers, BroadcastReceivers, and LLM integrations).
-
-### Features Overview
-
-- **Vocabulary Tracker**: Spaced-repetition vocabulary learning system powered by a Half-Life decay ML model and Google Gemini LLM auto-completion.
-- **Gym & Workout Tracking**: *(Documentation coming soon)*
-- **Nutrition & Hydration Tracking**: *(Documentation coming soon)*
-- **Screen Time & Sleep Analytics**: *(Documentation coming soon)*
-- **Quotes & Personal Utilities**: *(Documentation coming soon)*
+*An all-in-one personal productivity, habit tracking, health metrics, and intelligent learning assistant.*
 
 ---
 
-## Documentation & Feature Navigation
+## 🌟 High-Level Overview
 
-- 📖 [Vocabulary Module Documentation](docs/vocabulary.md) — High-level technical overview of word ingestion via Share Intent, LLM auto-completion, notification scheduling, and the Spaced Repetition ML Half-Life Decay Algorithm.
+**Personal Tracker** is a feature-rich Android application built to streamline personal development. By integrating machine learning decay models and Large Language Models (LLMs), it provides an intelligent ecosystem for daily self-improvement.
+
+---
+
+## 🚀 Key Modules & Feature Status
+
+- 🔤 **Vocabulary Tracker** `🟢 Active`  
+  Spaced-repetition learning system with ML half-life memory decay & AI auto-completion.
+- 🏋️ **Gym & Workout Tracking** `🟡 Planned`  
+  Exercise routines, sets tracking, and fitness progression.
+- 💧 **Hydration & Nutrition** `🟡 Planned`  
+  Daily water intake logs, calorie counters, and directory.
+- 📊 **Screen Time & Sleep Analytics** `🟡 Planned`  
+  Usage insights and sleep cycle tracking.
+- 💬 **Quotes & Personal Utilities** `🟡 Planned`  
+  Daily motivational quotes and custom productivity helpers.
+
+---
+
+## 📚 Documentation & Navigation
+
+Explore the technical design and architectural breakdown of individual features:
+
+- 📖 [**Vocabulary Module Technical Documentation**](docs/vocabulary.md) — *Learn how Share Intent ingestion, Gemini AI enrichment, dynamic alarm scheduling, and the Half-Life Decay ML engine work together.*
