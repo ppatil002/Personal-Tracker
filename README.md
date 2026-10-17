@@ -12,21 +12,21 @@
 
 ## 🌟 High-Level Overview
 
-**Personal Tracker** is a feature-rich Android application built to streamline personal development. By integrating machine learning decay models and Large Language Models (LLMs), it provides an intelligent ecosystem for daily self-improvement.
+**`Personal Tracker`** is a feature-rich Android application built to streamline personal development. By integrating machine learning decay models and Large Language Models (LLMs), it provides an intelligent ecosystem for daily self-improvement.
 
 ---
 
 ## 🚀 Key Modules & Feature Status
 
-- 🔤 **Vocabulary Tracker** `🟢 Active`  
+- 🔤 **`Vocabulary Tracker`** `🟢 Active`  
   Spaced-repetition learning system with ML half-life memory decay & AI auto-completion.
-- 🏋️ **Gym & Workout Tracking** `🟡 Planned`  
+- 🏋️ **`Gym & Workout Tracking`** `🟡 Planned`  
   Exercise routines, sets tracking, and fitness progression.
-- 💧 **Hydration & Nutrition** `🟡 Planned`  
+- 💧 **`Hydration & Nutrition`** `🟡 Planned`  
   Daily water intake logs, calorie counters, and directory.
-- 📊 **Screen Time & Sleep Analytics** `🟡 Planned`  
+- 📊 **`Screen Time & Sleep Analytics`** `🟡 Planned`  
   Usage insights and sleep cycle tracking.
-- 💬 **Quotes & Personal Utilities** `🟡 Planned`  
+- 💬 **`Quotes & Personal Utilities`** `🟡 Planned`  
   Daily motivational quotes and custom productivity helpers.
 
 ---
@@ -35,4 +35,4 @@
 
 Explore the technical design and architectural breakdown of individual features:
 
-- 📖 [**Vocabulary Module Technical Documentation**](docs/vocabulary.md) — *Learn how Share Intent ingestion, Gemini AI enrichment, dynamic alarm scheduling, and the Half-Life Decay ML engine work together.*
+- 📖 [**`Vocabulary Module Technical Documentation`**](docs/vocabulary.md) — *Learn how Share Intent ingestion, Gemini AI enrichment, dynamic alarm scheduling, and the Half-Life Decay ML engine work together.*
