@@ -95,19 +95,7 @@ Standard spaced-repetition platforms rely on rigid, fixed intervals. This module
 
 #### 📊 Conceptual Memory Retention Curve
 
-```
-Recall Probability P(t)
- 1.0 ┤ ⬤ (Just Reviewed: t = 0)
-     │  \
- 0.8 ┤   \  Target Retention Threshold (85%)
-     │    \ . . . . . . . . . . . . . . . . . . . . .
- 0.5 ┤     \           ◄── Half-Life (h): Time until recall drops to 50%
-     │      \          
- 0.2 ┤       \      ⬤ (Trigger Revision: P(t) hits 0.85)
-     │        \    /
- 0.0 └─────────┴───┴───────────────────────────► Time (Days)
-             Review Window
-```
+![Memory Decay Infographic](HalfLife.png)
 
 #### 📐 Mathematical Foundation
 
