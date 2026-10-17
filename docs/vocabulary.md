@@ -8,7 +8,6 @@
 </p>
 
 </div>
----
 
 ## 🎯 What Makes This Different?
 
