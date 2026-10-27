@@ -20,10 +20,12 @@
 
 - 🔤 **`Vocabulary Tracker`** `🟢 Active`  
   Spaced-repetition learning system with ML half-life memory decay & AI auto-completion.
+- 💧 **`Hydration Module`** `🟢 Active`  
+  Smart 2-hour periodic reminder engine (bounded 11 AM – 11 PM), notification quick-logging (+250ml, +300ml, 1h snooze), late-night auto-adjustment, and multi-period trend analytics to motivate daily hydration goals.
+- 🍴 **`Nutrition Tracker`** `🟡 Planned`  
+  Master food directory with unit scaling, real-time SQL macronutrient tracking (Calories, Protein, Carbs, Fats), and 5-minute meal bucket grouping.
 - 🏋️ **`Gym & Workout Tracking`** `🟡 Planned`  
   Exercise routines, sets tracking, and fitness progression.
-- 💧 **`Hydration & Nutrition`** `🟡 Planned`  
-  Daily water intake logs, calorie counters, and directory.
 - 📊 **`Screen Time & Sleep Analytics`** `🟡 Planned`  
   Usage insights and sleep cycle tracking.
 - 💬 **`Quotes & Personal Utilities`** `🟡 Planned`  
