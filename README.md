@@ -38,3 +38,4 @@
 Explore the technical design and architectural breakdown of individual features:
 
 - 📖 [**`Vocabulary Module Technical Documentation`**](docs/vocabulary.md) — *Learn how Share Intent ingestion, Gemini AI enrichment, dynamic alarm scheduling, and the Half-Life Decay ML engine work together.*
+- 💧 [**`Hydration Module Technical Documentation`**](docs/hydration.md) — *Discover how smart 2-hour periodic reminders, interactive notification quick-logging, late-night auto-adjustments, and visual trend analytics keep users motivated to achieve daily hydration goals.*
