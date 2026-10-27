@@ -59,7 +59,7 @@ Most flashcard applications rely on rigid, one-size-fits-all algorithms (like fi
 
 | 📲 Seamless Data Ingestion Demo | ⏰ Interactive Revision Demo |
 | :---: | :---: |
-| <video src="video/Vocabulary_Seemless_Data_Ingestion.mp4" controls width="100%"></video> | <video src="video/Vocabulary_Revision.mp4" controls width="100%"></video> |
+| ![Seamless Data Ingestion Demo](video/Vocabulary_Seemless_Data_Ingestion.gif) | ![Interactive Revision Demo](video/Vocabulary_Revision.gif) |
 
 ---
 
