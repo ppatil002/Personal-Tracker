@@ -89,8 +89,10 @@ All alarm events and background executions are logged for maximum reliability.
 | 🌊 1. Dashboard Wave Card | 🥛 2. Custom Intake Dialog | 🔔 3. Notification Quick Actions |
 | :---: | :---: | :---: |
 | <img src="images/jpegHydration_Dashboard.jpeg" alt="⏳ Add Dashboard Water Wave Card Screenshot" height="360" /> | <img src="images/Hydration_Custom_Dialog.jpeg" alt="⏳ Add Custom Intake Dialog Screenshot" height="360" /> | <img src="images/Hydration_Notification_Shade.jpeg" alt="⏳ Add Notification Shade Screenshot" height="360" /> |
-| **📊 4. Trend Analytics & Goals** | **⚙️ 5. Worker Execution Audit Logs** | |
-| <img src="images/Hydration_Analytics.jpeg" alt="⏳ Add Analytics Screen Screenshot" height="360" /> | <img src="images/Hydration_Worker_Logs.jpeg" alt="⏳ Add Background Worker Audit Logs Screenshot" height="360" /> | |
+
+| **📊 4. Trend Analytics & Goals** | **⚙️ 5. Worker Execution Audit Logs** |
+| :---: | :---: |
+| <img src="images/Hydration_Analytics.jpeg" alt="⏳ Add Analytics Screen Screenshot" height="360" /> | <img src="images/Hydration_Worker_Logs.jpeg" alt="⏳ Add Background Worker Audit Logs Screenshot" height="360" /> |
 
 ---
 
