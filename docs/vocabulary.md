@@ -55,6 +55,14 @@ Most flashcard applications rely on rigid, one-size-fits-all algorithms (like fi
 
 ---
 
+## 🎬 Feature Demos
+
+| 📲 Seamless Data Ingestion Demo | ⏰ Interactive Revision Demo |
+| :---: | :---: |
+| <video src="video/Vocabulary_Seemless_Data_Ingestion.mp4" controls width="100%"></video> | <video src="video/Vocabulary_Revision.mp4" controls width="100%"></video> |
+
+---
+
 ## ⚡ Feature Capabilities & System Flow
 
 ### 1. 📲 Ingestion & Share Intent Integration
