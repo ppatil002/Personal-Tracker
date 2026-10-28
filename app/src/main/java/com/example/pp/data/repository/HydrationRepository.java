@@ -58,6 +58,11 @@ public class HydrationRepository {
         return hydrationDao.getTotalMLSince(startOfDay);
     }
 
+    public int getTodayTotalMLSync(long startOfDay) {
+        Integer total = hydrationDao.getTotalMLSinceSync(startOfDay);
+        return total != null ? total : 0;
+    }
+
     public LiveData<Integer> getIntakeCountSince(long startOfDay) {
         return hydrationDao.getIntakeCountSince(startOfDay);
     }

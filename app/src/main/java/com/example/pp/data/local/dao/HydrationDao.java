@@ -52,6 +52,9 @@ public interface HydrationDao {
     @Query("SELECT SUM(amount_ml) FROM hydration_intakes WHERE timestamp >= :timestamp")
     LiveData<Integer> getTotalMLSince(long timestamp);
 
+    @Query("SELECT SUM(amount_ml) FROM hydration_intakes WHERE timestamp >= :timestamp")
+    Integer getTotalMLSinceSync(long timestamp);
+
     @Query("SELECT COUNT(*) FROM hydration_intakes WHERE timestamp >= :timestamp")
     LiveData<Integer> getIntakeCountSince(long timestamp);
 

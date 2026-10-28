@@ -10,9 +10,15 @@ import android.net.Uri;
 
 import androidx.core.app.NotificationCompat;
 
+import com.example.pp.PPApplication;
 import com.example.pp.R;
 import com.example.pp.core.constants.AppConstants;
+import com.example.pp.data.local.entity.HydrationIntake;
+import com.example.pp.data.repository.HydrationRepository;
 import com.example.pp.features.dashboard.DashboardActivity;
+import com.example.pp.utils.DateUtils;
+
+import java.util.concurrent.TimeUnit;
 
 public class WaterNotificationHelper {
     public static final String CHANNEL_ID = AppConstants.CHANNEL_WATER;
@@ -21,6 +27,14 @@ public class WaterNotificationHelper {
     public static final String ACTION_300ML = "com.example.pp.ACTION_300ML";
     public static final String ACTION_250ML = "com.example.pp.ACTION_250ML";
     public static final String ACTION_SNOOZE = "com.example.pp.ACTION_SNOOZE";
+
+    private static HydrationRepository getHydrationRepository(Context context) {
+        Context app = context.getApplicationContext();
+        if (app instanceof PPApplication) {
+            return ((PPApplication) app).getHydrationRepository();
+        }
+        return new HydrationRepository(context);
+    }
 
     private static void createNotificationChannel(Context context) {
         NotificationChannel channel = new NotificationChannel(
@@ -40,7 +54,41 @@ public class WaterNotificationHelper {
     }
 
     public static void showNotification(Context context, String taskId) {
+        showNotification(context, taskId, 0L, 0);
+    }
+
+    public static void showNotification(Context context, String taskId, long lastIntakeTime, int lastIntakeAmount) {
         createNotificationChannel(context);
+
+        HydrationRepository hydrationRepository = getHydrationRepository(context);
+
+        final HydrationIntake lastIntake = (lastIntakeTime <= 0L) ? hydrationRepository.findLatestIntake() : null;
+        final long intakeTime = (lastIntakeTime > 0L) ? lastIntakeTime : (lastIntake != null ? lastIntake.getTimestamp() : 0L);
+
+        long startOfDay = DateUtils.getStartOfDay(System.currentTimeMillis());
+        int totalTodayMl = hydrationRepository.getTodayTotalMLSync(startOfDay);
+        int targetMl = (int) AppConstants.TARGET_WATER_ML;
+        int percentage = (int) Math.min(100, Math.round(((double) totalTodayMl / targetMl) * 100));
+
+        final String contentText;
+        if (intakeTime > 0L) {
+            long elapsedMillis = Math.max(0, System.currentTimeMillis() - intakeTime);
+            long minutes = TimeUnit.MILLISECONDS.toMinutes(elapsedMillis) % 60;
+            long hours = TimeUnit.MILLISECONDS.toHours(elapsedMillis);
+
+            String timeGap;
+            if (hours > 0 && minutes > 0) {
+                timeGap = hours + "h " + minutes + "m ago";
+            } else if (hours > 0) {
+                timeGap = hours + (hours == 1 ? " hour ago" : " hours ago");
+            } else {
+                timeGap = Math.max(1, minutes) + " mins ago";
+            }
+
+            contentText = "Last drink: " + timeGap + " • " + totalTodayMl + "/" + targetMl + " ml (" + percentage + "%)";
+        } else {
+            contentText = "Progress: " + totalTodayMl + "/" + targetMl + " ml (" + percentage + "%) • Time to hydrate!";
+        }
 
         Intent intent250 = new Intent(context, WaterIntakeReceiver.class);
         intent250.setAction(ACTION_250ML);
@@ -64,7 +112,8 @@ public class WaterNotificationHelper {
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(R.drawable.ic_glass)
                 .setContentTitle("Water Intake")
-                .setContentText("Its Water Break")
+                .setContentText(contentText)
+                .setStyle(new NotificationCompat.BigTextStyle().bigText(contentText))
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
                 .setSound(Uri.parse("android.resource://" + context.getPackageName() + "/" + R.raw.water_notofication_drop))

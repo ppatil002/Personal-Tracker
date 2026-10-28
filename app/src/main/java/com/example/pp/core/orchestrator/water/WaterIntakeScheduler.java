@@ -29,6 +29,14 @@ public class WaterIntakeScheduler {
     private static final String TAG = "WaterIntakeScheduler";
     public static final int ALARM_REQUEST_CODE = AppConstants.RC_WATER_ALARM;
 
+    private static HydrationRepository getHydrationRepository(Context context) {
+        Context app = context.getApplicationContext();
+        if (app instanceof PPApplication) {
+            return ((PPApplication) app).getHydrationRepository();
+        }
+        return new HydrationRepository(context);
+    }
+
     /**
      * Reschedules the water intake alarm based on the latest database state.
      */
@@ -50,10 +58,17 @@ public class WaterIntakeScheduler {
 
             long nextAlarmTime = calculateNextAlarmTime(context);
             
+            HydrationRepository hydrationRepository = getHydrationRepository(context);
+            HydrationIntake lastIntake = hydrationRepository.findLatestIntake();
+
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             Intent intent = new Intent(context, WaterIntakeReceiver.class);
             intent.setAction(AppConstants.ACTION_WATER_ALARM);
             intent.putExtra("TASK_ID", taskDef.getTaskId());
+            if (lastIntake != null) {
+                intent.putExtra("LAST_INTAKE_TIME", lastIntake.getTimestamp());
+                intent.putExtra("LAST_INTAKE_AMOUNT", lastIntake.getAmountMl());
+            }
             
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     context, 
@@ -102,9 +117,9 @@ public class WaterIntakeScheduler {
      */
     public static void logIntakeAndReschedule(Context context, int amountMl, long timestamp) {
         AppExecutors.getInstance().diskIO().execute(() -> {
-            HydrationRepository hydrationRepo = new HydrationRepository(context);
+            HydrationRepository hydrationRepository = getHydrationRepository(context);
             // 1. Log the intake (Synchronously on this background thread)
-            hydrationRepo.addIntakeSync(amountMl, timestamp);
+            hydrationRepository.addIntakeSync(amountMl, timestamp);
             Log.d(TAG, "Logged intake: " + amountMl + "ml at " + timestamp);
             
             // 2. Reschedule
@@ -124,7 +139,7 @@ public class WaterIntakeScheduler {
     }
 
     private static long calculateNextAlarmTime(Context context) {
-        HydrationRepository repo = new HydrationRepository(context);
+        HydrationRepository hydrationRepository = getHydrationRepository(context);
 
         Calendar now = Calendar.getInstance();
         long currentMillis = now.getTimeInMillis();
@@ -145,7 +160,7 @@ public class WaterIntakeScheduler {
         elevenPM.set(Calendar.HOUR_OF_DAY, 23);
 
         // Get absolute last intake instead of just today
-        HydrationIntake lastIntake = repo.findLatestIntake();
+        HydrationIntake lastIntake = hydrationRepository.findLatestIntake();
 
         long baseTime;
         if (lastIntake == null) {
@@ -205,10 +220,17 @@ public class WaterIntakeScheduler {
                 snoozeTime = getNextDayStart();
             }
 
+            HydrationRepository hydrationRepository = getHydrationRepository(context);
+            HydrationIntake lastIntake = hydrationRepository.findLatestIntake();
+
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             Intent intent = new Intent(context, WaterIntakeReceiver.class);
             intent.setAction(AppConstants.ACTION_WATER_ALARM);
             intent.putExtra("TASK_ID", def.getTaskId());
+            if (lastIntake != null) {
+                intent.putExtra("LAST_INTAKE_TIME", lastIntake.getTimestamp());
+                intent.putExtra("LAST_INTAKE_AMOUNT", lastIntake.getAmountMl());
+            }
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     context,
@@ -262,10 +284,17 @@ public class WaterIntakeScheduler {
                 nextAlarmTime = getNextDayStart();
             }
 
+            HydrationRepository hydrationRepository = getHydrationRepository(context);
+            HydrationIntake lastIntake = hydrationRepository.findLatestIntake();
+
             AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
             Intent intent = new Intent(context, WaterIntakeReceiver.class);
             intent.setAction(AppConstants.ACTION_WATER_ALARM);
             intent.putExtra("TASK_ID", taskId);
+            if (lastIntake != null) {
+                intent.putExtra("LAST_INTAKE_TIME", lastIntake.getTimestamp());
+                intent.putExtra("LAST_INTAKE_AMOUNT", lastIntake.getAmountMl());
+            }
 
             PendingIntent pendingIntent = PendingIntent.getBroadcast(
                     context,

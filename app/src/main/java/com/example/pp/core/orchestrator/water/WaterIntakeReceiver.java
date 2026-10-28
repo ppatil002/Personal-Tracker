@@ -21,6 +21,14 @@ import java.util.concurrent.TimeUnit;
 public class WaterIntakeReceiver extends BroadcastReceiver {
     private static final String TAG = "WaterIntakeReceiver";
 
+    private static HydrationRepository getHydrationRepository(Context context) {
+        Context app = context.getApplicationContext();
+        if (app instanceof PPApplication) {
+            return ((PPApplication) app).getHydrationRepository();
+        }
+        return new HydrationRepository(context);
+    }
+
     @Override
     public void onReceive(Context context, Intent intent) {
         String taskId = intent.getStringExtra("TASK_ID");
@@ -36,8 +44,8 @@ public class WaterIntakeReceiver extends BroadcastReceiver {
 
     private void processAlarm(Context context, String taskId) {
         AppExecutors.getInstance().diskIO().execute(() -> {
-            HydrationRepository repo = new HydrationRepository(context);
-            HydrationIntake lastIntake = repo.findLatestIntake();
+            HydrationRepository hydrationRepository = getHydrationRepository(context);
+            HydrationIntake lastIntake = hydrationRepository.findLatestIntake();
             long now = System.currentTimeMillis();
 
             // Handle race condition: if user just logged water, skip the notification
@@ -56,7 +64,9 @@ public class WaterIntakeReceiver extends BroadcastReceiver {
                 return;
             }
 
-            WaterNotificationHelper.showNotification(context, taskId);
+            long lastIntakeTime = lastIntake != null ? lastIntake.getTimestamp() : 0L;
+            int lastIntakeAmount = lastIntake != null ? lastIntake.getAmountMl() : 0;
+            WaterNotificationHelper.showNotification(context, taskId, lastIntakeTime, lastIntakeAmount);
             updateTaskLastRun(context, taskId);
 
             // Schedule a repeat reminder after 20 minutes if no action taken
@@ -76,7 +86,7 @@ public class WaterIntakeReceiver extends BroadcastReceiver {
 
     private void handleAction(Context context, String action, String taskId) {
         TaskRepository taskRepo = ((PPApplication) context.getApplicationContext()).getTaskRepository();
-        HydrationRepository hydrationRepo = new HydrationRepository(context);
+        HydrationRepository hydrationRepository = getHydrationRepository(context);
         AppExecutors executors = AppExecutors.getInstance();
 
         executors.diskIO().execute(() -> {
@@ -84,11 +94,11 @@ public class WaterIntakeReceiver extends BroadcastReceiver {
             if (def == null) return;
 
             if (WaterNotificationHelper.ACTION_300ML.equals(action)) {
-                hydrationRepo.addIntakeSync(300, System.currentTimeMillis());
+                hydrationRepository.addIntakeSync(300, System.currentTimeMillis());
                 WaterNotificationHelper.cancelNotification(context);
                 WaterIntakeScheduler.schedule(context, def);
             } else if (WaterNotificationHelper.ACTION_250ML.equals(action)) {
-                hydrationRepo.addIntakeSync(250, System.currentTimeMillis());
+                hydrationRepository.addIntakeSync(250, System.currentTimeMillis());
                 WaterNotificationHelper.cancelNotification(context);
                 WaterIntakeScheduler.schedule(context, def);
             } else if (WaterNotificationHelper.ACTION_SNOOZE.equals(action)) {
